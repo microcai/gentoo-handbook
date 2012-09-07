@@ -1,0 +1,807 @@
+\documentclass[amstex]{ctexbook}
+%\usepackage[amstex]{xeCJK}
+
+\usepackage[a4paper]{geometry}
+\usepackage{amsmath}
+\usepackage{stmaryrd}
+\usepackage{wasysym}
+\usepackage{color}
+\usepackage{listings}
+\usepackage[colorlinks]{hyperref}
+\usepackage[below,section]{placeins}
+\usepackage{afterpage}
+\usepackage{footnote}
+\usepackage{longtable}
+\usepackage{amsthm}
+
+%=====================================================================================
+% define new command and environment 
+%=====================================================================================
+\newenvironment{notice}{\tt}{}
+\newenvironment{insertnote}{ \ttfamily\CJKfamily{KaiTi} }{\vskip 1cm }
+\newenvironment{code}{\small\tt\begin{longtable}{p{0.8\textwidth}}}{\end{longtable}}
+
+\newenvironment{quotes}[1]{\pushQED{#1}%
+\begin{flushright}%
+\begin{minipage}{0.5\textwidth}\begin{flushright}\noindent\it}{%
+ ------\popQED{}\end{flushright}\end{minipage}\end{flushright}}%
+
+
+\newcommand{\chatu}[2]{%
+\begin{figure}[h]%
+\centering%
+\includegraphics[scale=0.35]{pics/#1}%
+\caption{#2}%
+\end{figure}%
+}
+
+\newcounter{faqs}
+
+%=====================================================================================
+% style settings
+%=====================================================================================
+% font setting
+\setCJKmonofont{FangSong}
+\setCJKfamilyfont{zhfs}{FangSong}
+\setCJKmainfont[BoldFont={Adobe Heiti Std},ItalicFont={KaiTi}]{Adobe Song Std}
+\setCJKfamilyfont{KaiTi}{KaiTi}
+% 阿拉伯数字章节
+\setcounter{chapter}{-1}
+\CTEXsetup[number={\arabic{chapter}}]{chapter}
+% 对齐设置
+\tolerance=1500
+
+%=====================================================================================
+% book info
+%=====================================================================================
+\title{Linux枕边书}
+%\renewcommand\date{}
+
+
+\author{微蔡}
+
+%\makeatletter\def\CJKecglue{\hskip 0.15em plus 0.10em minus 0.10em}\let\xeCJK@@i\CJKecglue\let\xeCJK@v@i\CJKecglue\makeatother 
+
+
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\makeatletter
+
+\begin{center}
+
+\begin{Huge}
+
+
+\LaTeX
+
+\@title
+
+
+\end{Huge}
+
+\end{center}
+
+\makeatother 
+\setcounter{page}{0}
+
+ 
+% 目录
+\tableofcontents
+
+\chapter{序}
+不知道从什么时候开始用上了Linux，已经不记得刚开始用Linux的时候那段辛苦并乐在其中的学习过程了。
+有一天，我重新用起了曾经那么熟悉，那么“简单”的操作系统，结果大失所望。我看到的是一个完全反人类的系统。
+他它的操作似乎很简单，但是总有一直说不出的感觉，让我觉得它的操作非常别扭。
+有那么一瞬间，我感觉我第一次接触到Linux的时候也是这种感觉。
+
+有人说，这是一种习惯。而我确更乐意认为那是一种文化。Linux和Windows是一种截然不同的文化。
+Linux技术在飞快的进化，各种新技术层出不穷。但是骨子深处的UNIX文化确没变。
+
+有人说，Linux不是UNIX，BSD、Sun Solaris、IBM AIX这些才是UNIX。
+没错，这些系统确实继承了AT\&T\footnote{第一个UNIX系统由贝尔实验室开发。贝尔实验室当时属于AT\&T公司。}
+的代码\footnote{BSD和AT\&T打了几年官司，后经重写将AT\&T代码完全剔除了。}，还获得了
+OpenGroup\footnote{UNIX走向分裂后，几个大公司成立了OpenGroup共同持有UNIX商标。}认证
+。但是对我来说，只有Linux才真正在文化上继承了UNIX。
+既然Linux的文化源自UNIX，要学习Linux将不得不首先了解UNIX，
+了解UNIX从诞生到发展，发展到分裂，分裂到混乱，混乱中统一，统一却失去了UNIX的文化，再到借Linux重生的故事。
+
+故事虽然不是技术，但是了解它能更好的了解一个技术诞生的背景，从而深刻的理解它。
+
+融入UNIX文化后，再来学习Linux就得心应手了。
+
+但是我确不愿意独立一个章节介绍UNIX历史，因为这本书是带领大家学习Linux的，不是故事书，
+所以我把整书的序部分用来介绍UNIX的历史文化。因为序比较长，干脆就叫第\thechapter章。
+
+\section{为什么又写一本书}
+
+我不记得自己为了学习Linux查阅了多少资料，翻烂了多少本书。最终翻了那么多书后发现，
+现在讲解Linux入门书籍多数都讲求“速成”而采取填鸭式讲解。就算速成后成功学会Linux，最终也会因为不了解Linux的文化而处处碰壁。
+然后到网上发牢骚抱怨Linux不人性化。
+
+\begin{notice}
+习惯于Windows的人无法习惯于Linux的操作。所有与Windows不一致的操作都被认为“不人性化”。
+\end{notice}
+
+必须首先要让读者了解到UNIX文化的精髓，而后开始学习Linux，抛开一切对Windows的比较。这样学会的Linux，遇事首先会以UNIX的思维模式思考，然后提出非常UNIXy\footnote{UNIX的，UNIX化的。}的解决办法。
+
+所以本身就安装人对事物的认知，我对Linux的教学过程的安排，将不同于其他的书，我的重点在“文化”，介绍原理而不简单的介绍“XX的用法”。
+确实我会在书中有专门的章节安排详细讲解个各种实用工具，包括服务器的搭建，当读者可以把它当作是一个手册，用到的时候再翻阅。
+
+对发行版的考量上，我采用了Gentoo作为本身的参考发行版。在市场上还没有哪本入门书是使用Gentoo作为发行版的。
+对于使用人数最多的Ubuntu\footnote{非常流行的一个发行版}发行版，我想一定存在非常非常多的教程。但是没有哪个教程能让我满意。
+不是介绍的太过于片面而没有考虑到其他发行版，就是过分介绍了发行版之间的不同点。
+原因就是Ubuntu（还有Fedora\footnote{RedHat的社区发行版，其改动将回馈到RedHat企业版。}这些）发行版，并不是只将软件进行打包，还进行了大量的修改使之符合发行版的风格。
+
+\begin{notice}
+就拿 /etc/init.d/ 下面的服务启动脚本来说吧，没有哪个发行版的脚本是一致的。
+都经过了大量的修改。只介绍一个发行版还不够，但是为了“全面”而大而全式的把所有的发行版都介绍一遍，对初学者来说简直就是个噩梦。他会发现他需要为每个发行版都学习一次init脚本。
+\end{notice}
+
+如果说哪个发行版最尊重上游软件\footnote{所谓上游，就是软件的作者。发行版将软件从原始站点下载后重新打包，如果称发行版为下游，那原始软件开发者就是上游。}，进行最小的改动的话，那就是Gentoo了。
+
+Gentoo几乎所有的软件包都是直接从上游代码编译而来，中间很少有加自己的补丁\footnote{对一个软件的修改被形象的称呼为打补丁。}。
+有限的几个补丁也是为了修复bug而不是对软件进行修改。
+
+这种接近上游软件的状态非常适合初学者的学习。
+
+\section{UNIX的史前文明}
+
+当你看《天宫韵音》\footnote{86版本的西游记电视剧的片头曲}的时候，最先播放的画面就是悟空出世。第一个音符响起的时候，悟空从绷床\footnote{没错！仔细看，确实是绷床！后期处理居然没处理掉。BUG无处不在啊！}上腾空而起。悟空就这样开天辟地般高调出世了。
+
+但是UNIX的出世却非常低调，低调到需要介绍他那高调的前身\textbf{MULTICS}。
+
+Multics的全称是\textit{MULTiplexed Information and Computing System}\footnote{注音这里的大小写混合。这种混合方式旨在告诉读者缩写的由来。}。我们先来了解一下计算机早期的背景。
+
+
+
+\begin{insertnote}
+\subsection*{Multics背景}
+
+计算机诞生的时候并没有操作系统，甚至连程序都没有。操作员重新插拔系统电路连接来实现某个功能。而今天的电脑只要执行不同的程序就能有不同的功能。程序的发明是个非常重要的进步\footnote{通过执行程序而不是直接修改电路实现计算功能，程序和数据一同存储，执行的时候同时进入主存储器，这种结构的计算机最早由冯.诺曼提出，又叫冯.诺曼结构。我们现在的个人电脑就是冯.诺曼结构的。}。有了程序就可以预先编撰好程序，只要输入了程序就能执行了，而不需要费时的重新插拔电路。
+
+那个时候计算机程序的输入靠的是穿孔纸\footnote{用纸啊！太不环保了！}。一长条纸穿进去，程序就输入了，然后等待执行完毕。执行完毕后执行结果又打印到纸上\footnote{别想多了，是简单的机械打印机。只能打印0\textasciitilde{}9数字、26个字母和特殊符号。}。每次程序执行完毕后人要准备好下一叠纸给机器执行，操作员准备好纸张后按下机器的复位按钮机器开始读取纸张执行....周而复始。
+
+如果能不用人准备下一个程序的执行就好了。第一个操作系统就在这样的需求下出来了。他不用人的帮助就能批量执行程序。当然一次还是只执行一个程序。但是能做到前一个程序执行完毕后自动读取下一个程序执行。
+
+有时候一个程序要执行很长的时间，执行完毕后要花更长的时间打印结果，这个时候处理器的资源就是闲置了\footnote{写小看这个闲置，那个时候的计算机比劳斯莱斯贵多了。}。如果前一个程序在打印结果的时候后一个程序能开始执行就好了，这样就能最大限度的利用处理器的资源。
+
+
+这就诞生了最初的多任务操作系统。它能在将处理器的时间分配给多个程序，虽然在任意瞬间还是只有一个程序在执行，但是由于快速的在不同的程序间进行切换\footnote{专业术语叫上下文切换（Context Switch），所谓上下文切换，就是将当前程序的状态保存起来，然后调入先前保持的另一个程序的状态。这样那个被调入的程序就可以从被切换打断的那个地方继续执行。}，看起来就好像多个程序同时执行了。
+
+
+但是那个时候的计算机，还不能进行实时交互。程序员写好纸条后，要交给计算机管理员\footnote{确切的说是操作员}，管理员将纸条输入计算机，然后等待计算机将执行结果输出。最后输出结果交给程序员，这样程序员才能知道程序的执行结果。
+
+
+随着计算机性能的提高，出现了一种分时操作系统（Time Sharing Operating System）。 
+它可以让大型主机通过提供数个终端，用户通过终端使用主机。
+终端通过一条很长很长的线缆\footnote{也可以通过电话线呢！}连接到主机上\footnote{那个时候主机很大，要放到专门的地方嘛。}。
+当时的终端就是一个电传打字机和一个机械打印机。要使用计算机的人将程序或者命令通过终端输给主机，主机将执行结果传回终端。
+最原始的终端使用打印机输出主机的结果。后来出现了使用屏幕代替打印机的终端。
+
+\chatu{ctss}{分时操作系统}
+
+如此一来，无论主机在哪里，只要在终端機前面进行输入输出的作业，就可利用主机提供的功能了。 不过，此时终端機只具有输入/输出的功能，本身完全不具任何运算或者软件安装的能力。 
+
+前面已经讲过，之前的系统只能一个人，管理员，去操作电脑。而分时系统为每一个使用计算机的人提供了一个终端。比较先进的主机大概能同时为30个终端服务。 至此，计算机终于能实时交互\footnote{其实只是接近实时。不过已经是一种进步了，不是么？}了。
+
+Multics就是在分时系统的基础上开发的。
+
+\end{insertnote}
+
+为了更加强化大型主机的功能，以让主机的资源可以提供更多使用者来利用，1964年，MIT\footnote{麻省理工大学}、通用电器（General Electric）和贝尔实验室\footnote{根据Multics Myths网站（一个网站致力于破除有关Multics的谣言）的说法，贝尔实验室应该是在1965年的时候才参加的。
+}通力合作，计划开发一个完美的操作系统。
+
+Multics计划的目的是想要让大型主机可以同时为超过300个以上的终端服务。提供的功能包括邮件，电话
+
+
+\begin{itemize}
+\item Multics 
+
+\end{itemize}
+
+\section{UNIX的故事：双流记}
+
+
+\begin{quotes}{George Santayana}
+Those who cannot remember the past are condemned to repeat it.\\
+\end{quotes}
+
+
+\subsection{UNIX 分裂}
+
+\subsection{POSIX 大一统}
+
+
+\section{GNU 的故事}
+
+\subsection{RMS 大胡子在 MIT}
+\subsection{emacs 编辑器}
+\subsection{为保护自由的协议 - GPL}
+
+\chapter{黑客文化}
+
+
+TODO:  Linux 的发展受到两股重要思想的影响 UNIX哲学和自由软件，简单的说就是黑客精神
+
+\section{UNIX哲学}
+TODO:  主要的系统管理思想和一些小工具也在这里介绍，比如 ps grep 用户和组，用户权限的概念也在这里讲解
+\subsection{一切都是文件}
+
+TODO:  /dev 目录的介绍
+
+\subsection{做一件事情并把它做好}
+TODO: 介绍管道，各种命令的组合
+\subsection{使用文本流}
+\subsection{UNIX在别的系统上的影子}
+
+\section{自由软件GNU 和FSF}
+\subsection{免费和自由}
+\subsection{获得和修改源码的能力}
+\subsection{只有自由软件的完整操作系统}
+
+\chapter{初识 Gentoo}
+
+
+
+\section{Linux介绍}
+
+TODO :  要讨论 Linux ，不得不说 PC , Linux 最初就是从 PC 上发迹的
+
+\subsection{Linux 之前PC操作系统回顾}
+
+TODO:  DOS WINDOWS
+\subsection{GNU HURD 内核}
+
+ 
+\subsection{386BSD 和 minix}
+
+
+
+\subsection{襁褓中的Linux}
+\subsection{以GPL开源}
+
+\subsection{使用Linux内核的操作系统——发行版}
+\section{Linux是操作系统内核}
+
+TODO：Linux 主要发行版介绍，何为 Linux 发行版 Linux 发行版的作用
+
+\section{发行版的意义}
+\section{包管理}
+\section{和软件仓库}
+
+
+\section{包管理和软件仓库}
+
+\subsection*{rpm 和 deb}
+\subsection*{Portage}
+
+
+\chapter{快速安装 Linux}
+Linux介绍了那么多，是时候将它安装到我们的电脑上了。要安装一个Linux系统，我们总是选择一个发行版来安装。那么到底选择什么样的发行版呢? 理想的发行版通常是这样的一个发行版：它非常第容易安装，非常的容易适用；软件仓库里的软件非常丰富，我可以用包管理安装一切软件而不需要自己手动安装；对于一些软件我希望能容易的进行定制；快，非常快。在对各个发行版做里权衡后，我选择Gentoo作为本书中介绍Linux知识所使用的平台。
+
+
+\begin{notice}
+ 注意：Gentoo只是我们选择的众多发行版中的一个，我并不打算把本书变成一个Gentoo入门教程。如果这样，读者还不如选择阅读Gentoo官网上的手册。我尽量将所涉及到第知识通用化。如果这样的知识点只适用于Gentoo, 我会进行说明并辅之以其他发行版的等位操作\footnote{不同发行版达到同样的目的采取的不同操作。}。
+\end{notice}
+
+本书并不打算引起发行版之争\footnote{指不同的人使用不同的发行版，并常常在网上争论自己使用的发行版要比别人的优秀}，
+但是又必须解释为什么使用了Gentoo这个非常罕见的发行版而不是同其他书本那样采用最流行的发行版，比如Ubuntu或者Red Hat系。
+
+最直接的原因也许就是作者本身使用的就是Gentoo，以自己最熟悉的发行版写作，可以避免不熟悉系统进行错误的讲解\footnote{这确实是一个理由，但是Gentoo必定有比其他的发行版更值得作为本书的平台。}。
+当然，如果仅仅这一个理由未免太牵强。
+\it
+Gentoo可以让读者将精力放到学习Linux本身，而不需要关注发行版的细节，这就是我采用Gentoo的原因。
+\normalfont
+另一个能做到这种效果的发行版为LFS\footnote{严格来说，LFS 算不上发行版，只是一个教你如何手工编译出一个能用的系统的手册。}（Linux From Scratch）。
+但是LFS太繁琐，恐怕还没有学习到Linux的知识就已经中途放弃了。
+
+
+\section{安装准备}
+
+当然是准备一台电脑啦！Gentoo虽然号称为本机编译优化，但是编译本身非常耗费系统资源，所以一台主流配置的电脑是必不可少的！
+\footnote{Gentoo支持的硬件架构非常多，不是一定要用个人电脑的。
+但是作为初学者，我们就用最常见的个人电脑，不折腾各种稀奇古怪的电脑，最重要的是，Gentoo对x86体系也是支持的最好的（这不废话么，用户量摆那里么）。}
+
+
+除了一台电脑，还要准备个Fedora或者Ubuntu的LiveCD\footnote{参考附录A. FAQ 的“什么是LiveCD”。
+}，这里不推荐Gentoo自己的LiveDVD\footnote{同LiveCD。}，因为前者更容易获取和使用。
+
+当然，还有网络。Gentoo虽然可以脱离网络进行安装，但是需要将所可能需要用到的源码提前下载，这是非常麻烦的。所以最好准备一个安装的时候可以访问的网络，也就是说LiveCD 环境里必须能使用网络。Fedora 或者Ubuntu那样的LiveCD 通常提供了完整的桌面环境，使用这些桌面环境的网络设置，让LiveCD 能访问互联网就可以了。你可能需要使用 NetworkManager 提供的图形客户端进行配置，通常是在桌面右上角的系统通知区域。要使用 NetworkManager 配置网络，请参考第6章的内容。
+
+嗯嗯，不过就算是x86还分为x86\_32（ 没有特殊指明的情况下x86特指x86\_32） 和x86\_64\footnote{因为历史原因，AMD率先推出支持64位运算的x86CPU，所以Gentoo管x86\_64叫amd64，这和x86又被称呼为 i386 是一样的原因。}呢。
+由于x86\_64是在x86的基础上发展起来的，所以x86\_64向下兼容x86。 也就是说，64位的CPU可以运行32位的软件。但是反过来就不行了。
+
+既然存在两种x86，选择起来就费脑筋了。怎么知道自己的CPU是x86\_64的还是x86\_32 的呢？答案是，现在生产的CPU都是x86\_64了。当然如果你想准确的知道CPU到底支持不支持64位指令，在Window下你可以选择执行CPU-Z 软件获得CPU信息，如果是Linux就简单的多，在终端下执行lscpu命令就可以了。
+
+（1）  Linux下使用lscpu：
+
+在终端下执行lscpu，该命令的第一行输出就是CPU的体系结构。在我的电脑上，其输出为：
+
+\begin{code}%
+Architecture:        x86\_64\\
+CPUop-mode(s):        32-bit, 64-bit\\
+Byte Order:            Little Endian\\
+CPU(s):                8\\
+On-lineCPU(s) list:   0-7\\
+Thread(s) per core:    2\\
+Core(s) per socket:    4\\
+Socket(s):             1\\
+Vendor ID:             GenuineIntel\\
+CPUfamily:            6\\
+Model:                 42\\
+Stepping:              7\\
+CPUMHz:               1600.000\footnote{如果CPU支持动态降频，这里显示的是当前频率而不是CPU的标称频率。}\\
+BogoMIPS:              6420.96\\
+Virtualization:        VT-x\\
+L1d cache:             32K\\
+L1i cache:             32K\\
+L2 cache:              256K\\
+L3 cache:              8192K\\
+\end{code}
+
+第一行的Architecture:        x86\_64就表明此CPU的结构是x86\_64。
+
+
+\vskip 1em
+（2）  Windows 下使用CPU-Z：
+
+\chatu{cpuz}{cpuz截图}
+如图\thefigure所示。我红圈标注的EM64T表示CPU支持64位指令。对于AMD系的CPU，您大可放心，全部支持64位指令。
+
+
+\begin{insertnote}
+\subsection*{小插曲  64位 vs 32位}
+
+如果是x86\_64的CPU，应该选择amd64\footnote{AMD64 就是x86\_64。}
+的Gentoo还是x86的呢？既然现在的CPU都支持 64位指令的，为何还有那么多人使用 32 位的系统？
+
+x86\_64虽然能执行x86代码，但并不是没有代价的。Windows下大部分现有的程序都是32位的，如果安装的64位Windows，32位软件并不能100\%兼容。而且所有的64位软件同时有32位的版本，所以Windows用户非但没有迫切的升级到64位系统的意愿，放而有为了兼容性考虑不得不安装32位系统的处境。
+
+64位系统如果不执行64的程序，那性能还不如直接使用32位的系统和32位的程序。所以在 Windows 统治的世界里，64 位CPU的地位非常尴尬。32位CPU通过PAE\footnote{Physical Address Extension，物理地址扩展。允许32位CPU使用36位地址从而突破4G内存限制。}同样能获得 >4G 内存的支持（非服务器版Windows人为阉割32位版本的PAE支持，故而32位桌面版Windows不能支持超过4G内存。）。
+
+大概也就是因为这个原因，所以不明真相的群众就以为64位除了支持大内存外一无是处。继续固守32位。64Bit vs 32bit的战斗因此打响。
+
+x86\_64对x86的提升不仅仅是更大的内存，同时增加的有
+
+(1)  更大的寄存器 64位CPU自然拥有64位宽度的寄存器。
+
+(2)  更多的寄存器x86\_64相比x86增加了8个通用寄存器,增加8个MMX寄存器。
+
+(3)  默认支持SSE\footnote{SSE指令是Intel为x86添加的扩展，加快了浮点运算的速度。}指令集。
+
+(4)  更有效的指令编码。
+
+这些都无形中增加了x86\_64指令编译的软件的运行速度。所以，如果你的CPU支持x86\_64，请必定选择x86\_64。
+Linux上没有Windows上遇到的问题。
+Gentoo下几乎所有软件都是本机编译的，自然不存在兼容性问题。
+而个别非开源软件也多数拥有 64位版本，更不需要操心兼容性问题。
+\end{insertnote}
+
+
+
+好了，将LiveCD塞入光驱，开始一步步安装属于你的Gentoo吧。有关如何使用LiveCD请参考 附录A.FAQ“如何使用 LiveCD。”
+
+好，我们列一个清单：
+
+
+\begin{itemize}
+\item[ \checked] 一台电脑
+\item[ \checked] 一张LiveCD
+\item[ \checked] Internet
+\item[ \checked] 本书或者Gentoo 安装手册。
+\item[ \checked] 耐心，很多很多的耐心
+\end{itemize}
+
+你准备好了么？
+
+\section{分区规划}
+任何系统都是安装到硬盘使用的
+\footnote{好吧，先忽略掉LiveCD 和  WinPE 这类不需要安装的系统，咱讨论的是一般用途的桌面操作系统。}，
+安装到硬盘之前，必须先划好家。在介绍如何分区前，首先得知道什么是分区，然后参考
+FHS\footnote{FHS 是文件系统目录结构的一个标准。规定了根分区下各个子目录的名称和用途。}
+指示结合自己的实际情况规划好分区。
+
+\subsection{分区基础知识}
+最初，计算机使用软盘，软盘是没有分区的。后来蓝色巨人IBM发明了硬盘。硬盘的容量一下子比软盘大出好多倍。当时的MS-DOS所使用的FAT12文件系统无法管理那么大的硬盘。于是西雅图的巨人和蓝色巨人想出来把硬盘划成逻辑上的几个区域，每个区域大小都在MS-DOS能管理的范围之内——这样的逻辑区域就是分区。人们发现将硬盘划分为逻辑上的几个区域后，更容易组织硬盘上的数据了；而且一个文件系统错误只会影响到一个分区的数据，其他分区不受影响，数据的安全性也得到的提升。因而后来的DOS虽然将FAT12进化到了FAT16，能管理当时的大容量硬盘了，但是分区这个功能却保留了下来\footnote{虽然是MS-DOS的发明，但是Linux可不会拒绝这样的发明。Linux还支持 BSD 发明的分区格式，总之，Linux决定支持越多的分区表格式越好，这极大的方便了用户，不是么？}。
+
+既然用户划了分区，操作系统总得知道用户到底怎么划分的，描述分区的数据被称作分区表。既有分区表，必须有个地方存储，也必须知道到哪里去读取分区表。MS-DOS的把分区表和引导程序放入硬盘的第一个扇区\footnote{扇区是硬盘最小寻址单位。参考附录A. FAQ里的条目“什么是扇区”。}。
+
+硬盘的第一个扇区又被称呼为MBR\footnote{MBR是硬盘的第一个扇区，具体解释请参考附录A. FAQ 里的条目“什么是 MBR”。}。
+MBR既要存储引导程序，又要储存分区表，是个寸土寸金的地方，分区表大小受限，只有4个表项。也就是说，一个 MBR分区表最多只能有4个分区。要是只有四个，似乎并不够用。
+
+MS-DOS将其中一个分区作为扩展分区，然后再扩展分区里再建分区表。扩展分区里面的分区就是逻辑分区，MBR 上的分区表就是主分区表。主分区表里划分的分区自然就是主分区了。所以一个MBR格式分区表最多允许3个主分区和1个扩展分区，或者4个主分区。扩展分区里再创建逻辑分区，没有数量限制。
+\chatu{logicalpart}{链式逻辑分区表}
+
+\begin{notice}
+注意：扩展分区里的逻辑分区并不是表格形式存储的，而是“链式”存储。如图\thefigure所示。每个逻辑分区包含查找下一个逻辑分区的信息。因而一个逻辑分区的破坏有可能造成链式效应，将所有的逻辑分区全部摧毁。
+\end{notice}
+
+由于近来UEFI\footnote{参考附录A “UEFI 和 BIOS”。}  的兴起，
+UEFI指定的分区表格式GPT也流行开来了。
+和MBR不同的是UEFI不需要专门的引导扇区，引导程序由UEFI直接从文件系统上加载。所以GPT只是分区表，不需要和引导程序共存。
+
+MBR 的分区表只有64个字节大小，只能包含最多4个分区的信息。
+GPT包含128个分区表项，最多允许一个硬盘划分成128个分区，足够了。
+能表示更多的分区并不是GPT唯一的优点，MBR分区表只能管理2.2TB
+\footnote{MBR使用4个字节表示分区起始位置的偏移量。
+偏移量以扇区为单位，一个扇区为512字节，那么MBR分区表能管理的最大硬盘大小为$2^{31}*512Byte = 2TB$。
+又因为硬盘厂家以1000为进制而不是1024，故而大约为2.2TB。}%
+以下大小的硬盘，GPT却可以管理容量超过9ZB\footnote{1ZB=1024PB 1PB=1024TB. 硬盘厂家的计算是 1ZB=1000PB 1PB=1000TB。}的硬盘。
+在大容量硬盘越来越普遍的今天，MBR显得越来越力不从心。GPT正好接替MBR成为今后PC硬盘的主流分区表格式。
+
+如果你电脑的固件是UEFI，不管硬盘实际是否大于2TB，建议最好使用GPT分区表。
+
+\subsection{为磁盘分区}
+
+\chatu{gparted-gui}{gparted界面}
+
+\FloatBarrier
+
+\normalfont
+
+有很多种工具可以对硬盘进行分区。今天的主角是 gparted , 这个是一个非常简单易用的分区管理软件，带图形界面的哦~~
+
+要打开gparted，在终端执行sudo gparted。如果 Fedora 的LiveCD提示没有这个命令，则用命令sudo yum install gparted或者apt-get install gparted进行安装。gparted界面如图\thefigure所示。
+
+在gparted里所做的一切操作都不是立即执行的，只有应用操作后才被一次性执行。所以未应用前撤销操作是来得及的。
+下面我把为硬盘分区所需要的几个主要操作图解一下。请读者根据此处的图示熟悉操作流程，并在学习下一个小节后自行分区。
+
+\chatu{gparted-apply}{gparted应用操作}
+\noindent要应用操作：\\\indent
+1. 单击“编辑”|“应用全部操作”菜单。如图\thefigure所示。\\\indent
+2. 在弹出的警告对话框中选择“是”。
+
+\chatu{gparted-newpart-boot}{gparted新建分区}
+
+\noindent建立一个分区：\\\indent
+1. 选择磁盘的空白区域，右击后在菜单里选择“新建”。\\\indent
+2. 在弹出的对话框里指定一个大小、分区类型和文件系统，如图\thefigure所示。\\\indent
+\hskip 4em %
+\begin{notice} %
+  注意：分区表为GPT格式的只能选择主分区。
+\end{notice} \\\indent
+3. 单击“添加”按钮，新建的分区就编排在了任务列队里了\\\indent
+
+\chatu{gparted-delpart}{gparted删除分区}
+\noindent删除一个分区:\\\indent
+1. 右击要删除的分区在菜单里选择“删除”。如图\thefigure所示。 %\\\indent
+
+\chatu{gparted-newpt1.png}{新建分区表}
+
+\noindent新建一个分区表：\\\indent
+1. 单击“设备”｜“创建分区表”菜单，如图\thefigure所示。
+
+\chatu{gparted-newpt2.png}{新建分区表}
+
+\indent2.在打开的对话框里点“高级”前面的箭头，选择一个分区表类型。默认为MS-DOS分区表，也就是MBR分区表。
+我需要在这里我选择gpt分区表。如图\thefigure所示。
+
+\FloatBarrier
+
+好了，gparted的基本操作就完成了，接下来学习一下文件系统的结构后按照自己的意愿为自己的系统分区吧。
+
+\subsection{文件系统结构标准（FHS）}
+
+Linux继承自UNIX树形目录。每个目录各司其职，并被FHS（Filesystem Hierarchy Standard）标准化。表3.1所列是一个不怎么完整的FHS标准，但是对于读者决定如何为他自己的电脑分区已经足够了。
+
+\begin{longtable}{|l|p{0.7\textwidth}|}
+\caption{FHS标准参考}\\
+\hline
+/ & 根目录 \\\hline
+/bin & 基本系统程序。如 ls cat grep \\\hline
+/sbin & 只供管理员使用的基本系统程序 \\\hline
+/boot & 内核和引导程序，通常为独立分区\\\hline
+/dev & 设备文件目录 \\\hline
+/etc & 存放系统配置文件。不允许存放为独立分区\\\hline
+/home & 存放非root用户的家目录。 
+比如foo用户的家目录就是/home/foo
+一般用来存在个人文件和个人设置。
+通常强烈建议独立为一个分区。\\\hline
+/lib & 系统基本库，被 /bin /sbin 里的程序依赖的库 \\\hline
+/media & 可移动媒体的挂载目录。比如cdrom和u盘。被/run/media代替\\\hline
+/mnt & 临时挂载目录\\\hline
+/opt & 通常用于安装非开源软件，如Adobe Reader \\\hline
+/proc & 虚拟的文件系统，用来获得内核和运行中的程序的信息\\\hline
+/root & root用户的家目录\\\hline
+/srv & 做服务器使用的时候 ，用来存储服务的数据。如一个git服务器通常将仓库存放于/srv/git\\\hline
+/tmp & 临时目录。其中文件关机丢失。建议挂载为tmpfs虚拟文件系统，对于tmpfs的介绍可以参考第7章。 \\\hline
+/usr & 非基本系统程序根目录，下面的结构和 / 差不多 \\\hline
+/usr/bin & 同 /bin。只是非基本程序。如xeye  elinks . \\\hline
+/usr/sbin & 同 /sbin。只是非基本程序。如system-config-firewall \\\hline
+/usr/include & 头文件目录。\\\hline
+/usr/lib & 同 /lib。只是其包含的库是不被/sbin、/bin使用的。\\\hline
+/usr/share &  保存架构无关的共享数据。如图标\\\hline
+/var & 系统运行中会不停变化的文件。比如各种log，包管理器的数据库，等等。通常在服务器上是独立分区，个人电脑可以不独立划分。\\\hline
+/var/cache & 缓存。该目录下的文件可以安全删除，要求使用它的程序必须能重建它。比如fontconfig的缓存。\\\hline
+/run 和 /var/run & 临时目录。包含本次系统运行时的信息。\\\hline
+/var/log & 存放各种日志文件。\\\hline
+/var/tmp & 临时文件，可能重启后还在。注意和/tmp的区别。\\\hline
+\end{longtable}
+
+
+知道了系统各个目录的作用，就好为目录进行分区了。通常我们使用4个分区 /boot、/、/home 和一个交换分区。
+
+\begin{notice}
+注意：我在使用“/home分区”这个术语的时候，我指的是为“/home”分一个单独的分区，并且将这个分区挂载到“/home”目录下。我通常不使用“挂载到/home目录的分区”而直接简述为“/home分区”。同样的，“/分区”（或者根分区）指的就是挂载到根目录的分区。
+\end{notice}
+
+/boot独立为一个分区的好处是防止根文件系统的错误蔓延导致/boot/*文件破坏无法正常启动。另一个好处是 /分区可以使用引导程序（如GRUB）不支持的文件系统格式。例如GRUB不支持XFS文件系统格式，但是你可以让/boot分区使用ext2格式从而使 /分区可以使用XFS格式。如果/boot没有独立出一个分区。那 /分区就只能使用引导程序所支持的文件系统了。
+
+/home独立一个分区的好处就是将用户数据彻底和系统数据分离。由于/home目录通常频繁读取写入，和 /分区隔离可以避免 /分区被碎片化。
+
+提示：其他目录，比如“/var”，可以独立一个分区也可以不独立。就看你系统的用处了。作为桌面用途，完全没必要。如果是服务器，“/var/log”可能会很大。邮件服务器的“/var/mail”就可能会非常大，所以非常有必要使用独立分区。
+
+\subsection{文件系统选择}
+
+
+Linux支持的文件系统非常多，有自家系列 ext2/ext3/ext4、甲骨文公司开发的btrfs，来自硅谷图像的XFS等等等等。
+
+不过选一个文件系统没那么纠结的。对于根分区\footnote{根目录所在分区}，既然大部分发行版默认使用ext4，那就ext4吧。
+
+为了引导程序的兼容性，/boot分区仍旧使用ext2或者ext3。
+
+对于/tmp这样的目录，强烈建议使用tmpfs\footnote{参考第7章“文件系统”。}。tmpfs是一种内存文件系统，所有tmpfs上创建的文件都是在内存里的，关机后就会消失。非常适合用作/tmp的文件系统。既能加快系统速度，又能保护硬盘。
+
+对于/home目录，如果是个BT爱好者，会有很多大文件，我推荐使用XFS文件系统。其他情况下还是ext4各方面性能比较平衡。
+
+如果希望为自己选择最佳的分区格式，请参考第7章“文件系统”的内容。
+
+\section{开始安装}
+
+废话了那么多，介绍了一些安装前需要知道的基础知识，现在终于要进入正题了，安装Gentoo。
+Gentoo的安装非常简单，首先是分区。这个前面已经介绍过了。我现在假定读者已经在LiveCD 环境中完成分区了。下面开始真正的安装。
+
+
+\subsection{Shell 快速入门}
+
+由于安装Gentoo需要执行shell命令，所以我需要讲解一下最基本的shell命令。
+
+机器只能接受二进制指令，可是人需要工作在更高一层。人希望直接提供文本形式的指令由机器执行。shell 是操作系统提供给用户的解释器。shell把来自用户的命令转化为机器指令并执行。
+
+命令虽然是文本，但也不是自由格式的。计算机是死的，自然不能接受人类的语言，只能是比较固定的几个格式。
+
+一条shell命令的最常用格式为:
+
+\begin{code}
+命令 [选项] [目标]
+\end{code}
+
+选项是可选的，可以有一个或多个；多个选项间用空格隔开；有些命令没有选项；目标通常是一个文件的文件名，或者目录名。
+
+请看一个命令做为例子： 
+
+\begin{code}
+root@gentoo \textasciitilde \# ls -l --all /  
+\end{code}
+在这里：
+
+\begin{itemize}
+\item -l 是一个短选项。短选项 “-”开头，后面跟单个字母。在这里 -l 表示以“长格式”列出。所谓“长格式”就是相对与一般格式，除了要列出文件名，好要列出文件所有者，权限模式，文件大小
+\item -{}-all 是一个长选项。长选项使用两个“-” 开头，后面跟一个单词。在这里 -{}-all 表示列出所有 文件，包括隐藏文件。
+\item / 在这里为操作对象参数，在这里是一个目录。表示要列出 / 下的文件。
+\item ls 的所有参数都是可选的，如果不使用任何参数，ls 列出当前目录下的文件。
+
+
+\end{itemize}
+
+shell命令分两种，一种是内部命令，另一直是外部命令。内部命令是由shell直接执行的\footnote{最常用的内部命令是cd。}。
+外部命令则是独立的程序。比如ls就是独立程序，它的路径为/bin/ls。shell使用一个PATH环境变量\footnote{参考附录A FAQ“什么是环境变量”。}来查找外部命令。
+
+现在我们只需要知道shell最常用的命令形式就可以了。在以后的学习过程中，我会像大家介绍 shell 的其他命令格式，包括各种循环和函数使用。现在还要一个比知道更多的shell命令更重要的知识需要知道：
+\begin{center}\em
+shell字符串扩展
+\end{center}
+
+还是 ls 这个命令作为例子，假设当前目录下有“a.txt”“ab.txt”两个文件。执行下面的命令：
+
+\begin{code}
+root@gentoo \textasciitilde \# ls *.txt
+\end{code}
+
+结果就是列出 a.txt ab.txt 两个文件。
+
+在这里：
+\begin{itemize}
+\item *.txt 会被扩展成 a.txt ab.txt
+\item a.txt 和 ab.txt 被作为2个参数传递给ls。
+\item “*”是通配符，表示匹配任意多个字符；“?”表示匹配任意的一个字符。
+\end{itemize}
+
+比如你执行的是下面这个指令：
+
+\begin{code}
+root@gentoo \textasciitilde \# ls ?.txt
+\end{code}
+
+结果就只显示a.txt文件。要取消shell字符串扩展，加引号即可，如下面这条命令：
+
+\begin{code}
+root@gentoo \textasciitilde \# ls "*.txt"
+\end{code}
+
+执行结果为：
+
+\begin{code}
+ls: 无法访问*.txt: 没有那个文件或目录
+\end{code}
+
+
+我们知道，ls *.txt 相当于 ls a.txt ab.txt，可是如果执行下面的命令
+
+\begin{code}
+root@gentoo \textasciitilde \# ls "a.txt ab.txt" 
+
+ls: 无法访问a.txt ab.txt: 没有那个文件或目录 
+
+root@gentoo \textasciitilde \# 
+\end{code}
+
+shell将“a.txt ab.txt”整体（不包含引号）作为了一个参数传递给ls了。
+
+要理解shell的这种行为，首先要明白shell是如何传递参数给程序的。
+
+
+\subsection{init 系统选择}
+
+\subsubsection{sysvinit+openrc}
+\subsubsection{SystemD}
+
+\subsection{内核编译}
+
+\subsubsection{新手使用 genkernel}
+
+\subsection{引导管理器}
+\subsubsection{UEFI}
+
+\subsection{安装基础系统}
+\subsection{系统初步配置—重启前配置}
+
+\subsubsection{nano 编辑器快速入门}
+
+\chapter{Linux 探索}
+\section{Shell 基础和日常应用}
+
+\section{文件管理}	
+\section{文件编辑器}
+\subsection{编辑器之神 vim	}
+\subsection{神之编辑器 emacs	}
+\subsection{够用就好 gedit	}
+\section{系统管理基础}
+
+\subsection{进程管理	}
+\subsection{系统服务管理	}
+\section{软件管理}
+\subsection{ 软件的分发	}
+\subsection{软件的编译	}
+\subsection{  发行版的包管理}	
+\section{ shell 进阶应用}
+	
+\chapter{图形界面}
+对命令行是不是有点枯燥了？是时候来电新鲜的东西了 只所以现在才讲，因为图形实在是太复杂了。
+
+\section{窗口和图形}
+
+\section{X 的历史}
+
+TODO： X 是一个窗口系统，那么X为什么采用了 C/S 结构呢？
+\subsection{ 窗口管理}
+\subsection{ 渲染库和静态链接}
+\section{桌面环境}
+\subsection{GNOME}
+GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
+\subsection{ KDE XFCE 和其他}
+
+\section{  办公和打印	}
+\subsection{  LibreOffice	}
+\subsection{使用CUPS 打印文档	}
+\section{ 声音的那些事	}
+\subsection{  声音的数字编码	}
+\subsection{  逐渐被遗忘的OSS	声音架构}
+\subsection{ ALSA 高级Linux声音架构}
+\subsection{  PulseAudio 优秀的声音服务器	}
+\subsection{  播放器	}
+\section{  让游戏放松自己	}
+\subsection{  OpenGL 和 Mesa	}
+\subsection{  硬件加速	}
+\section{  Wayland	}
+\subsection{ X 的错误	}
+\subsection{  直接渲染}
+
+\chapter{网络}
+\section{  网络基础知识}
+\subsection{  通信基础}
+\subsection{  IP地址和TCP/IP协议}
+\subsection{  路由表和路由协议}
+\subsection{ 以太网和WIFI}
+\subsection*{  小插曲：永恒的以太网}
+\section{  网络配置}
+\subsection{  图形环境下的工具	}
+\subsection{ 命令行配置工具}
+\subsection{ 网络自动配置和DHCP}
+\section{  网络攻击和防火墙	}
+\subsection{ 网络攻击类型和检测}
+\subsection{  iptables防火墙}
+
+\chapter{文件系统}
+\section{  磁盘上的文件系统	}
+\subsection{  块设备和磁盘}
+\subsection{ 超级块和inode}
+\subsection{  典型磁盘文件系统举例}
+\section{  虚拟文件系统	}
+\subsection{  /proc内核信息窗口}
+\subsection{  /dev设备文件系统和udev}
+\subsection{  虚拟内存盘tmpfs}
+\section{  网络文件系统	}
+\subsection{  NFS	}
+\subsection{  Windows 网络邻居 CIFS	}
+\section{  其他的文件系统	}
+\subsection{  LiveCD的最爱——压缩文件系统squashfs}
+\subsection{  为Flash芯片设计的文件系统}
+
+\chapter{架设服务器}
+\section{  搭建 HTTP 服务器}
+\subsection{  apache 用的最多的服务器}
+\subsection{ nginx 轻量级服务器}
+\subsection{ lighttpd 超轻量级服务器}
+\subsection{ squid 加速代理	}
+\section{  数据库	}
+\subsection{  最流行的开源数据库 MySQL}
+\subsection{  最优秀的开源数据库 PostgreSQL 	}
+\subsection{  商业霸主 OracleDB	}
+\section{  加速 DNS ，在本机搭建 DNS	}
+\section{  共享打印机	}
+\subsection{ CUPS 打印服务	}
+\subsection{ Samba 打印机共享	}
+
+
+\chapter{压榨机器的性能}
+\section{  最廉价的优化 – 编译优化	}
+\subsection{  编译期优化	}
+\subsection{  链接时优化（LTO）	}
+\section{  有目的的优化 – 查找性能瓶颈}
+\subsection{ 查找性能瓶颈}
+\subsection{  优化瓶颈}
+\section{  benchmark – 优化的基准测试}
+\subsection{  CPU 单核能力测试}
+\subsection{  CPU 多线程性能测试}
+\subsection{  文件系统 IO 测试}
+\subsection{  网络性能测试}
+\subsection{  GPU/OpenGL 性能测试}
+
+
+\chapter{时光机器-版本控制系统}
+\section{   历史和后悔药	}
+\section{   中心式版本控制仓库 CVS	}
+\section{   CVS 后继 SVN	}
+\section{   GIT 划时代的分布式版本控制	}
+\subsection{  Bitkeeper	}
+\subsection{  Linus 消失的一周	}
+\subsection{  版本控制设计为一个文件系统	}
+\subsection{ 去中心化	}
+\subsection{  GIT典型工作流	}
+\subsection{  GIT 简单使用	}
+
+
+\appendix
+\renewcommand{\thesection}{\arabic{section}}
+
+\chapter{FAQ}
+
+
+
+\section{什么是 LiveCD ?}
+一种让 Linux 系统脱离硬盘，只需要一张 DVD 或者 CD 运行的技术。使用者只需要插入一张 LiveCD 就可以使用 Linux  系统了。当然，由于 CD-ROM 是只读的，所以对 LiveCD 系统本身所做的更改重启后都会消失。由于 Linux 发行版的膨胀，一张 CD-ROM 无法装下，于是就有了 LiveDVD , 除了容量增加外，和LiveCD 是一致的。此外还有 LiveUSB , 也就是使用 USB 存储设备的 liveCD。用法和 LiveCD 并无二致。
+
+\section{UEFI和BIOS是什么}
+
+\section{Shell 是什么？}
+操作系统是由内核和一系列的系统程序组成的。
+
+\chapter{ 名称缩写	}
+\chapter{ 图片索引	}
+\chapter{ Gentoo 的前身今世}
+
+\end{document}
