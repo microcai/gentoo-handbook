@@ -193,31 +193,85 @@ Multics就是在分时系统的基础上开发的。
 
 \end{insertnote}
 
-为了更加强化大型主机的功能，以让主机的资源可以提供更多使用者来利用，1964年，MIT\footnote{麻省理工大学}、通用电器（General Electric）和贝尔实验室\footnote{根据Multics Myths网站（一个网站致力于破除有关Multics的谣言）的说法，贝尔实验室应该是在1965年的时候才参加的。
-}通力合作，计划开发一个完美的操作系统。
+MIT\footnote{麻省理工大学}计算机研究中心研究出来的CTSS(Compatible Time Sharing System)是世界上最早的分时系统，它在1961年首次演示。
+正如一切软件开发者所遵循的鉄律：来不及添加的功能就放到第二版做吧！Multics就是CTSS来不及添加更多功能后希望开发的全功能第二版。1964年，MIT、通用电器（General Electric）和贝尔实验室\footnote{根据Multics Myths网站（一个网站致力于破除有关Multics的谣言）的说法，贝尔实验室应该是在1965年的时候才参加的。
+}通力合作，计划开发一个完美的CTSS第二代。
 
 Multics计划的目的是想要让大型主机可以\textbf{}为超过300个以上的终端服务和一整套完整的信息处理系统。
-Multics支持模块化的硬件配置：CPU、内存，磁盘等硬件都可以在需要的时候在系统运行的过程中被动态增加或移除。
+Multics支持模块化的硬件配置：CPU、内存，磁盘等硬件都可以在需要的时候在系统运行的过程中被动态增加或移除。Multics还提出使用高级语言\footnote{当时还没C语言呢！}编写整个系统，而当时的系统差不多都是由汇编语言写成的。
 
 Multics先进的系统模型的后果也是显而易见的：从1964年立项1969年，整5年过去了，Multics的开发一再受挫。
 Multics迟迟不能完成，预定的目标越来越难以达成，在投入了巨大的人力物力资源后，
 贝尔实验室终于决定在这场注定失败的项目\footnote{一种说法是Multics最终达成了设定的目标，所以不能算是一个失败的项目。但是我且以为Multics没能在期望的时间内达到设定的目标，就是失败的。}中提前退出。
 
+但是Multics的激发的灵感却在今后几十年内被延续到各种各样的系统上。高级语言编写的内核、文件系统、终端实时交互、多任务、多用户等能力。这些最终将在接下来的几十年时间里分别在不同的系统上得以实现。
 
+Multics是个优秀的系统。在参加Multics项目的日子里，贝尔实验室的研究人员已经习惯了不用等待就能通过交互式终端使用大型电脑的功能。
+但是退出Multics项目后，他们又得继续原始生活了。由于习惯了Multics的便利，贝尔实验室的将发明一个简化的Multics，这个发明就是\textbf{UNIX}。
 
-
-\section{UNIX的故事：双流记}
-
+\section{UNIX的故事}
 
 \begin{quotes}{George Santayana}
 Those who cannot remember the past are condemned to repeat it.\\
 \end{quotes}
 
+很显然Ken Thompson不愿意放弃Multics提供的交互式终端，
+而且为了能继续玩他在Multics的时候编写的“星际旅行”游戏，他头脑风暴了一把，用实验室废弃的一台PDP-7写了一个简陋的操作系统。
+Ken Thompson为PDP-7开发的小型系统被称呼为UNICS（UNiplexed Information and Computing System） 。 这个名字的由来就是Ken Thompson认为Multics太复杂，而Multics的功能可以用更简单的方式去实现。Dennis Ritchie注意到了他的同事为PDP-7开发的简单系统。两个人亲密无间的合作就这样在某一天无意中的搭话开始了。
 
-\subsection{UNIX 分裂}
+Dennis Ritchie和Dennis Ritchie的加入为Ken Thompson的系统带来的第一个变化就是高级语言。他们开始计划用B语言\footnote{C语言的前身，Ken Thompson创造的。}重写这个系统。
 
-\subsection{POSIX 大一统}
+在重写UNICS的过程中，Dennis Ritchie改进了B语言，使之成为更加实用的C语言。Dennis Ritchie和Ken Thompson一起实现了C语言，并在1973年用C语言重写了UNICS。哦，不对，是UNIX。因为谐音的关系，不知道什么时候开始UNICS就被称呼为UNIX了。
 
+UNIX很快的就在贝尔实验室流行开来了。
+1974年，Dennis和Ken第一次对外公布了UNIX。他们在《美国计算机通信》(Communications of the ACM)发表了介绍UNIX的论文。
+这个论文使得外界对UNIX产生了极大的兴趣。纷纷开始向贝尔实验室索要UNIX。
+
+老实说，AT\&T是个大公司。恩不对，还是个垄断公司。AT\&T垄断了美国的电话网。
+根据1958年为解决反托拉斯案例达成的和解协议，AT\&T被禁止进入计算机相关的商业领域。
+所以,Unix不能够成为一种商品。实际上，根据和解协议的规定，贝尔实验室必须将非电话业务的技术许可给任何提出要求的人。
+Ken Thompson开始默默回应那些请求，将包含着UNIX源代码的磁带和磁盘一包包地寄送出去——据传说，每包里都有一张字条,写
+着“love，ken”（爱你的，ken）。
+
+UNIX的源代码在高校间广泛传播\footnote{UNIX因此获得了一个非常重要的传统“附带源代码”。正是这个传统催生了后来的开源运动。}，
+其中自然有一份代码被寄到了加州大学伯克利分校。在那里，UNIX被孵化，催生了BSD（Berkeley Software Distribution）。
+
+在伯克利，一些重要的UNIX功能贝被开发出来。最重要的莫过于socket了。在BSD开发出socket之前，UNIX的网络功能简陋的可怜\footnote{UNIX有个uucp命令可以通过电话线执行远程拷贝，仅此而已。}。
+
+AT\&T对UNIX源代码的“慷慨\footnote{没那么好心。不过是AT\&T还没意识到UNIX的商业价值，同时暂时性的被反托拉斯和解协议束缚了。}”奉献促成了UNIX的繁荣。
+
+大量的新功能被开发出来，各种功能补丁雪花般飘到贝尔实验室。各种版本的UNIX不断涌现，商业化的UNIX系统也出现了。
+伯克利开发BSD的Bill Joy加入了新成立的Sun\footnote{是Stanford University Network的缩写。2011年被甲骨文（Oracle）收购。}公司开发基于BSD的SunOS\footnote{SunOS从 5.0版本以后就不再基于BSD开发了。}。
+就连微软也曾开发名叫Xenix的UNIX系统\footnote{但是微软把UNIX作为一个产品的热情并没有持续多久。}。
+
+\subsection{UNIX混乱和分裂}
+
+UNIX世界百花争鸣的日子随着AT\&T公司的拆分一去不复返。1983年，美国司法部对在针对AT\&T的第二起反托拉斯诉讼中获胜，AT\&T和贝尔实验室被拆分。这次判决将AT\&T从1958年的禁止将UNIX产品化的和解协议中解脱了出来。AT\&T马上忙不迭地将UNIX商业化------这一举措差点扼杀了UNIX。
+
+那时，没有人意识到，UNIX的产业化会破坏UNIX源码的自由交流，而恰是后者滋养了UNIX系统早期的活力。AT\&T收回了原先的UNIX源码的许可，挂上高价（而在这之前，AT\&T只对UNIX源码收取象征性的费用），对源码散发严加防护。来自高校的贡献开始枯竭。
+
+刚刚进入UNIX市场的几家大公司马上犯下了最重大的战略错误------试图通过差异化寻求有力地位------这个策略照成了
+UNIX的分歧，抛弃了UNIX的跨平台兼容性,造成了UNIX市场分割。
+
+AT\&T 拆分后的数年内，UNIX社区忙着UNIX大战的第一阶段-----System V Unix（AT\&T的将UNIX商业化后推出的UNIX）和 BSD UNIX之间的内部争吵。争吵分成不同的层面，有些属于技术层面（socket vs stream,BSD tty 对 System V termio），有些则属于文化层面。
+AT\&T对UNIX的商业化使得UNIX作为统一的操作系统环境分崩离析。市场上充斥着各种互不兼容的UNIX。
+给软件开发和系统维护带来了沉重的负担。
+
+\subsection{统一的UNIX和POSIX标准}
+
+以调解System V UNIX和BSD UNIX的API为目标的严肃的标准化工作始于1983年，产生了/usr/group标准。
+这一标准随之成为IEEE指定POSIX\footnote{其正式称呼为IEEE 1003，而国际标准名称为ISO/IEC 9945。POSIX这个名称是由理查德·斯托曼应IEEE的要求而提议的一个易于记忆的名称。}（Portable Operating System Interface\footnote{最初这个X是 of UNIX最后的那个X。但是后来鉴于POSIX可以用于非UNIX（这些系统被称为UNIX-like，如Linux和Minix）系统，于是去掉了of UNIX但是保留了X。 }，可移植操作系统接口）的基础。
+
+POSIX标准定义了UNIX（和UNIX-like）系统的API\footnote{参考附录A. FAQ“什么是API”}（Application Programing Interface）和shell命令所要遵循的标准。
+
+后续开发的各种UNIX版本也严格遵循这个标准。
+
+\begin{notice}
+注意：POSIX标准是源码级兼容的标准。意思是在一个系统上编写的软件可以在另一个系统上“无修改的”通过\textbf{编译}并正常运行。
+但是如果是编译好的可执行程序拿到另一个UNIX系统下“不保证”能执行。
+
+但是对于shell脚本就另当别论了。POSIX定义了一个shell所必须具备的功能和行为。只使用POSIX定义的shell功能的脚本可以未经修改直接在另一个UNIX系统上执行。
+\end{notice}
 
 \section{GNU 的故事}
 
