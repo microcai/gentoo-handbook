@@ -24,7 +24,7 @@
 \newenvironment{quotes}[1]{\pushQED{#1}%
 \begin{flushright}%
 \begin{minipage}{0.5\textwidth}\begin{flushright}\noindent\it}{%
- ------\popQED{}\end{flushright}\end{minipage}\end{flushright}}%
+ \\------\popQED{}\end{flushright}\end{minipage}\end{flushright}}%
 
 
 \newcommand{\chatu}[2]{%
@@ -105,6 +105,11 @@
 
 %=========================================================
 \chapter{序}
+\begin{quotes}{George Santayana}
+Those who cannot remember the past are condemned to repeat it.
+\end{quotes}
+
+
 不知道从什么时候开始用上了Linux，已经不记得刚开始用Linux的时候那段辛苦并乐在其中的学习过程了。
 有一天，我重新用起了曾经那么熟悉，那么“简单”的操作系统，结果大失所望。我看到的是一个完全反人类的系统。
 他它的操作似乎很简单，但是总有一直说不出的感觉，让我觉得它的操作非常别扭。
@@ -129,6 +134,8 @@ OpenGroup\footnote{UNIX走向分裂后，几个大公司成立了OpenGroup共同
 所以我把整书的序部分用来介绍UNIX的历史文化。因为序比较长，干脆就叫第\thechapter章。
 
 \section{为什么又写一本书}
+
+
 
 我不记得自己为了学习Linux查阅了多少资料，翻烂了多少本书。最终翻了那么多书后发现，
 现在讲解Linux入门书籍多数都讲求“速成”而采取填鸭式讲解。就算速成后成功学会Linux，最终也会因为不了解Linux的文化而处处碰壁。
@@ -222,10 +229,6 @@ Multics是个优秀的系统。在参加Multics项目的日子里，贝尔实验
 
 \section{UNIX的故事}
 
-\begin{quotes}{George Santayana}
-Those who cannot remember the past are condemned to repeat it.\\
-\end{quotes}
-
 很显然Ken Thompson不愿意放弃Multics提供的交互式终端，
 而且为了能继续玩他在Multics的时候编写的“星际旅行”游戏，他头脑风暴了一把，用实验室废弃的一台PDP-7写了一个简陋的操作系统。
 Ken Thompson为PDP-7开发的小型系统被称呼为UNICS（UNiplexed Information and Computing System） 。 这个名字的由来就是Ken Thompson认为Multics太复杂，而Multics的功能可以用更简单的方式去实现。Dennis Ritchie注意到了他的同事为PDP-7开发的简单系统。两个人亲密无间的合作就这样在某一天无意中的搭话开始了。
@@ -284,18 +287,27 @@ POSIX标准定义了UNIX（和UNIX-like）系统的API\footnote{参考附录A. F
 但是对于shell脚本就另当别论了。POSIX定义了一个shell所必须具备的功能和行为。只使用POSIX定义的shell功能的脚本可以未经修改直接在另一个UNIX系统上执行。
 \end{notice}
 
+那么UNIX的故事到这里就告一段落了。Linux文化的的另一个重要来源GNU也要登录历史舞台了。
+
 \section{GNU 的故事}
+
+这次故事的地点不再是贝尔实验室了。它发生在MIT的人工智能实验室。
+
 
 \subsection{RMS 大胡子在 MIT}
 \subsection{emacs 编辑器}
 \subsection{为保护自由的协议 - GPL}
 
 \chapter{黑客文化}
-
+\begin{quotes}{Dennis Ritchie}
+UNIX is very simple, it just needs a genius to understand its simplicity.
+\end{quotes}
 
 TODO:  Linux 的发展受到两股重要思想的影响 UNIX哲学和自由软件，简单的说就是黑客精神
 
 \section{UNIX哲学}
+
+
 TODO:  主要的系统管理思想和一些小工具也在这里介绍，比如 ps grep 用户和组，用户权限的概念也在这里讲解
 \subsection{一切都是文件}
 
