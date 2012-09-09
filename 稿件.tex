@@ -45,6 +45,8 @@
 \setCJKfamilyfont{zhfs}{FangSong}
 \setCJKmainfont[BoldFont={Adobe Heiti Std},ItalicFont={KaiTi}]{Adobe Song Std}
 \setCJKfamilyfont{KaiTi}{KaiTi}
+\newfontfamily\xingkai{STXingkai}
+\setCJKfamilyfont{xingkai}{STXingkai}
 % 阿拉伯数字章节
 \setcounter{chapter}{-1}
 \CTEXsetup[number={\arabic{chapter}}]{chapter}
@@ -68,6 +70,11 @@
 
 \begin{document}
 
+
+%=========================================================
+% 首页
+%=========================================================
+
 \thispagestyle{empty}
 
 \makeatletter
@@ -75,14 +82,14 @@
 \begin{center}
 
 \begin{Huge}
-
-
-\LaTeX
-
-\@title
-
-
+\xingkai\CJKfamily{xingkai} \@title
 \end{Huge}
+
+\vskip 5cm
+
+作者 \@author
+
+本书由 \LaTeX + \tt{xeCJK} 排版。
 
 \end{center}
 
@@ -90,9 +97,13 @@
 \setcounter{page}{0}
 
  
-% 目录
+%=========================================================
+%目录
+%=========================================================
 \tableofcontents
 
+
+%=========================================================
 \chapter{序}
 不知道从什么时候开始用上了Linux，已经不记得刚开始用Linux的时候那段辛苦并乐在其中的学习过程了。
 有一天，我重新用起了曾经那么熟悉，那么“简单”的操作系统，结果大失所望。我看到的是一个完全反人类的系统。
