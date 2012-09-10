@@ -16,6 +16,16 @@
 \usepackage{amsthm}
 
 %=====================================================================================
+% font setting
+%=====================================================================================
+\setCJKmonofont{Adobe Fangsong Std}
+\setCJKfamilyfont{zhfs}{Adobe Fangsong Std}
+\setCJKmainfont[BoldFont={Adobe Heiti Std},ItalicFont={Adobe Kaiti Std}]{Adobe Song Std}
+\setCJKfamilyfont{KaiTi}{Adobe Kaiti Std}
+\newfontfamily\xingkai{STXingkai}
+\setCJKfamilyfont{xingkai}{STXingkai}
+
+%=====================================================================================
 % define new command and environment 
 %=====================================================================================
 \newenvironment{notice}{\tt}{}
@@ -42,18 +52,14 @@
 \end{figure}%
 }
 
+\newcommand{\faqref}[1]{~附录A.\nameref{FAQ}~“\nameref{#1}”}
+
 \newcounter{faqs}
 
 %=====================================================================================
 % style settings
 %=====================================================================================
-% font setting
-\setCJKmonofont{FangSong}
-\setCJKfamilyfont{zhfs}{FangSong}
-\setCJKmainfont[BoldFont={Adobe Heiti Std},ItalicFont={KaiTi}]{Adobe Song Std}
-\setCJKfamilyfont{KaiTi}{KaiTi}
-\newfontfamily\xingkai{STXingkai}
-\setCJKfamilyfont{xingkai}{STXingkai}
+
 % 阿拉伯数字章节
 \setcounter{chapter}{-1}
 \CTEXsetup[number={\arabic{chapter}}]{chapter}
@@ -71,44 +77,22 @@
 
 \author{微蔡}
 
-%\makeatletter\def\CJKecglue{\hskip 0.15em plus 0.10em minus 0.10em}\let\xeCJK@@i\CJKecglue\let\xeCJK@v@i\CJKecglue\makeatother 
-
-
-
 \begin{document}
-
-
 %=========================================================
 % 首页
 %=========================================================
+\include{preface}
 
-\thispagestyle{empty}
 
-\makeatletter
+\addcontentsline{toc}{chapter}{致谢}
+\chapter*{致谢!}
 
-\begin{center}
 
-\begin{Huge}
-\xingkai\CJKfamily{xingkai} \@title
-\end{Huge}
 
-\vskip 5cm
-
-作者 \@author
-
-本书由 \LaTeX + \tt{xeCJK} 排版。
-
-\end{center}
-
-\makeatother 
-\setcounter{page}{0}
-
- 
 %=========================================================
 %目录
 %=========================================================
 \tableofcontents
-
 
 %=========================================================
 \chapter{序}
@@ -292,14 +276,14 @@ AT\&T对UNIX的商业化使得UNIX作为统一的操作系统环境分崩离析�
 1983年/usr/group标准组开始了以调解System V UNIX和BSD UNIX的API为目标的严肃的标准化工作。
 随后IEEE以/usr/group标准为基础制定了POSIX
 \footnote{其正式称呼为IEEE 1003，而国际标准名称为ISO/IEC9945。POSIX这个名称是由理查德·斯托曼应IEEE的要求而提议的一个易于记忆的名称。}
-（Portable Operating System Interface\footnote{最初这个X是 of UNIX最后的那个X。但是后来鉴于POSIX可以用于非UNIX（这些系统被称为UNIX-like，如Linux和Minix）系统，于是去掉了of UNIX但是保留了X。 }，可移植操作系统接口）标准。
+（Portable Operating System Interface\footnote{最初这个X是 of UNIX最后的那个X。但是后来鉴于POSIX可以用于非UNIX（这些系统被称为UNIX-like，如Linux和Minix）系统，于是去掉了of UNIX但是保留了X。 }，可移植操作系统接口）标准。并于1985年发布了第一版。
 
-POSIX标准定义了UNIX（和UNIX-like）系统的API\footnote{参考附录A. FAQ“什么是API”}（Application Programing Interface）和shell命令所要遵循的标准。
+POSIX标准定义了UNIX（和UNIX-like）系统的API\footnote{ 参考\faqref{API}}（Application Programing Interface）和shell命令所要遵循的标准。
 
 后续开发的各种UNIX版本也严格遵循这个标准。
 
 \begin{notice}
-注意：POSIX标准是源码级兼容的标准。意思是在一个系统上编写的软件可以在另一个系统上“无修改的”通过\textbf{编译}并正常运行。
+注意：POSIX标准是源码级兼容的标准。意思是在一个系统上编写的软件可以在另一个系统上“无修改的”通过编译并正常运行。
 但是如果是编译好的可执行程序拿到另一个UNIX系统下“不保证”能执行。
 
 但是对于shell脚本就另当别论了。POSIX定义了一个shell所必须具备的功能和行为。只使用POSIX定义的shell功能的脚本可以未经修改直接在另一个UNIX系统上执行。
@@ -380,12 +364,13 @@ GPL却利用了这点来\textbf{保证用户的权利}。用户被赋予了和�
 
 GPL就是通过如上的传染性保证自己能像病毒一样迅速传播。随着GPL授权的软件愈来愈多，最后几乎不可能编写一个完全不依赖GPL代码的软件了。这样所有的软件最终都将被迫GPL化\footnote{我不知道这个词语之前有没有人用过，我希望读者能理解这里个词语的含义，就是改变原先的许可协议为GPL。}。
 
-
+到1992年，GNU项目开发出了一系列的软件，包括编辑器、开发工具链（编译器，调试器，C库，autotools\footnote{参考}）、shell和系统工具等等，再有一个内核就是完整的自由的操作系统了。但是GNU的Hurd内核一再跳票，距离发布的日子遥遥无期。这个时候GPL授权的Linux内核刚好填补了Hurd的位置，使GNU成了一个彻底完整的系统。至此UNIX的文化经过80年代的短暂中断后在GNU和Linux的组合系统中延续。
 
 \chapter{黑客文化}
 \begin{quotes}{Dennis Ritchie}
 UNIX is very simple, it just needs a genius to understand its simplicity.
 \end{quotes}
+
 
 TODO:  Linux 的发展受到两股重要思想的影响 UNIX哲学和自由软件，简单的说就是黑客精神
 
@@ -549,7 +534,7 @@ Gentoo下几乎所有软件都是本机编译的，自然不存在兼容性问�
 
 
 
-好了，将LiveCD塞入光驱，开始一步步安装属于你的Gentoo吧。有关如何使用LiveCD请参考 附录A.FAQ“如何使用 LiveCD。”
+好了，将LiveCD塞入光驱，开始一步步安装属于你的Gentoo吧。有关如何使用LiveCD请参考\faqref{FAQ:UseLiveCD}
 
 好，我们列一个清单：
 
@@ -955,17 +940,7 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 \appendix
 \renewcommand{\thesection}{\arabic{section}}
 
-\chapter{FAQ}
-
-
-
-\section{什么是 LiveCD ?}
-一种让 Linux 系统脱离硬盘，只需要一张 DVD 或者 CD 运行的技术。使用者只需要插入一张 LiveCD 就可以使用 Linux  系统了。当然，由于 CD-ROM 是只读的，所以对 LiveCD 系统本身所做的更改重启后都会消失。由于 Linux 发行版的膨胀，一张 CD-ROM 无法装下，于是就有了 LiveDVD , 除了容量增加外，和LiveCD 是一致的。此外还有 LiveUSB , 也就是使用 USB 存储设备的 liveCD。用法和 LiveCD 并无二致。
-
-\section{UEFI和BIOS是什么}
-
-\section{Shell 是什么？}
-操作系统是由内核和一系列的系统程序组成的。
+\include{faq}
 
 \chapter{ 名称缩写	}
 \chapter{ 图片索引	}
