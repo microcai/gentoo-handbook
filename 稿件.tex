@@ -8,7 +8,7 @@
 \usepackage{color}
 \usepackage{listings}
 \usepackage{url}
-\usepackage[colorlinks]{hyperref}
+\usepackage[colorlinks,linkcolor=black]{hyperref}
 \usepackage[below,section]{placeins}
 \usepackage{afterpage}
 \usepackage{footnote}
@@ -32,7 +32,7 @@
 \begin{figure}[h]%
 \centering%
 \includegraphics[scale=#1]{pics/#2}%
-\caption{#3}%
+\caption{#3\label{fig:#2}}%
 \end{figure}%
 }
 
@@ -182,22 +182,23 @@ Multics的全称是\textit{MULTiplexed Information and Computing System}\footnot
 \subsection*{Multics背景}
 
 \chatu{TwoWomenOperatingENIAC}{为世界上的第一台电脑编程\protect\footnotemark}%
-	\footnotetext{图片来自维基百科\url{http://en.wikipedia.org/wiki/File:Two_women_operating_ENIAC.gif}}
+	\footnotetext{图片来自维基百科~\url{http://en.wikipedia.org/wiki/File:Two_women_operating_ENIAC.gif}}
 
 
 计算机诞生的时候并没有操作系统，甚至连程序都没有。操作员重新插拔系统电路连接来实现某个功能。
 如图\thefigure那样两个人在重新插拔电路为世界上的第一台电脑编程。
 而今天的电脑只要执行不同的程序就能有不同的功能。程序的发明是个非常重要的进步\footnote{通过执行程序而不是直接修改电路实现计算功能，程序和数据一同存储，执行的时候同时进入主存储器，这种结构的计算机最早由冯.诺曼提出，又叫冯.诺曼结构。我们现在的个人电脑就是冯.诺曼结构的。}。有了程序就可以预先编撰好程序，只要输入了程序就能执行了，而不需要费时的重新插拔电路。
 
-那个时候计算机程序的输入靠的是穿孔纸\footnote{用纸啊！太不环保了！}。一长条纸穿进去，程序就输入了，然后等待执行完毕。执行完毕后执行结果又打印到纸上\footnote{别想多了，是简单的机械打印机。只能打印0\textasciitilde{}9数字、26个字母和特殊符号。有时就是这点功能都不能保证。可能只能打大写的A-Z而已。}。每次程序执行完毕后人要准备好下一叠纸给机器执行，操作员准备好纸张后按下机器的复位按钮机器开始读取纸张执行....周而复始。
+那个时候计算机程序的输入靠的是穿孔纸\footnote{用纸啊！太不环保了！}。一长条纸穿进去，程序就输入了，然后等待执行完毕。执行完毕后执行结果又打印到纸上\footnote{别想多了，是简单的机械打印机。只能打印0\textasciitilde{}9数字、26个字母和特殊符号。有时就是这点功能都不能保证。可能只能打大写的A-Z而已。UNIX少说多做的传统就来源于此，不仅是为了节约纸张，更是节约打印时间。}。每次程序执行完毕后人要准备好下一叠纸给机器执行，操作员准备好纸张后按下机器的复位按钮机器开始读取纸张执行....周而复始。
 
 如果能不用人准备下一个程序的执行就好了。第一个操作系统就在这样的需求下出来了。他不用人的帮助就能批量执行程序。当然一次还是只执行一个程序。但是能做到前一个程序执行完毕后自动读取下一个程序执行。
 
 有时候一个程序要执行很长的时间，执行完毕后要花更长的时间打印结果，这个时候处理器的资源就是闲置了\footnote{写小看这个闲置，那个时候的计算机比劳斯莱斯贵多了。}。如果前一个程序在打印结果的时候后一个程序能开始执行就好了，这样就能最大限度的利用处理器的资源。
 
 
-这就诞生了最初的多任务操作系统。它能在将处理器的时间分配给多个程序，虽然在任意瞬间还是只有一个程序在执行，但是由于快速的在不同的程序间进行切换\footnote{专业术语叫上下文切换（Context Switch），所谓上下文切换，就是将当前程序的状态保存起来，然后调入先前保持的另一个程序的状态。这样那个被调入的程序就可以从被切换打断的那个地方继续执行。}，看起来就好像多个程序同时执行了。
+这就诞生了最初的多任务操作系统。它能在将处理器的时间分配给多个程序，虽然在任意瞬间还是只有一个程序在执行，但是由于快速的在不同的程序间进行切换\footnote{专业术语叫上下文切换（Context Switch），所谓上下文切换，就是将当前程序的状态保存起来，然后调入先前保持的另一个程序的状态。这样那个被调入的程序就可以从被切换打断的那个地方继续执行。}，看起来就好像多个程序同时执行了。如图 \ref{fig:ContextSwitch}  所示。
 
+\chatu[0.65]{ContextSwitch}{上下文切换}
 
 但是那个时候的计算机，还不能进行实时交互。程序员写好纸条后，要交给计算机管理员\footnote{确切的说是操作员}，管理员将纸条输入计算机，然后等待计算机将执行结果输出。最后输出结果交给程序员，这样程序员才能知道程序的执行结果。
 
@@ -238,7 +239,9 @@ Multics是个优秀的系统。在参加Multics项目的日子里，贝尔实验
 
 很显然Ken Thompson不愿意放弃Multics提供的交互式终端，
 而且为了能继续玩他在Multics的时候编写的“星际旅行”游戏，他头脑风暴了一把，用实验室废弃的一台PDP-7写了一个简陋的操作系统。
-Ken Thompson为PDP-7开发的小型系统被称呼为UNICS（UNiplexed Information and Computing System） 。 这个名字的由来就是Ken Thompson认为Multics太复杂，而Multics的功能可以用更简单的方式去实现。Dennis Ritchie注意到了他的同事为PDP-7开发的简单系统。两个人亲密无间的合作就这样在某一天无意中的搭话开始了。
+Ken Thompson为PDP-7开发的小型系统被称呼为UNICS（UNiplexed Information and Computing System） 。 这个名字的由来就是Ken Thompson认为Multics太复杂，而Multics的功能可以用更简单的方式去实现。Dennis Ritchie注意到了他的同事为PDP-7开发的简单系统。两个人亲密无间的合作就这样开始了。
+
+\chatu[0.2]{KandRwithPDP7}{Dennis Ritchie（站）和Ken Thompson（坐）在工作}
 
 Dennis Ritchie和Dennis Ritchie的加入为Ken Thompson的系统带来的第一个变化就是高级语言。他们开始计划用B语言\footnote{C语言的前身，Ken Thompson创造的。}重写这个系统。
 
@@ -367,6 +370,7 @@ GPL却利用了这点来\textbf{保证用户的权利}。用户被赋予了和�
 \end{itemize}
 
 GPL就是通过如上的传染性保证自己能像病毒一样迅速传播。随着GPL授权的软件愈来愈多，最后几何已经不可能编写一个完全不依赖GPL代码的软件了。这样所有的软件最终都将被迫GPL化\footnote{我不知道这个词语之前有没有人用过，我希望读者能理解这里个词语的含义，就是改变原先的许可协议为GPL。}。
+
 
 
 \chapter{黑客文化}
