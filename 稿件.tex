@@ -1,4 +1,4 @@
-\documentclass[amstex]{ctexbook}
+\documentclass[amstex,twoside]{ctexbook}
 %\usepackage[amstex]{xeCJK}
 
 \usepackage[a4paper]{geometry}
@@ -81,13 +81,11 @@
 %=========================================================
 % 首页
 %=========================================================
+{
+\pagestyle{empty}
 \include{preface}
-
-
-\addcontentsline{toc}{chapter}{致谢}
-\chapter*{致谢!}
-
-
+\include{thanks}
+}
 
 %=========================================================
 %目录
