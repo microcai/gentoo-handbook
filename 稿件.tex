@@ -22,9 +22,15 @@
 \newenvironment{insertnote}{ \ttfamily\CJKfamily{KaiTi} }{\vskip 1cm }
 \newenvironment{code}{\small\tt\begin{longtable}{p{0.8\textwidth}}}{\end{longtable}}
 
-\newenvironment{quotes}[1]{\pushQED{#1}%
+\newcommand{\RTLpar}{% right-to-left paragraph alignment
+  \leftskip=0pt plus .5fil%
+  \rightskip=0pt plus -.5fil%
+  \parfillskip=0pt plus .5fil%
+}
+
+\newenvironment{quotes}[2][0.5]{\pushQED{#2}%
 \begin{flushright}%
-\begin{minipage}{0.5\textwidth}\begin{flushright}\noindent\it}{%
+\begin{minipage}{#1\textwidth}\begin{flushright}\noindent\it\RTLpar}{%
  \\------\popQED{}\end{flushright}\end{minipage}\end{flushright}}%
 
 
@@ -331,7 +337,7 @@ RMS觉得自己被逐出了黑客的伊甸园,他把这一切都归咎于专有�
 
 RMS认为所有的软件都应该是自由的。自由的意思就是:
 \begin{itemize}
-\item 运行的自由。你可以自由的决定运行或者不运行这个软件。运行的话怎么运行这个软件，在何种环境下运行。
+\item 运行的自由。你可以自由的决定运行或者不运行这个软件。运行的话怎么运行这个软件，在何种环境下运行\footnote{可别小看这个自由，许多软件规定只能在家运行，不能在作为商业用途在公司运行。}。
 \item 修改的自由。你可以获得程序的源代码，并进行修改。
 \item 再发布的自由。你可以自由的传播不论是你修改过的还是未修改过的软件。
 \end{itemize}
@@ -347,7 +353,8 @@ RMS面临的另外一个问题是，他需要保护自由软件的成果不至�
 
 \subsection{以Copyright保护Copyleft}
 
-自由软件的目的是\textbf{去版权化}。但是却首先要用版权保护自己。软件的作者通常会随软件附带一份许可协议，这份许可协议由版权法保护，用户同意即生效。而且要使用该软件用户必须同意（当然前提是这个国家对版权的保护非常好。）。
+自由软件的目的是\textbf{去版权化},也被 称为Copyleft。
+但是却首先要用版权保护自己。软件的作者通常会随软件附带一份许可协议，这份许可协议由版权法保护，用户同意即生效。而且要使用该软件用户必须同意（当然前提是这个国家对版权的保护非常好。）。
 用户可以同意并使用该软件或者不同意并退回所购买的软件\footnote{这有点像是霸王条款？}。通常这样的许可协议是用来保护开发者的：微软公司就在他的许可条款里堂而皇之的说因使用微软的软件导致的损失微软免责，这种免责条款被大多数公司所使用。
 
 GPL却利用了这点来\textbf{保证用户的权利}。用户被赋予了和开发者同等的权利，只要保证一点：他同意继续保持软件为GPL授权。
@@ -365,8 +372,8 @@ GPL却利用了这点来\textbf{保证用户的权利}。用户被赋予了和�
 
 所有的这些权利你都能获得，只要你同意
 \begin{itemize}
-\item 当我再发行这个修改或者未修改后的软件的时候，我保证不修改它的许可协议。让它的GPL协议传播给下一代。
-\item 当我在自己的软件里用到了一个GPL授权的软件的一部分或者全部的代码的时候------就算我没有将这个软件的代码直接包含到我的软件中，而只是使用里它提供的函数库------我保证将我的软件同样以GPL协议授权。
+\item 当你再发行这个修改或者未修改后的软件的时候，你保证不修改它的许可协议。让它的GPL协议传播给下一代。
+\item 当你在自己的软件里用到了一个GPL授权的软件的一部分或者全部的代码的时候------就算你没有将这个软件的代码直接包含到你的软件中，而只是使用里它提供的函数库------你保证将你的软件同样以GPL协议授权。
 \end{itemize}
 
 GPL就是通过如上的传染性保证自己能像病毒一样迅速传播。随着GPL授权的软件愈来愈多，最后几何已经不可能编写一个完全不依赖GPL代码的软件了。这样所有的软件最终都将被迫GPL化\footnote{我不知道这个词语之前有没有人用过，我希望读者能理解这里个词语的含义，就是改变原先的许可协议为GPL。}。
@@ -398,9 +405,11 @@ TODO: 介绍管道，各种命令的组合
 \subsection{获得和修改源码的能力}
 \subsection{只有自由软件的完整操作系统}
 
-\chapter{初识 Gentoo}
+\chapter{初识Linux}
 
-
+\begin{quotes}[0.63]{Linus~Torvalds}
+To kind of explain what Linux is, you have to explain what an operating system is. And the thing about an operating system is that you're never ever supposed to see it. Because nobody really uses an operating system; people use programs on their computer. And the only mission in life of an operating system is to help those programs run. So an operating system never does anything on its own; it's only waiting for the programs to ask for certain resources, or ask for a certain file on the disk, or ask to connect to the outside world. And then the operating system steps in and tries to make it easy for people to write programs.
+\end{quotes}
 
 \section{Linux介绍}
 
