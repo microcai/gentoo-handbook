@@ -1,7 +1,9 @@
 \documentclass[amstex,twoside]{ctexbook}
 \usepackage[colorlinks,linkcolor=black]{hyperref}
 \usepackage[below,section]{placeins}
+\usepackage{tabularx}
 \usepackage{longtable}
+\usepackage{multirow}
 
 \usepackage{amsmath}
 \usepackage{stmaryrd}
@@ -53,6 +55,18 @@
 \end{figure*}%
 }
 
+\makeatletter
+\newcommand\@publisher{}
+\newcommand{\publisher}[1]{
+\renewcommand\@publisher{#1}
+}
+
+\newcommand\@company{}
+\newcommand{\company}[1]{
+\renewcommand\@company{#1}
+}
+
+\makeatother
 
 \newcommand{\faqref}[1]{~附录A.\nameref{FAQ}~“\nameref{#1}”}
 
@@ -74,17 +88,17 @@
 % book info
 %=====================================================================================
 \title{Linux枕边书}
-%\renewcommand\date{}
+\author{微菜}
+\company{北京源智天下科技有限公司}
+\publisher{清华大学出版社}
 
-
-\author{微蔡}
 
 \begin{document}
 %=========================================================
 % 首页
 %=========================================================
 {
-\pagestyle{empty}
+
 \include{coverpage}
 \include{thanks}
 }
