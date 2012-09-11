@@ -96,38 +96,47 @@
 %=========================================================
 % 正文开始
 %=========================================================
-
-\chapter{黑客文化}
+\chapter{UNIX哲学}
 \begin{quotes}{Dennis Ritchie}
 UNIX is very simple, it just needs a genius to understand its simplicity.
 \end{quotes}
 
+UNIX的哲学到底是什么？
+是如此的重要，我必须独立一个章节来讲述它。
 
-TODO:  Linux 的发展受到两股重要思想的影响 UNIX哲学和自由软件，简单的说就是黑客精神
-
-\section{UNIX哲学}
 
 TODO:  主要的系统管理思想和一些小工具也在这里介绍，比如 ps grep 用户和组，用户权限的概念也在这里讲解
 
-\subsection{一切都是文件}
+\section{一切都是文件}
 
 TODO:  /dev 目录的介绍
 
-\subsection{做一件事情并把它做好}
+\section{做一件事情并把它做好}
 TODO: 介绍管道，各种命令的组合
-\subsection{使用文本流}
-\subsection{UNIX在别的系统上的影子}
+\section{使用文本流}
+\section{UNIX在别的系统上的影子}
 
-\section{自由软件GNU 和FSF}
-\subsection{免费和自由}
-\subsection{获得和修改源码的能力}
-\subsection{只有自由软件的完整操作系统}
 
-\chapter{初识Linux}
+\chapter{黑客和Linux}
 
-\begin{quotes}[0.63]{Linus~Torvalds}
-To kind of explain what Linux is, you have to explain what an operating system is. And the thing about an operating system is that you're never ever supposed to see it. Because nobody really uses an operating system; people use programs on their computer. And the only mission in life of an operating system is to help those programs run. So an operating system never does anything on its own; it's only waiting for the programs to ask for certain resources, or ask for a certain file on the disk, or ask to connect to the outside world. And then the operating system steps in and tries to make it easy for people to write programs.
-\end{quotes}
+在计算机发展的初期，软件\footnote{那个时候系统软件都是汇编语言开发的，所以也谈不上什么源代码。}被作为硬件的附属品销售。
+购买一个机器的硬件也就连带的附送了一系列的软件。谁也不会觉得软件是可以被“保护起来”盈利的。相互交换彼此的程序随处可见。
+直到有一天，西雅图的一个软件天才说，他花了很多时间写好的软件，不希望被人随意拷贝。每一个获得拷贝的人都应该给他付钱。
+有了天才的带领，自此商业公司开始独立销售软件而不再作为硬件的附属品。
+
+不过这股软件私有化的浪潮还不曾传播到社会的各个交流。
+大学里，实验室里，人们还是保持着将软件自由传播的传统。虽然他们不再能自由的传播商业软件，但是自己编写的各种
+稀奇古怪的软件可以自由的交流。在没有internet的年代他们就开始利用Usenet\footnote{%
+\textbf{来自维基百科：}Usenet是一种分布式的互联网交流系统，它的发明是在1979年由杜克大学的研究生Tom Truscott与Jim Ellis所设想出来的。Usenet包含众多新闻组，它是新闻组（异于传统，新闻指交流、信息）及其消息的网络集合。 }相互交流了。
+这样一群天才不满于商业化的软件，时常有人对商业公司的系统进行破解，故得名hacker，中译“黑客”\footnote{%
+由于只有身怀绝技的聪明人物才有可能破解商业软件。故而黑客给人一种智商非常高的印象。久而久之智商很高（或者因为专业技能好，看起来很高）的程序员都被称作黑客。所以现在说的黑客一般指的是计算机方面非常厉害的人而不再是搞破解的人。现在再搞破解和破坏的人，就没有黑客头衔了，而是Cracker，骇客。
+}。
+
+\section{从UNIX到Linux}
+
+早期的UNIX鼓励源代码的密切交流。这和黑客们的思想如出一辙。
+
+
 
 \section{Linux介绍}
 
@@ -147,6 +156,16 @@ TODO:  DOS WINDOWS
 \subsection{以GPL开源}
 
 \subsection{使用Linux内核的操作系统——发行版}
+
+
+\chapter{初识Linux}
+
+\begin{quotes}[0.63]{Linus~Torvalds}
+To kind of explain what Linux is, you have to explain what an operating system is. And the thing about an operating system is that you're never ever supposed to see it. Because nobody really uses an operating system; people use programs on their computer. And the only mission in life of an operating system is to help those programs run. So an operating system never does anything on its own; it's only waiting for the programs to ask for certain resources, or ask for a certain file on the disk, or ask to connect to the outside world. And then the operating system steps in and tries to make it easy for people to write programs.
+\end{quotes}
+
+
+
 \section{Linux是操作系统内核}
 
 TODO：Linux 主要发行版介绍，何为 Linux 发行版 Linux 发行版的作用
