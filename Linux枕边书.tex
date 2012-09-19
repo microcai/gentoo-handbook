@@ -320,14 +320,50 @@ HTTP这种只有HTTP头是文本，后续发送的文件内容（尤其是二进
 
 能无限的扩展并保持极佳的兼容性和人类可读性\footnote{测试问题的时候不需要特殊的工具去解析二进制流的各个字段，只需要打印出文本就可以了。}，是文本协议的最大优点。
 
-\section{用程序去生成程序}
+\section{懒惰原则}
 
-UNIX认为人的时间比机器的时间要宝贵的多。如果有什么事情是机器能代劳的，就绝对不要浪费人的时间。这个原则我们将在 \ref{section:pkgmgr} \nameref{section:pkgmgr} 一节中讲解autotools的时候体会到。
+UNIX认为人的时间比机器的时间要宝贵的多。如果有什么事情是机器能代劳的，就绝对不要浪费人的时间。
+
+这是 \textit{The Art of Unix Programming} 的《附录D》收录的无名师的传记，说明懒惰的人写脚本来解放自己的时间。我想没有比这个故事更能表达懒惰原则的含义了。
+
+\begin{insertnote}
+\subsection*{无名师与shell脚本}
+
+无名师曾对来访的程序员说：“Unix传统上认为，一行 shell脚本胜过万行C程序。" 
+
+这个程序员自以为对C极其精通，说：“这不可能。Unix内核正是用C实现的。” 
+
+无名师回道：“确实如此。不过，Unix传统上认为，一行shell脚本胜过万行C程序。" 
+
+程序员颇为沮丧：“但是在C中我们可领会到尊者Ritchie的智慧。我们与操作系统和机器合而为一，可以获取无与伦比的性能。“ 
+
+无名师回道：“诚如你言。不过，Unix传统上认为，一行shell脚本胜过万行C程序。” 
+
+程序员冷笑着想悲愤离去。无名师向学生Nabi颌首示意，Nubi在黑板上写下一行shell脚本，问道：“尊敬的程序员，看看这行管道。用纯C实现，是 不是要一万行C代码？“ 
+
+程序员沉吟念诵。最终他承认如此。 
+
+“你需要多长时间来实现和调试那个C程序?"Nubi问道。 
+
+“很长”，来访程序员承认。“但傻子才会干这个而不去完成更有价值的任务。” 
+
+“那么谁更了解Unix传统？”无名师问道。“是写一万行代码的，还是看到任务的无谓而不去编码的？” 
+
+听到此，程序员眼中一亮。
+\end{insertnote}
+
+%这个原则我们将在 \ref{section:pkgmgr} \nameref{section:pkgmgr} 一节中讲解autotools的时候体会到。
+
+
 
 \section{UNIX在别的系统上的影子}
 
 
 \chapter{黑客和Linux}
+
+\begin{quotes}{Richard Matthew Stallman}
+Writing non-free software is not an ethically legitimate activity, so if people who do this run into trouble, that's good! All businesses based on non-free software ought to fail, and the sooner the better.
+\end{quotes}
 
 在计算机发展的初期，软件\footnote{那个时候系统软件都是汇编语言开发的，所以也谈不上什么源代码。}被作为硬件的附属品销售。
 购买一个机器的硬件也就连带的附送了一系列的软件。谁也不会觉得软件是可以被“保护起来”盈利的。相互交换彼此的程序随处可见。
