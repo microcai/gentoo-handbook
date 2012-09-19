@@ -6,16 +6,21 @@
 \usepackage{multirow}
 
 \usepackage{amsmath}
-\usepackage{stmaryrd}
 \usepackage{wasysym}
 \usepackage{amsthm}
+\usepackage{stmaryrd}
 
-\input{draftcopy}
+%\input{draftcopy}
+
 
 %=====================================================================================
 % font setting
 %=====================================================================================
 \input{setfonts}
+
+%=====================================================================================
+% define new command and environment 
+%=====================================================================================
 
 %=====================================================================================
 % define new command and environment 
@@ -34,25 +39,33 @@
 \begin{flushright}%
 \begin{minipage}{#1\textwidth}\begin{flushright}\noindent\it\RTLpar}{%
  \\------\popQED{}\end{flushright}\end{minipage}\end{flushright}}%
- 
+
+\newcounter{lizi}[chapter]
+
+\newenvironment{example}[1]{ \addtocounter{lizi}{1} \vskip 3ex \bf 例\hskip -0.05em\arabic{chapter}.\arabic{lizi}： #1%
+\par %
+ \tt\small\CJKfamily{zhfs}}{ \vskip 3ex  }
+
+\newcommand{\theexample}{\arabic{chapter}.\arabic{lizi}}
+
 \makeatletter\newcommand{\chatu}{\@ifstar%
                      \chatuStar%
                      \chatuNoStar%
 }\makeatother
 
-\newcommand{\chatuNoStar}[3][0.35]{%
+\newcommand{\chatuNoStar}[3][scale=0.35]{%
 \begin{figure}[h]%
-\centering%
-\includegraphics[scale=#1]{pics/#2}%
+\noindent\centering%
+\includegraphics[#1]{pics/#2}%
 \caption{#3\label{fig:#2}}%
 \end{figure}%
 }
 
 
-\newcommand{\chatuStar}[3][0.35]{%
+\newcommand{\chatuStar}[3][scale=0.35]{%
 \begin{figure*}[!h]%
-\centering%
-\includegraphics[scale=#1]{pics/#2}%
+\noindent\centering%
+\includegraphics[#1]{pics/#2}%
 \label{fig:#2}%
 \end{figure*}%
 }
@@ -71,6 +84,8 @@
 \makeatother
 
 \newcommand{\faqref}[1]{~附录A.\nameref{FAQ}~“\nameref{#1}”}
+
+
 
 \newcounter{faqs}
 
@@ -128,23 +143,132 @@ UNIX is very simple, it just needs a genius to understand its simplicity.
 UNIX的哲学到底是什么？UNIX的哲学一言以蔽之，就是：\chatu*{kiss}{KISS}
 
 
-UNIX哲学是如此的重要，我必须独立一个章节来讲述它。
-
-\section{UNIX 无处不在}
-
-UNIX从1969年诞生的那一刻起就
+UNIX无处不在，生命力顽强。从1969年诞生的那一刻起，没有人想到它会如此成功。得益于C语言，UNIX以其绝佳的可移植性轻松的被移植到各种类型的机器上。小到各种移动设备，达到超级计算机，UNIX都能在这些设备上畅快的运行。恐怕没有哪个操作系统能像UNIX那样拥有持续40多年的生命力。UNIX不仅存在于UNIX操作系统本身。许多非UNIX系统都能找到UNIX的影子。
 
 
-
-TODO:  主要的系统管理思想和一些小工具也在这里介绍，比如 ps grep 用户和组，用户权限的概念也在这里讲解
+%TODO:  主要的系统管理思想和一些小工具也在这里介绍，比如 ps grep 用户和组，用户权限的概念也在这里讲解
 
 \section{一切都是文件}
 
-TODO:  /dev 目录的介绍
+这是最明显的一条UNIX设计哲学了。通过将一切设备抽象为文件，就可以使用统一的方法去操作设备。不管设备是磁带机也好，猫也罢，都使用同样文件操作。唯一不同的，也只有操作的设备文件名不一样而已。彻头彻尾的反UNIX，就是将设备和文件系统隔离。
 
-\section{做一件事情并把它做好}
-TODO: 介绍管道，各种命令的组合
-\section{使用文本流}
+\begin{example}{备份 MBR}
+
+在 Linux下，第一个磁盘的设备文件是 /dev/sda , 第二个磁盘的设备文件是 /dev/sdb 
+要备份第一个硬盘的 MBR ,可以使用  dd 命令。
+
+\begin{code}
+dd if=/dev/sda of=mbr.bak bs=512 count=1
+\end{code}
+
+使用这条命令就可以把硬盘的第一个扇区备份到 mbr.bak 文件了。对于其他的UNIX系统，只有对硬盘设备的命名不一致而已，没有其他区别。
+
+而彻头彻尾的反UNIX，就需要使用特殊的备份MBR/分区表的“工具”。
+\end{example}
+
+
+\begin{example}{查看硬扇区}
+
+直接查看硬盘的扇区，就和查看一般文件没有任何区别。使用二进制编辑器打开磁盘设备就可以了。
+如果只是为了查看一下，还有个非常方便的工具：\textbf{hexdump}
+
+\begin{code}
+hexdump /dev/sda
+\end{code}
+
+这条命令就可以把第一块硬盘的扇区数据直接显示到屏幕上，按Ctrl-C终止。想屏幕不要快速滚动的话，请仔细阅读下面的章节，你会找到办法的。
+
+而彻头彻尾的反UNIX，就需要使用特殊的查看磁盘扇区的“工具”。
+\end{example}
+
+从两个例子可以看出，UNIX将硬盘看作一个普通的文件（只不过文件大小固定为磁盘容量）。像这样的设备文件UNIX将他们组织起来统一放到/dev目录下面。
+/dev 目录下的文件一度是由内核进行管理的，不过Linux后来放弃了内核管理/dev的办法而改为由一个叫udev\footnote{udev最后被systemd合并。}的程序进行管理。
+
+
+\section{鼓励程序间协作}
+
+UNIX鼓励短小精湛的程序，不鼓励编写大而全式的程\footnote{据说是因为当年PDP-7内存有限}。正是因为UNIX鼓励短小的程序，并相互配合，所以创造了无穷的灵活性。
+UNIX通过组合各种小程序，能发挥出各个小工具独立工作的时候不能完成的功能。
+
+实现程序间协作的最伟大的发明就是\textbf{管道}。通过管道，一个程序的输出可以变成另一个程序的输入，将多个程序进行串街------每个程序变成这条处理链上的一个\textbf{过滤器}------组合的这些工具能产生工具的开发者都没有预料到的功能。
+
+\chatu{Douglas-McIlroy}{管道发明人 Malcolm Douglas McIlroy}
+
+图\thefigure 为管道发明人Malcolm Douglas McIlroy。 \chatu[width=\textwidth]{pipe-draft}{管道} 图\thefigure 为他发明管道的时候提出的建议的打字稿扫描图片。
+
+管道能够让你用简单的程序去构 造更复杂的程序。管道能够以意想不到的方式去使用命令,管道使得你可以用更简单的方式去实现复杂的功能。
+UNIX简单就是美的设计哲学，让管道这种强大的功能简单到只需要使用“|”就可以实现了。
+
+\begin{example}{还是查看硬扇区}
+
+前面说过，直接查看硬盘的扇区，只要执行如下的指令：
+\begin{code}
+hexdump /dev/sda
+\end{code}
+
+想屏幕不要快速滚动的话，并不需要修改 hexdump 程序添加滚屏功能。这个功能只需要交给一个专门为\textbf{滚屏}而开发的程序: less。
+
+只要执行这样的命令就能实现一次查看一个屏幕的内容。还可以向上回滚。
+\begin{code}
+hexdump /dev/sda | less
+\end{code}
+
+less 的功能就是将自己的输入以一个屏幕的内容显示，超过屏幕能显示范围的内容要等用户使用滚屏命令（PageUp PageDown 空格键和回车键）让less滚动到用户想要观察的位置。
+
+如果我不太喜欢 less 提供的功能，我还有more呢！
+\begin{code}
+hexdump /dev/sda | more
+\end{code}
+
+more和less在功能上大同小异。
+
+而彻头彻尾的反UNIX，就需要给所有有需要的程序添加滚动屏幕的支持。
+
+\end{example}
+
+UNIX鼓励程序之间通过管道或者其他IPC（Inter-Process Communication 进程间通信）进行协作。这样一个程序就可以专注于本质工作，不需要为了“多功能”而开发庞大复杂的软件。这就引出了下一个我要讲的UNIX哲学。
+
+\section{一个程序只做一件事情并把它做好}
+
+UNIX鼓励程序间的协作，一个程序只需要专注于本职的工作，并做到最好。UNIX下有各种简单的工具。但是这些简单的工具却将自己的本质工作做到了最好。
+所以UNIX下通常不会有功能繁多，大而全式的软件。但是你有非常丰富的功能单一却很强大的小工具，并拥有将工具进行组合的能力。
+
+而彻头彻尾的反UNIX，让每个软件都倾向于包含你可能用到的一切功能，试图提供一个“家长式”的程序。
+
+\begin{example}{下载工具wget}
+
+wget 是一个命令行下的下载工具。wget功能非常明确，http/ftp 下载。使用起来也非常简单
+\begin{code}
+wget [url]
+\end{code}
+但是wget做到了一件事——下载——并将它做最好。
+但是，如果给你的是一个下载文件列表，wget可不会去支持它。这是和下载无关的功能。但是，你能通过组合命令实现：
+\begin{code}
+cat urllist | xargs wget
+\end{code}
+在这里，我们又利用了一个名字叫xargs的程序，xargs的程序功能很简单，就是接受标准输入，为每个输入的字符串作为最后一个参数调用一次指定的命令。
+cat 是个功能非常简单的程序，将文件打印到标准输出。这个标准输出被\textbf{管道}重定向给了xargs做为标准输入。
+
+这个命令组合后的结果就是：为urllist里列出的每个url调用一次wget进行下载。自然也就是为wget实现了“下载文件列表里的url”的功能了。
+\end{example}
+
+UNIX就是因为提供了管道这种强大到底协作工具，所以得以鼓励开发各种功能单一的精湛的小程序。而功能单一的程序大大简化了软件的开发，也使得UNIX下的软件质量非常高。
+
+\section{使用文本流，因为这个是通用的协议}
+
+如果说，UNIX鼓励编写功能简单的程序，必定是因为它提供了程序间协作的机制，而要利用这样的机制，程序间唯有使用统一的协议才能实现正确的协作。
+这个统一的协议就是文本流。
+
+UNIX反对使用专有的二进制格式。UNIX天然的支持流格式\footnote{一个接着一个的字节}，连文件都被看成是无格式的字节流。
+因为输出不仅可以被管道送给另一个程序处理，更有可能会直接打印到终端。
+所以对于输入输出，UNIX更是鼓励文本字节流，也就是只使用可打印的\footnote{26个大小写字母，0到9阿拉伯数字，标点符号，空格和换行}文本字母。并且将这种文本用于进程间的通信。
+
+\begin{example}{文本协议HTTP}
+HTTP是一个文本协议。的
+
+
+\end{example}
+
 \section{UNIX在别的系统上的影子}
 
 

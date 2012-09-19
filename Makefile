@@ -6,7 +6,7 @@ xdvipdfmx=xdvipdfmx
 BOOKNAME=Linux枕边书
 
 ${BOOKNAME}.pdf: ${BOOKNAME}.xdv ${BOOKNAME}.toc
-	${xdvipdfmx}  ${BOOKNAME}.xdv
+	${LATEX} ${BOOKNAME}.tex
 
 ${BOOKNAME}.toc ${BOOKNAME}.xdv:${BOOKNAME}.tex coverpage.tex  faq.tex  preface.tex  setfonts.tex  thanks.tex
 	${XDVTEX} ${BOOKNAME}.tex && ${XDVTEX} ${BOOKNAME}.tex

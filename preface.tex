@@ -91,7 +91,7 @@ Multics的全称是\textit{MULTiplexed Information and Computing System}\footnot
 
 于是最初的多任务操作系统应运而生。它能将处理器的时间分配给多个程序，虽然在任意瞬间还是只有一个程序在执行，但是由于快速的在不同的程序间进行切换\footnote{专业术语叫上下文切换（Context Switch），所谓上下文切换，就是将当前程序的状态保存起来，然后调入先前保持的另一个程序的状态。这样那个被调入的程序就可以从被切换打断的那个地方继续执行。}，看起来就好像多个程序同时执行了。如图 \ref{fig:ContextSwitch}  所示。
 
-\chatu[0.65]{ContextSwitch}{上下文切换}
+\chatu[scale=0.65]{ContextSwitch}{上下文切换}
 
 但是那个时候的计算机，还不能进行实时交互。程序员写好纸条后，要交给计算机管理员\footnote{确切的说是操作员}，管理员将纸条输入计算机，然后等待计算机将执行结果输出。最后输出结果交给程序员，这样程序员才能知道程序的执行结果。
 
@@ -101,7 +101,7 @@ Multics的全称是\textit{MULTiplexed Information and Computing System}\footnot
 终端经一条很长很长的线缆\footnote{也可以通过电话线呢！}连接到主机上\footnote{那个时候主机很大，要放到专门的地方嘛。}。
 当时的终端就是一个电传打字机和一个机械打印机，只具有输入/输出的功能，本身完全不具任何运算或者软件安装的能力。要使用计算机的人将程序或者命令通过终端输给主机，主机将执行结果传回终端。最后来屏幕代替了打印机，成为视频终端。
 
-\chatu[0.8]{ctss}{分时操作系统}
+\chatu[scale=0.8]{ctss}{分时操作系统}
 
 如此一来，无论主机在哪里，只要在终端機前面进行输入输出的作业，就可利用主机提供的功能了。
 
@@ -133,7 +133,7 @@ Multics是个优秀的系统。在参加Multics项目的日子里，贝尔实验
 而且为了能继续玩他在Multics项目做研究的时候编写的“星际旅行”游戏，他头脑风暴了一把，用实验室废弃的一台PDP-7写了一个简陋的操作系统。
 Ken Thompson为PDP-7开发的小型系统被称呼为UNICS（UNiplexed Information and Computing System） 。 这个名字的由来是因为Ken Thompson认为Multics太复杂，而Multics的功能可以用更简单的方式去实现。Dennis Ritchie注意到了他的同事为PDP-7开发的简单系统。两个人亲密无间的合作就这样开始了。
 
-\chatu[0.2]{KandRwithPDP7}{Dennis Ritchie（站）和Ken Thompson（坐）在工作}
+\chatu[scale=0.2]{KandRwithPDP7}{Dennis Ritchie（站）和Ken Thompson（坐）在工作}
 
 Dennis Ritchie和Dennis Ritchie的加入为Ken Thompson的系统带来的第一个变化就是高级语言。他们开始计划用B语言\footnote{C语言的前身，Ken Thompson创造的。}重写这个系统。
 
