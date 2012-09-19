@@ -4,7 +4,7 @@
 \usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{multirow}
-
+\usepackage{soul}
 \usepackage{amsmath}
 \usepackage{wasysym}
 \usepackage{amsthm}
@@ -97,10 +97,10 @@
 \setcounter{chapter}{-1}
 \CTEXsetup[number={\arabic{chapter}}]{chapter}
 % 对齐设置
-\tolerance=1500
+\tolerance=4500
 \punctstyle{hangmobanjiao}
 \CJKecglue{}
-
+\CJKsetecglue{} %{\hskip 0.1em plus 0.05em minus 0.05em}
 %=====================================================================================
 % book info
 %=====================================================================================
@@ -247,7 +247,7 @@ wget [url]
 cat urllist | xargs wget
 \end{code}
 在这里，我们又利用了一个名字叫xargs的程序，xargs的程序功能很简单，就是接受标准输入，为每个输入的字符串作为最后一个参数调用一次指定的命令。
-cat 是个功能非常简单的程序，将文件打印到标准输出。这个标准输出被\textbf{管道}重定向给了xargs做为标准输入。
+cat 是个功能非常简单的程序，将文件打印到标准输出。这个标准输出被\underline{\textbf{管道}}重定向给了xargs做为标准输入。
 
 这个命令组合后的结果就是：为urllist里列出的每个url调用一次wget进行下载。自然也就是为wget实现了“下载文件列表里的url”的功能了。
 \end{example}
@@ -264,10 +264,65 @@ UNIX反对使用专有的二进制格式。UNIX天然的支持流格式\footnote
 所以对于输入输出，UNIX更是鼓励文本字节流，也就是只使用可打印的\footnote{26个大小写字母，0到9阿拉伯数字，标点符号，空格和换行}文本字母。并且将这种文本用于进程间的通信。
 
 \begin{example}{文本协议HTTP}
-HTTP是一个文本协议。的
+目前广泛使用的HTTP协议就是一个文本协议的例子。
 
+比如你访问 \url{http://www.example.com/example.html} ， 浏览器连接到 www.example.com 主机的80端口，发出一个
+\begin{code}
+GET /example.html HTTP/1.1
+\end{code}
+请求。服务器收到后，如果找到了example.html文件，就返回
+\begin{code}
+HTTP/1.1 200 OK
+\end{code}
+并空1行后紧接着输出example.html文件的内容。
+
+要模拟浏览器的请求，可以使用\textbf{telnet}这个程序。
+\begin{code}
+\#telnet  www.example.com 80\\
+Trying \st{***.***.***.***}...\\
+Connected to www.example.com.\\
+Escape character is '\textasciicircum'.{ <--  \it 以上为telnet输出 }\\
+GET /example.html HTTP/1.1 { <--  \it 自己输入的，输入后敲两下回车 }
+
+\\
+
+HTTP/1.1 200 OK\\
+Date: Wed, 19 Sep 2012 15:41:40 GMT\\
+Content-Length: 31\\
+Content-Type: text/html; {  <-- \it 下面有一行空行}
+
+\\
+
+<html>hello example.com</html>
+
+Connection closed by foreign host. <-- \it telnet输出
+\end{code}
+
+可以看到，HTTP协议使用文本模式进行通信。服务器的回应也是文本流。而且是行模式，没条信息存放一行。如果有多个信息，可以多行存放。HTTP协议没有规HTTP头的大小，HTTP头和传输的内容之间使用空行隔开\footnote{这就要求HTTP头本身没有空行。}。
 
 \end{example}
+
+除了HTTP，互联网上常用的协议，比如FTP、SMTP\footnote{发送邮件用的}、POP3\footnote{用于客户端从服务器接收邮件}都是基于文本的协议。
+HTTP这种只有HTTP头是文本，后续发送的文件内容（尤其是二进制文件来说）是字节流。但是SMTP全程连接使用的都是文本。对于发送不可打印的字符（比如以一张图片作为附件），SMTP需要将二进制字节流转化为文本格式。这是文本协议的一个缺点。
+
+但是瑕不掩玉，文本协议的好处有很多，比如可以无限扩展。
+
+还是拿 HTTP协议来说（方便起见，我没有设计HTTP请求的二进制版本。）。刚刚访问 www.example.com获了example.html。该文件有31个字节长度，HTTP头中的信息Content-Length: 31也告诉了我们文件大小。如果是二进制协议，一般会设计使用一个32bit的整数代表返回的文件大小。如果需要处理很大的文件，协议恐怕需要使用64bit长度的整数。但是对于64bit都无法表示的文件怎么办呢？ 二进制协议始终有扩展性不佳的问题。如果是HTTP协议，不管文件多大，只要这个数字还能表示出来，就没有问题。
+
+我们可以看到， HTTP 返回的除了文件大小，还有文件类型等信息，如果是二进制的协议，大概会如图 \ref{fig:binhttp} 这么设计，其中每个方块代表4个字节。要传输的文件紧挨着HTTP头的后面。
+
+\chatu[width=0.2\textwidth]{binhttp}{二进制的HTTP协议，服务器返回部分}
+
+每个类型的信息都分配了固定的字段。解析起来非常快，似乎够用了
+
+等等，我还要添加个信息，表示这个文件该不该被缓存。如果这个文件是临时文件，我大概不希望浏览器将它缓存，而是每次都到服务器上获取文件内容。
+好吧，我再添加个字段。
+
+\chatu[width=0.2\textwidth]{binhttp2}{二进制的HTTP协议，服务器返回部分，版本2}
+
+等等，已经运行了的大批服务器和浏览器怎么办？由于文件紧跟着HTTP头，使用新的二进制HTTP协议的服务器碰上老版本的浏览器，缓存属性不仅是被忽略了，更被当做文件内容的一部分了。难道为了一个小修改需要为新的协议修改所有的浏览器和服务器么？
+
+能无限的扩展并保持极佳的兼容性和人类可读性\footnote{测试问题的时候不需要特殊的工具去解析二进制流的各个字段，只需要打印出文本就可以了。}，是文本协议的最大优点。
 
 \section{UNIX在别的系统上的影子}
 
