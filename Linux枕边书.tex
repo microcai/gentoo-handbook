@@ -70,6 +70,10 @@
 \end{figure*}%
 }
 
+
+\newcommand{\faqref}[1]{~附录A.\nameref{FAQ}~“\nameref{#1}”}
+\newcounter{faqs}
+
 \makeatletter
 \newcommand\@publisher{}
 \newcommand{\publisher}[1]{
@@ -80,14 +84,8 @@
 \newcommand{\company}[1]{
 \renewcommand\@company{#1}
 }
-
 \makeatother
 
-\newcommand{\faqref}[1]{~附录A.\nameref{FAQ}~“\nameref{#1}”}
-
-
-
-\newcounter{faqs}
 
 %=====================================================================================
 % style settings
@@ -101,13 +99,11 @@
 \punctstyle{hangmobanjiao}
 \CJKecglue{}
 \CJKsetecglue{} %{\hskip 0.1em plus 0.05em minus 0.05em}
+
 %=====================================================================================
 % book info
+\input{bookinfo}
 %=====================================================================================
-\title{Linux枕边书}
-\author{微菜}
-\company{北京源智天下科技有限公司}
-\publisher{清华大学出版社}
 
 
 \begin{document}
@@ -323,6 +319,10 @@ HTTP这种只有HTTP头是文本，后续发送的文件内容（尤其是二进
 等等，已经运行了的大批服务器和浏览器怎么办？由于文件紧跟着HTTP头，使用新的二进制HTTP协议的服务器碰上老版本的浏览器，缓存属性不仅是被忽略了，更被当做文件内容的一部分了。难道为了一个小修改需要为新的协议修改所有的浏览器和服务器么？
 
 能无限的扩展并保持极佳的兼容性和人类可读性\footnote{测试问题的时候不需要特殊的工具去解析二进制流的各个字段，只需要打印出文本就可以了。}，是文本协议的最大优点。
+
+\section{用程序去生成程序}
+
+UNIX认为人的时间比机器的时间要宝贵的多。如果有什么事情是机器能代劳的，就绝对不要浪费人的时间。这个原则我们将在 \ref{section:pkgmgr} \nameref{section:pkgmgr} 一节中讲解autotools的时候体会到。
 
 \section{UNIX在别的系统上的影子}
 
@@ -785,11 +785,13 @@ shell将“a.txt ab.txt”整体（不包含引号）作为了一个参数传递
 
 \subsection{进程管理	}
 \subsection{系统服务管理	}
-\section{软件管理}
-\subsection{ 软件的分发	}
-\subsection{软件的编译	}
-\subsection{  发行版的包管理}	
+
 \section{ shell 进阶应用}
+
+\chapter{软件管理}
+\section{ 软件的分发	}
+\section{软件的编译	}
+\section{发行版的包管理}\label{section:pkgmgr}
 	
 \chapter{图形界面}
 对命令行是不是有点枯燥了？是时候来电新鲜的东西了 只所以现在才讲，因为图形实在是太复杂了。
