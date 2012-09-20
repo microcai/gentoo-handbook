@@ -1,3 +1,7 @@
+
+\newcommand{\compileall}{def}
+
+
 \documentclass[amstex,twoside]{ctexbook}
 \usepackage[colorlinks,linkcolor=black]{hyperref}
 \usepackage[below,section]{placeins}
@@ -124,14 +128,22 @@
 %=========================================================
 % 序言
 %=========================================================
-\include{preface}
-%\addtocounter{chapter}{1}
+\ifdefined\compileall
+	\include{preface}
+\else
+	\addtocounter{chapter}{1}
+\fi
+
 
 %=========================================================
 % 正文开始
 %=========================================================
+
+\ifdefined\compileall
 \include{chp_unix}
-%\addtocounter{chapter}{1}
+\else
+\addtocounter{chapter}{1}
+\fi 
 
 \chapter{黑客和Linux}
 
