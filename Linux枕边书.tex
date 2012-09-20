@@ -9,7 +9,6 @@
 \usepackage{wasysym}
 \usepackage{amsthm}
 \usepackage{stmaryrd}
-
 %\input{draftcopy}
 
 
@@ -126,13 +125,13 @@
 % 序言
 %=========================================================
 \include{preface}
-
+%\addtocounter{chapter}{1}
 
 %=========================================================
 % 正文开始
 %=========================================================
 \include{chp_unix}
-
+%\addtocounter{chapter}{1}
 
 \chapter{黑客和Linux}
 
@@ -711,12 +710,12 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 
 
 \appendix
-\renewcommand{\thesection}{\arabic{section}}
 
 \include{faq}
 
 \chapter{ 名称缩写	}
 \chapter{ 图片索引	}
-\chapter{ Gentoo 的前身今世}
+
+\include{app_gentoolife}
 
 \end{document}
