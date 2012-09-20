@@ -147,32 +147,64 @@
 
 \chapter{黑客和Linux}
 
+\begin{quotes}{Linus Benedict Torvalds}
+If 386-BSD had been available when I started on Linux, Linux would probably never had happened.
+\end{quotes}
+
 \begin{quotes}{Richard Matthew Stallman}
 Writing non-free software is not an ethically legitimate activity, so if people who do this run into trouble, that's good! All businesses based on non-free software ought to fail, and the sooner the better.
 \end{quotes}
 
 在计算机发展的初期，软件\footnote{那个时候系统软件都是汇编语言开发的，所以也谈不上什么源代码。}被作为硬件的附属品销售。
 购买一个机器的硬件也就连带的附送了一系列的软件。谁也不会觉得软件是可以被“保护起来”盈利的\footnote{机器码可以非常容易的反汇编重新生成源汇编文件。既然软件是汇编开发的，那也没有什么秘密可以隐藏。}。相互交换彼此的程序随处可见。
-直到有一天，西雅图的一个软件天才说，他花了很多时间写好的软件，不希望被人随意拷贝。每一个获得拷贝的人都应该给他付钱。
+直到有一天，西雅图的一个软件天才\footnote{为了避免反应迟钝的人不知道，这位天才是比尔\textbullet盖茨啦}说，他花了很多时间写好的软件，不希望被人随意拷贝。每一个获得拷贝的人都应该给他付钱。
 有了天才的带领，自此商业公司开始独立销售软件而不再作为硬件的附属品。
 
 不过这股软件私有化的浪潮还不曾传播到社会的各个交流。
 大学里，实验室里，人们还是保持着将软件自由传播的传统。虽然他们不再能自由的传播商业软件，但是自己编写的各种
 稀奇古怪的软件可以自由的交流。在没有internet的年代他们就开始利用Usenet\footnote{%
 \textbf{来自维基百科：}Usenet是一种分布式的互联网交流系统，它的发明是在1979年由杜克大学的研究生Tom Truscott与Jim Ellis所设想出来的。Usenet包含众多新闻组，它是新闻组（异于传统，新闻指交流、信息）及其消息的网络集合。 }相互交流了。
+%
 这样一群天才不满于商业化的软件，时常有人对商业公司的系统进行破解，故得名hacker，中译“黑客”\footnote{%
 由于只有身怀绝技的聪明人物才有可能破解商业软件。故而黑客给人一种智商非常高的印象。久而久之智商很高（或者因为专业技能好，看起来很高）的程序员都被称作黑客。所以现在说的黑客一般指的是计算机方面非常厉害的人而不再是搞破解的人。现在再搞破解和破坏的人，就没有黑客头衔了，而是Cracker，骇客。
 }。
 
+Linux的诞生就是因为黑客门不满足于被大公司控制的操作系统市场。
+
 \section{从UNIX到Linux}
 
-早期的UNIX鼓励源代码的密切交流。这和黑客们的思想如出一辙。但是一场突如其来的官司让AT\&T在反托拉斯的禁锢中拖开。
+早期的UNIX鼓励源代码的密切交流。这和黑客们的思想如出一辙。伯克利开发的BSD更是吸引了大量的黑客进行贡献。70年代到80年代早期，黑客门过着自由的日子。
 
 
+但是一场突如其来的官司让AT\&T从反托拉斯的禁锢中挣开\footnote{参考前言的内容。}。
+脱缰的AT\&T将UNIX推入了深渊。
+
+但是就算UNIX被推入了深渊，BSD还是一个避风港。但是这最后一点希望都随着AT\&T对BSD的起诉而消失了。
+
+1983年，AT\&T发布了Unix最新版system V UNIX，这是一个商业化版本，付费才能使用，并且不得传播源码。
+为了减少纠纷，伯克利分校规定，BSD本身依然保持免费，但是只能提供给持有AT\&T源码许可的公司。
+不过，与此同时，伯克利的师生也着手开始将AT\&T的代码从BSD中逐渐去除，以便发布一个不受AT\&T控制的版本。
+这一举动惹恼了AT\&T。AT\&T起诉BSD侵犯了Unix的版权。
+这场诉讼对BSD打击极大，所有的开发活动都被迫停止，用户人心惶惶，担心自己也遭到AT\&T的追究，因此BSD的使用急剧减少。
+
+这场战争给BSD带来了毁灭性的打击。
+
+
+黑客们突然间没有了玩具。
+
+最后在1994年，双方达到和解，BSD才恢复开发。但是历史的已经不会再给BSD机会了。因为在BSD官司缠身的时候，上帝把爱心悄悄给了Linux。
+
+1991年，芬兰的一个大学生在网上公布了Linux，立即吸引了大量黑客的目光。从此BSD神码的都成了浮云。黑客门团结在天才周围缔造了Linux的神话。
+不用说，这位天才的大学生名字就叫做 Linus Benedict Torvalds。
 
 \section{Linux介绍}
 
-TODO :  要讨论 Linux ，不得不说 PC , Linux 最初就是从 PC 上发迹的
+UNIX自诞生以来就是学术界研究的对象。UNIX被移植到大量的机器上，唯独没有染指PC市场。UNIX的人轻视了这个以8086为核心构造的个人电脑。
+也难怪，UNIX的多任务能力需要CPU能提供一些保护机制，防止未经授权的访问。而这正是8086所缺乏的。
+
+但是当80386发布的时候，情况有了一些变化。
+
+%TODO :  要讨论 Linux ，不得不说 PC , Linux 最初就是从 PC 上发迹的
 
 \subsection{Linux 之前PC操作系统回顾}
 
