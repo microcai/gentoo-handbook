@@ -3,6 +3,18 @@
 
 
 \documentclass[amstex,twoside]{ctexbook}
+
+% 16开本
+\usepackage[
+		paperwidth=195mm,
+		paperheight=271mm,
+		lmargin = 34mm,
+		rmargin = 28mm,
+		tmargin = 38mm,
+		bmargin = 28mm
+	]{geometry}
+
+\usepackage{needspace}
 \usepackage[colorlinks,linkcolor=black]{hyperref}
 \usepackage[below,section]{placeins}
 \usepackage{tabularx}
@@ -14,7 +26,6 @@
 \usepackage{amsthm}
 \usepackage{stmaryrd}
 %\input{draftcopy}
-
 
 %=====================================================================================
 % font setting
@@ -197,17 +208,14 @@ Linux的诞生就是因为黑客门不满足于被大公司控制的操作系统
 1991年，芬兰的一个大学生在网上公布了Linux，立即吸引了大量黑客的目光。从此BSD神码的都成了浮云。黑客门团结在天才周围缔造了Linux的神话。
 不用说，这位天才的大学生名字就叫做 Linus Benedict Torvalds。
 
-\section{Linux介绍}
+\section{Linux诞生}
 
 UNIX自诞生以来就是学术界研究的对象。UNIX被移植到大量的机器上，唯独没有染指PC市场。UNIX的人轻视了这个以8086为核心构造的个人电脑。
 也难怪，UNIX的多任务能力需要CPU能提供一些保护机制，防止未经授权的访问。而这正是8086所缺乏的。
 
 但是当80386发布的时候，情况有了一些变化。80386具备了“真正的”CPU的特性，包括特权级别区分和分页内存支持\footnote{关于分页技术，请参考 \faqref{FAQ:Paging}。}。 有了这些支持，PC终于具备了运行UNIX的条件。
 
-
-%TODO :  要讨论 Linux ，不得不说 PC , Linux 最初就是从 PC 上发迹的
-
-\subsection{PC操作系统回顾}
+\subsection{被UNIX忽略的PC}
 %那么我们还是字为何PC
 计算机最初是作为美国军方的项目研究制造的。美军向来有向全世界开放自己的研究的传统\footnote{Internet也源自美国军方的研究。还有现在每天都在用的GPS卫星定位哦~~。}，所以计算机得以被商业化。
 一家造卡片统计机\footnote{恩，先进的自动化的...算盘}的公司因卡片机的大量销售而积累雄厚的财力和强大的销售服务能力，决定进入未知的电子计算机世界。
@@ -249,17 +257,28 @@ UNIX支持多进程运行。每个进程\footnote{参考 \faqref{FAQ:Process}}�
 
 由于8086/8088处理器并不拥有MMU，也没有实现特权级别划分，所以根本不具备运行UNIX的条件。
 
+就这样PC市场被UNIX忽略，直到80386的出现。80386是Intel生产的第一个具备运行UNIX自个的CPU。
+但是就算在功能上具备了运行UNIX的资质，80386从UNIX的观点来说，实在是太慢了。所以谁也没打算将UNIX移植到使用80386处理器的PC上。
 
+PC机就这样继续运行着DOS，以及后来的Windows。
 
-\subsection{386BSD 和 minix}
+\subsection{386BSD、 Minix催生Linux}
 
+要说PC真的没有一个UNIX可以运行那是假的。商业UNIX抛弃了PC，但是黑客们却像发现了新大陆一样为PC着迷。于是，各种黑客版本的UNIX被移植到80386芯片上。
+其中最著名的莫过于386BSD（将BSD移植到80386处理器的项目）和Andrew S. Tanenbaum教授以教学为目的开发的Minix。
 
+Linus在大学里用过UNIX就为它着迷。于是决定为自己买一台计算机运行UNIX，这样就不要跑去学校的机房了。
+由于PC性能不佳，跑着UNIX的工作站又太贵了。Linus决定购买一台PC。时值BSD正好处于和AT\&T的长期诉讼中。法律风险是大大的。于是Linus装起了Minix。
+至于其他版本的UNIX，就没入Linus的法眼，呵呵。
 
-\subsection{襁褓中的Linux}
+Minix是Andrew S. Tanenbaum教授以教学为目的开发的UNIX，但是并不是一个“自由”的软件。而且Linus对于Minix有相当多的吐槽。不仅仅是Linus，许多人都为他们的吐槽写了补丁。
+但是Andrew以“只用于教学目的的系统不想变的太复杂”为由而拒绝添加这些改进。一个拒绝改进的开发者+虽然宽松但是不自由的授权\footnote{
+购买Andrew的《操作系统设计与实现》这本书就能获得Minix代码并授权个人使用。仅限于非商业用途。}\textrightarrow ~Linus~决定\textbf{为自己}开发一个UNIX兼容的操作系统。
 
-可是UNIX太贵了。而BSD官司缠身，为了能使用便宜的UNIX,Linus决定自己开发一个UNIX兼容的操作系统。
 
 \subsection{以GPL开源}
+
+Linus说自己在Linux上做的最正确的决定就是用GPL保护了Linux。
 
 \subsection{使用Linux内核的操作系统——发行版}
 

@@ -1,6 +1,8 @@
 
-LATEX=xelatex -interaction=nonstopmode
-XDVTEX=xelatex -no-pdf -interaction=nonstopmode
+XELATEX=xelatex -interaction=nonstopmode
+
+LATEX=${XELATEX}
+XDVTEX=${XELATEX} -no-pdf 
 xdvipdfmx=xdvipdfmx
 
 BOOKNAME=Linux枕边书
