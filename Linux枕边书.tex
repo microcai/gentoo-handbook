@@ -169,11 +169,26 @@
 To kind of explain what Linux is, you have to explain what an operating system is. And the thing about an operating system is that you're never ever supposed to see it. Because nobody really uses an operating system; people use programs on their computer. And the only mission in life of an operating system is to help those programs run. So an operating system never does anything on its own; it's only waiting for the programs to ask for certain resources, or ask for a certain file on the disk, or ask to connect to the outside world. And then the operating system steps in and tries to make it easy for people to write programs.
 \end{quotes}
 
-%\subsection{使用Linux内核的操作系统——发行版}
+Linus发布他的内核的时候，Linux就只是一个内核而已。一个操作系统不当当依靠一个内核就能工作。还需要各种程序供用户使用。最少的，用户需要一个shell进行人机交互。
+用户需要管理磁盘，管理他的文件。等等操作都需要依靠各种各样的程序进行。如果用户只是将Linux内核运行起来，那他将什么都做不了。所以用户需要的，是一个Linux内核和一套工具软件。这样的组合才能构成用户操作机器的环境——也就是说，一个操作系统。于是人们有时候简单的称呼这样的操作系统为Linux。但是我们得知道，这只是泛称，Linux的实际含义就是Linus和其他黑客开发的一个内核，并不是一个完整的操作系统。
 
-\section{Linux是操作系统内核}
+由于Linux只是一个内核，所以用户需要的工具软件就需要向别的地方寻找了。所幸RMS宣誓的GNU已经开发的差不多了，就只差个名字叫GNU Hurd的内核。等等，我们不是有Linux内核了么？
 
-TODO：Linux 主要发行版介绍，何为 Linux 发行版 Linux 发行版的作用
+没错！只要我们将GNU的系列软件和Linux内核搭配起来，不就有一个完整的操作系统了么？我们需要一个shell, GNU bash就是我们要找的。我们需要各种命令行工具， GNU coreutils就是我们要找的，我们需要编辑器，GNU emacs就行。我们需要开发工具编写自己的程序，GCC GDB GNU make等等就是我们需要的。 我们要的各种构成UNIX系统的要素GNU通通提供了。额，除了内核。所以RMS提议使用Linux内核+GNU userland\footnote{
+前文提到过，UNIX需要CPU提供特权和非特权两个代码级别。内核的代码运行在特权级别。用户的程序运行在非特权级别。故而用户程序统称userland。}的操作系统应该叫做GNU/Linux。
+
+那还等什么，赶紧到GNU的网站上下载吧！
+
+\subsection{使用Linux内核的操作系统——发行版}
+且慢！我还未拥有一个UNIX环境，GNU网站上提供的都是源代码，Linux也是源代码，我如何使用他们？编译？
+那么我首先需要一个UNIX系统，并有一个能工作的编译器，才能编译这些软件吧！
+
+这是一个先有鸡还是先有蛋的问题。
+
+再说，就算我已经安装了一个Minix或者BSD系统，想编译出一个使用Linux内核的完整操作系统，也是一个巨大的工程吧！
+%\section{Linux是操作系统内核}
+
+%TODO：Linux 主要发行版介绍，何为 Linux 发行版 Linux 发行版的作用
 
 \section{发行版的意义}
 \section{包管理}
