@@ -8,10 +8,10 @@
 \usepackage[
 		paperwidth=195mm,
 		paperheight=271mm,
-		lmargin = 34mm,
-		rmargin = 28mm,
+		lmargin = 36mm,
+		rmargin = 30mm,
 		tmargin = 38mm,
-		bmargin = 28mm
+		bmargin = 35mm
 	]{geometry}
 
 \usepackage{needspace}
@@ -52,7 +52,7 @@
 \newenvironment{quotes}[2][0.55]{\pushQED{#2}%
 \begin{flushright}%
 \begin{minipage}{#1\textwidth}\begin{flushright}\noindent\it\RTLpar}{%
- \\------\popQED{}\end{flushright}\end{minipage}\end{flushright}}%
+ \\------\popQED{}\end{flushright}\end{minipage}\end{flushright}\vskip 8mm }%
 
 \newcounter{lizi}[chapter]
 
@@ -278,10 +278,19 @@ Minix是Andrew S. Tanenbaum教授以教学为目的开发的UNIX，但是并不�
 
 \subsection{以GPL开源}
 
-Linus说自己在Linux上做的最正确的决定就是用GPL保护了Linux。
+Linus说自己在Linux上做的最正确的决定就是用GPL保护了Linux。1911年发布的第一版内核并不是使用GPL协议发布的。
+他使用了自定的一个协议，内容大概就是：{\it Linux自由免费，随便用。如果你对Linux做了修改，麻烦你把修改后的代码给我一份，谢谢。}
 
-\subsection{使用Linux内核的操作系统——发行版}
+在黑客界，有一个古老的传统：\emph{尽量去发现工具，实在没有就自己写一个。} 这条传统似乎对软件授权协议也有效。
+%
+Linus大概觉得自己跳过了第一步的发现，于是他决定重新开始依照老传统做一次——这次他发现了GPL，于是他不再发明，将Linux置于GPL的保护之下。
 
+Linus为第一版Linux编写的协议和GPL想要表达的意思差不多，但是起草过程中有律师帮忙的GPL更加的严谨。
+
+从头开发的Linux源码和GPL授权为Linux的发展构建了坚实的后盾。即没有侵权的后顾之忧也没有不怕被侵权后缺乏法律的保护。Linux就这样替代了386BSD，Minix等等等等
+成为了PC上最受欢迎的类UNIX系统。同时由于Linux使用GPL授权，填补了GNU缺失的内核 GNU Hurd。
+
+全世界的黑客开始行动起来，推动着Linux快速的发展。Linux成了分布式开发的典范。
 
 \chapter{初识Linux}
 
@@ -289,7 +298,7 @@ Linus说自己在Linux上做的最正确的决定就是用GPL保护了Linux。
 To kind of explain what Linux is, you have to explain what an operating system is. And the thing about an operating system is that you're never ever supposed to see it. Because nobody really uses an operating system; people use programs on their computer. And the only mission in life of an operating system is to help those programs run. So an operating system never does anything on its own; it's only waiting for the programs to ask for certain resources, or ask for a certain file on the disk, or ask to connect to the outside world. And then the operating system steps in and tries to make it easy for people to write programs.
 \end{quotes}
 
-
+%\subsection{使用Linux内核的操作系统——发行版}
 
 \section{Linux是操作系统内核}
 
