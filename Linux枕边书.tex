@@ -227,15 +227,100 @@ Linus发布他的内核的时候，Linux就只是一个内核而已。一个操�
 
 \item 干净卸载。卸载不能留下任何不该留下的东西。所谓燕过不留痕。
 
+\item 解决依赖问题。一个软件或多或少的会依赖其他的软件。最明显的例子，如果系统里没有安装libc，所有的软件都不可能运行。一个软件要想正常工作，它依赖的软件必定也要安装。　包管理要最终软件之间的相互依赖关系。安装一个软件的时候能将它依赖的软件也安装，卸载软件的时候能将依赖的软件（如果没有其他的软件也依赖它的话）一并删除。
+
 \item 打包方便，不能方便了最终用户而是发行版维护人员痛苦不堪。
 
 \end{itemize}
 
+各个发行版使出浑身解数，开发了各种软件包格式和对于包管理器。比较流行的也就只有两个而已：RPM和deb。
 
-\subsection*{rpm 和 deb}
+\subsection*{RPM}
 
+RPM是Redhat Package Manager的缩写，不过后来RPM被Redhat以外的发行版采用的，似乎RPM成了另一种缩写：Rpm Package Manager\footnote{吐槽吧，学的GNU啊。递归缩写}。
 
-\subsection*{Portage}
+RPM格式的扩展名是.rpm，分源码包和二进制包。源码包将rpm规格说明文件（.spec）和程序源码打包为一个.src.rpm包（或者.srpm） 。源码包可以用来构建二进制rpm包。
+要安装rpm包，使用rpm命令进行。具体使用请参考man手册。比较常规的用法我会在第\ref{chap:软件管理}章~\nameref{chap:软件管理}介绍。
+
+\begin{insertnote}
+\vskip 0.5cm
+man手册的用法很简单啦，打man后面跟个要帮助的命令，rpm就是
+\begin{code}
+\$man rpm
+\end{code}
+按q退出查看。PgUp和PgDown可以翻页。
+\end{insertnote}
+
+RPM被广泛使用，包括RHEL、Fedora、OpenSuSe、RedFlag都是使用的rpm包格式。
+
+\subsection*{deb}
+
+包管理世界的另一大流派是deb。deb因其所使用的软件包扩展名为.deb而得名。实质上是Debian的缩写。因为它是Debian专用软件包格式。
+因为Ubuntu是Debian修改而来，自然也采用了deb包管理。
+
+和RPM一样，deb也有源码包和二进制包。从源码包可以编译得到二进制包。要安装deb包，使用dpkg命令进行。具体使用请参考man手册。比较常规的用法我会在第\ref{chap:软件管理}章~\nameref{chap:软件管理}介绍。
+
+\subsection*{ebuild}
+
+Gentoo的ebuild严格来说并不是软件包格式。rpm deb之类的，可以直接安装对应的二进制包。包管理器检查包的依赖，依赖检查后将包里的文件解压安装到系统里就可以了。
+
+Gentoo的ebuild却并不是这样的。ebuild大致是一个BASH脚本（不能直接执行，只能由包管理器调用）。Gentoo的包管理器通过执行ebuild完成“自动下载源码，解压，编译，安装”这样的操作。
+
+%TODO 更多ebuild介绍
+
+\subsection{软件仓库}
+
+发行版搜集了各种软件，并编译成二进制包。通常发行版收集的软件包数量以万计。这么多包是不可能一次性全部装到一张光盘上的。也完全没有那种必要。用户拿到光盘的那一刻开始软件就已经过时了。
+
+如果将所有的包都集中存放到服务器上，用户要安装的时候直接到服务器上获取就可以了。用户获得的软件总能保证是最新的。只需要比较本地安装的软件版本和服务器上存储的最新版本就可以知道是否有更新了。
+
+这样在服务器上集中存储的软件包就集合成了一个仓库。发行版的工作就是维护这个仓库，时不时的向仓库更新软件。
+
+软件仓库可是个伟大的发明。乔帮主从Linux社区学到了软件仓库创立了App Store赚了大发。微软也开始学软件仓库的思想，据说Windows 8打算使用软件仓库。
+
+限于仓库的格式问题，不同的发行版有不同的工具让用户访问软件仓库。
+
+RPM系的发行版，使用yum\footnote{不要和rpm混淆哦！一个是安装软件包的，一个是访问软件仓库的。}访问仓库。用户可以下载　XXX.rpm 然后使用　rpm -i XXX.rpm 安装这个包，但是更便捷的做法是直接使用 {\tt yum install XXX} 安装名为XXX的软件。yum会到仓库里搜索XXX软件并将对应的rpm文件下载下来，如果有未安装的依赖，将依赖的软件也下载下来。然后调用rpm安装。
+
+\begin{example}{Fedora下安装手写输入法}
+手写，handwrite，搜索
+\begin{code}
+\#yum search handwrite
+\end{code}
+
+在结果页面，有个叫　ibus-handwrite的软件。ibus是一个输入法框架，自然ibus-handwrite就是手写输入法了。
+开始安装（注意需要使用root帐号运行，参考\faqref{FAQ:su}）
+\begin{code}
+\#yum install ibus-handwrite
+\end{code}
+回答yes后ibus-handwrite就被安装到系统上了。
+当然，前提是保证网络连接：）
+\end{example}
+
+要删除软件，使用 yum remove XXX.
+
+对deb系的发行版，使用apt-get（俗称超级牛力）哦。基本用法和yum一致。apt-get install 安装软件，apt-get remove 卸载软件。
+区别就是，yum是在线搜索，apt-get是离线搜索。你需要每天使用apt-get update（也不需要每天啦！
+长久没用apg-get的时候先执行一下apt-get update就行了。）刷新缓存，
+之后apt-get就使用本地缓存的软件包信息而不用每次都连接到服务器进行搜索。
+
+另外，更新系统yum使用的操作是　yum update，而apt-get同样的操作用来更新本地软件包信息缓存了，故而更新系统在apt-get下使用的命令是apt-get upgrade。
+
+而Gentoo这样的系统嘛，也有非常强大的工具：{\bf emerge}。emerge　XXX就可以安装名为XXX的软件。
+
+\begin{example}{Gentoo下安装vim}
+要安装vim非常简单，emerge就可以了
+\begin{code}
+\#emerge　vim
+\end{code}
+emerge会忠实的到vim的网站上下载vim的代码，解压，编译，然后安装。如果vim依赖的软件还未被安装的话，emerge会首先安装它们。
+
+\end{example}
+
+\subsection*{在仓库中搜索}
+
+虽然仓库很好用，但是在用的时候大家都会有一个疑问：怎么知道一个软件对应的包的名字？
+
 
 
 \chapter{快速安装 Linux}
@@ -251,9 +336,7 @@ Linux介绍了那么多，是时候将它安装到我们的电脑上了。要安
 
 最直接的原因也许就是作者本身使用的就是Gentoo，以自己最熟悉的发行版写作，可以避免不熟悉系统进行错误的讲解\footnote{这确实是一个理由，但是Gentoo必定有比其他的发行版更值得作为本书的平台。}。
 当然，如果仅仅这一个理由未免太牵强。
-\it
-Gentoo可以让读者将精力放到学习Linux本身，而不需要关注发行版的细节，这就是我采用Gentoo的原因。
-\normalfont
+{ \it Gentoo可以让读者将精力放到学习Linux本身，而不需要关注发行版的细节，这就是我采用Gentoo的原因。}
 另一个能做到这种效果的发行版为LFS\footnote{严格来说，LFS 算不上发行版，只是一个教你如何手工编译出一个能用的系统的手册。}（Linux From Scratch）。
 但是LFS太繁琐，恐怕还没有学习到Linux的知识就已经中途放弃了。
 
@@ -635,7 +718,7 @@ shell将“a.txt ab.txt”整体（不包含引号）作为了一个参数传递
 
 \section{ shell 进阶应用}
 
-\chapter{软件管理}
+\chapter{软件管理}\label{chap:软件管理}
 \section{ 软件的分发	}
 \section{软件的编译	}
 \section{发行版的包管理}\label{section:pkgmgr}
