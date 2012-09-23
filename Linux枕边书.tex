@@ -736,6 +736,7 @@ execv("/bin/ls",argv);
 
 
 \subsection{init 系统选择}
+Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启动就完全交给了init程序。由于init是第一个启动的程序，所以他的PID\footnote{Linux用一个数字代表一个进程。需要对进程操作的地方可以使用该数字。比如向进程发送信号，就是用PID标识发送的目标的。}是1\footnote{PID 0是个特殊进程（或者是根本就不是进程吧），每当系统空闲下来的时候PID　0才会执行，PID 0只做一个事情，就是让CPU进入节能模式。而且PID　0的个数就是CPU的个数。每个CPU都有一个属于自己的PID 0。所以系统真正的进程号是从1开始的。}。
 
 \subsubsection{sysvinit+openrc}
 \subsubsection{SystemD}
