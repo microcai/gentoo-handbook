@@ -5,6 +5,8 @@
 *.bbl
 *.gz
 *.toc
+*.tof
+*.lof
 *.log
 *~
 *.xdv
