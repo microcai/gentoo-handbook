@@ -1,3 +1,4 @@
+% !TeX spellcheck = <none>
 
 \newcommand{\compileall}{def}
 
@@ -635,7 +636,7 @@ root@gentoo \textasciitilde \# ls -l --all /
 在这里：
 
 \begin{itemize}
-\item root@gentoo \textasciitilde \# 是shell提示符。\#是root账户，普通账户是\$。root@gentoo 表示当前登录用户为root,当前登录机器是gentoo,后面的 \textasciitilde　表示当前目录为　\textasciitilde，　\textasciitilde　在shell中表示用户主目录，也就是　\$HOME。root的主目录为 /root,　普通用户为/home/用户名。
+\item root@gentoo \textasciitilde \# 是shell提示符。\#是root账户，普通账户是\$。root@gentoo 表示当前登录用户为root,当前登录机器是gentoo,后面的 \textasciitilde{}　表示当前目录为　\textasciitilde{}，　\textasciitilde{}　在shell中表示用户主目录，也就是　\$HOME。root的主目录为 /root,　普通用户为/home/用户名。
 \item -l 是一个短选项。短选项 “-”开头，后面跟单个字母。在这里 -l 表示以“长格式”列出。所谓“长格式”就是相对与一般格式，除了要列出文件名，好要列出文件所有者，权限模式，文件大小
 \item -{}-all 是一个长选项。长选项使用两个“-” 开头，后面跟一个单词。在这里 -{}-all 表示列出所有 文件，包括隐藏文件。
 \item / 在这里为操作对象参数，在这里是一个目录。表示要列出 / 下的文件。
@@ -718,10 +719,21 @@ int execv(const char *path, char *const argv[]);
 path就是要执行的程序。
 argv的最后一个由NULL结尾，故而内核会知道有几个参数，转化为main里的argc。
 
-shell
-
-
 \end{insertnote}
+
+在本例中，
+shell
+启动ls程序的参数应该是这样的
+\begin{code}
+argv[0]="ls";\\
+argv[1]="a.txt b.txt";\\
+argv[2]=NULL;
+
+execv("/bin/ls",argv);
+\end{code}
+
+所以ls会把"a.txt b.txt"（不包含引号）作为一个参数。参数和参数之间的分隔是由shell完成的
+
 
 \subsection{init 系统选择}
 
