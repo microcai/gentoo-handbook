@@ -90,7 +90,7 @@
 
 
 \newcommand{\faqref}[1]{~附录A.\nameref{FAQ}~“\nameref{#1}”}
-\newcommand{\secref}[1]{第\ref{＃1}章~\nameref{#1}}
+\newcommand{\secref}[1]{节\ref{#1}~\nameref{#1}}
 
 \newcounter{faqs}
 
@@ -437,10 +437,6 @@ Gentoo下几乎所有软件都是本机编译的，自然不存在兼容性问�
 而个别非开源软件也多数拥有 64位版本，更不需要操心兼容性问题。
 \end{insertnote}
 
-
-
-好了，将LiveCD塞入光驱，开始一步步安装属于你的Gentoo吧。有关如何使用LiveCD请参考\faqref{FAQ:UseLiveCD}
-
 好，我们列一个清单：
 
 
@@ -453,6 +449,10 @@ Gentoo下几乎所有软件都是本机编译的，自然不存在兼容性问�
 \end{itemize}
 
 你准备好了么？
+
+准备好的话，将LiveCD塞入光驱，开始一步步安装属于你的Gentoo吧。有关如何使用LiveCD请参考\faqref{FAQ:UseLiveCD}。
+启动LiveCD，首先配置好网络环境，有关网络环境的配置请参考 \secref{sec:ifconfig}。
+
 
 \section{分区规划}
 任何系统都是安装到硬盘使用的
@@ -665,7 +665,14 @@ root@gentoo \textasciitilde \# ls *.txt
 \item *.txt 会被扩展成 a.txt ab.txt
 \item a.txt 和 ab.txt 被作为2个参数传递给ls。
 \item “*”是通配符，表示匹配任意多个字符；“?”表示匹配任意的一个字符。
+
+\begin{insertnote}
+注意：shell的字符串扩展不仅仅支持*和?这样的通配符，更高级的用法将在后续章节将到。
+\end{insertnote}
+
+
 \end{itemize}
+
 
 比如你执行的是下面这个指令：
 
@@ -726,14 +733,141 @@ shell
 启动ls程序的参数应该是这样的
 \begin{code}
 argv[0]="ls";\\
-argv[1]="a.txt b.txt";\\
+argv[1]="a.txt ab.txt";\\
 argv[2]=NULL;
 
 execv("/bin/ls",argv);
 \end{code}
 
-所以ls会把"a.txt b.txt"（不包含引号）作为一个参数。参数和参数之间的分隔是由shell完成的
+所以ls会把"a.txt ab.txt"（不包含引号）作为一个参数。也就是说，参数和参数之间的分隔是由shell完成的\footnote{Windows下的程序，参数和参数之间的分隔是C库的启动函数完成的。GetCommandLine()后分割命令行参数再调用main()}。
 
+
+那么，shell进行字符串扩展和命令行参数分割的时候遵循的规则是这样的：
+
+\begin{itemize}
+\item shell进行字符串扩展的时候，只对游离的*和?进行扩展。如果*和？处于引号之内则不进行扩展。
+\item shell以空格为参数分割的界限。但是对于使用*和?扩展出来的字符串，以文件名为界限。比如文件名内的空格不会成为分割的界限。
+\end{itemize}
+
+
+如果执行的是下面的命令
+\begin{code}
+root@gentoo \textasciitilde \#ls　*.txt c.txt
+\end{code}
+
+shell对命令解析的步骤是：
+
+首先进行命令行字符串扩展，*.txt 扩展为　a.txt ab.txt；接着进行参数分割，这样就是3个参数: a.txt ab.txt c.txt；最后将这3个参数传递给ls。也就是执行下面的操作
+
+\begin{code}
+argv[0]="ls";\\
+argv[1]="a.txt";
+argv[2]="ab.txt";\\
+argv[3]=NULL;
+
+execv("/bin/ls",argv);
+\end{code}
+
+\subsection*{本节回顾}
+
+目前shell知识讲解仅限于能让读者小小入门，并顺利完成Gentoo的安装。现在小结一下shell的简单用法。
+
+\begin{itemize}
+\item shell以文本模式命令行作为用户界面。
+\item 命令行的规则是　命令+参数，以回车键代表输入完成，请立即执行命令。
+\item 参数之间以空格隔开。
+\item 文件名参数可以用通配符，shell会自动扩展后作为参数传递给要执行的命令。扩展后的文件名是每个文件名一个参数而不管文件名本身是不是包含空格。
+\item 如果需要避免shell对通配符进行shell扩展，加引号。
+\item 避免空格成为参数之间的分割的办法也是将带有空格的参数用引号引起来。
+\end{itemize}
+
+掌握这些知识应该用于完成安装Gentoo足够了。
+
+\subsection{正式开始安装过程}
+
+现在，Gentoo的安装可以正式开始了！现在再检查一下
+
+\begin{itemize}
+\item	使用LiveCD启动，处于LiveCD环境中。
+\item	LiveCD里已经配置好网络，能访问Internet。
+\item	完成分区规划。已经为将要安装的Gentoo规划并划分好分区。
+\item	现在处于LiveCD的命令提示符下。
+\end{itemize}
+
+一切准备就绪，可以开始安装了。
+
+首先要做的事情就是创建一个　gentoo　目录。这个将要用来安装Gentoo的分区就暂时挂载到这个目录下。如不特殊说明，我使用 \#　代表命令提示符， \#后的命令表示需要手工输入并敲回车执行。
+
+\begin{code}
+\#mkdir　/gentoo\\
+\#mount /dev/sdXX /gentoo
+\end{code}
+这里　/dev/sdXX　是读者为Gentoo划分的根目录。
+
+系统目录准备好了，接下来下载Gentoo的stage3。打开　\url{http://mirrors.163.com/gentoo/releases/amd64/current-stage3/} 或者如果打算使用x86就打开\url{http://mirrors.163.com/gentoo/releases/x86/current-stage3/}下载以最近的日期结尾的 stage3 压缩包。
+
+然后解压到 /gentoo
+\begin{code}
+\#tar stage3-*.tar.bz2 -C /gentoo 
+\end{code}
+
+接着下载　portage 快照
+\begin{code}
+\#wget http://mirrors.163.com/gentoo/snapshots/portage-latest.tar.bz2\\
+\#tar portage-latest.tar.bz2 -C /gentoo/usr/portage
+\end{code}
+
+解压完成后，复制dns配置　
+\begin{code}
+\#cp /etc/resolv.conf /gentoo/etc/resolv.conf
+\end{code}
+
+如果还有划分了其他目录，也要一并挂载进来
+
+挂载home分区，boot分区等（如果有划分独立分区的话）
+\begin{code}
+\#mount /dev/sdXX /gentoo/boot\\
+\#mount /dev/sdXX /gentoo/home
+\end{code}
+
+各使用读者划分好的分区代替命令中的　/dev/sdXX。
+
+下面是挂载/dev/ /proc /sys的。这里使用宿主系统的/dev /proc 和 /sys　目录。
+\begin{code}
+\#mount --rbind /dev/ /gentoo/dev\\
+\#mount --rbind /sys /gentoo/sys\\
+\#mount --rbind /proc /gentoo/proc
+\end{code}
+
+好了，最好这些操作，Gentoo最小环境（能用但是不能启动）的基本环境就搭建完毕了。
+执行
+
+\begin{code}
+\#chroot /gentoo　/bin/bash
+\end{code}
+或者如果你喜欢简洁的操作
+\begin{code}
+\#chroot /gentoo
+\end{code}
+
+\begin{insertnote}
+\subsection*{chroot命令解释}
+
+chroot 命令能将某个目录变成根目录并在新的根目录里执行shell或者命令行第二个参数指定的程序。
+
+执行 chroot /gentoo 后，chroot 将自己的根目录（不影响系统其他进程的根目录）切换到新的目录，然后执行新的根目录里的 \$SHELL（通常是/bin/bash）。
+这样获得的新shell就继承了chroot的根目录设定，也就是 /gentoo。 试试在里面执行　mkdir /test。然后开个新的终端检查看看　/gentoo/test 目录是不是在了。
+\end{insertnote}
+
+
+好了，现在就已经进入Gentoo的环境了。接下来要做的就是编译一个可启动的内核，编译一些引导必备软件，安装一个引导程序Gentoo就能启动了。
+
+\subsection{内核编译}
+编译内核，对初学者来说是个艰巨的任务。不过这是通往资深用户和熟练管理员的必经之路。该做的迟早要做，不如现在就做个了断吧。
+
+
+
+\subsubsection{新手使用 genkernel}
 
 \subsection{init 系统选择}
 Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启动就完全交给了init程序。由于init是第一个启动的程序，所以他的PID\footnote{Linux用一个数字代表一个进程。需要对进程操作的地方可以使用该数字。比如向进程发送信号，就是用PID标识发送的目标的。}是1\footnote{PID 0是个特殊进程（或者是根本就不是进程吧），每当系统空闲下来的时候PID　0才会执行，PID 0只做一个事情，就是让CPU进入节能模式。而且PID　0的个数就是CPU的个数。每个CPU都有一个属于自己的PID 0。所以系统真正的进程号是从1开始的。}。
@@ -741,9 +875,6 @@ Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启
 \subsubsection{sysvinit+openrc}
 \subsubsection{SystemD}
 
-\subsection{内核编译}
-
-\subsubsection{新手使用 genkernel}
 
 \subsection{引导管理器}
 \subsubsection{UEFI}
@@ -812,7 +943,8 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 \subsection{  路由表和路由协议}
 \subsection{ 以太网和WIFI}
 \subsection*{  小插曲：永恒的以太网}
-\section{  网络配置}
+
+\section{网络配置\label{sec:ifconfig}}
 \subsection{  图形环境下的工具	}
 \subsection{ 命令行配置工具}
 \subsection{ 网络自动配置和DHCP}
