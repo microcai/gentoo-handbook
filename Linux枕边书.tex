@@ -802,6 +802,14 @@ execv("/bin/ls",argv);
 \#mkdir　/gentoo\\
 \#mount /dev/sdXX /gentoo
 \end{code}
+
+\begin{insertnote}
+\subsection*{mount命令解释}
+
+在UNIX操作系统下，一个文件系统是要挂载到某个目录下才能访问其中的文件的。Windows和DOS下，操作系统会分配一个“盘符”，但在UNIX下，使用挂载命令将文件系统挂到一个目录下。被挂载的目录就成了那个挂载的文件系统的根目录，也称为挂载点。
+
+\end{insertnote}
+
 这里　/dev/sdXX　是读者为Gentoo划分的根目录。
 
 系统目录准备好了，接下来下载Gentoo的stage3。打开　\url{http://mirrors.163.com/gentoo/releases/amd64/current-stage3/} 或者如果打算使用x86就打开\url{http://mirrors.163.com/gentoo/releases/x86/current-stage3/}下载以最近的日期结尾的 stage3 压缩包。
@@ -865,6 +873,8 @@ chroot 命令能将某个目录变成根目录并在新的根目录里执行shel
 \subsection{内核编译}
 编译内核，对初学者来说是个艰巨的任务。不过这是通往资深用户和熟练管理员的必经之路。该做的迟早要做，不如现在就做个了断吧。
 
+首先获取一个内核代码。推荐使用git获得内核的代码而不是下载tar压缩包。因为更新到下一个版本的时候git只会下载差异部分而不会重新下载。
+git的具体用法请参考　\secref{sec:git}。
 
 
 \subsubsection{新手使用 genkernel}
@@ -1003,7 +1013,7 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 \section{   历史和后悔药	}
 \section{   中心式版本控制仓库 CVS	}
 \section{   CVS 后继 SVN	}
-\section{   GIT 划时代的分布式版本控制	}
+\section{GIT 划时代的分布式版本控制\label{sec:git}}
 \subsection{  Bitkeeper	}
 \subsection{  Linus 消失的一周	}
 \subsection{  版本控制设计为一个文件系统	}
