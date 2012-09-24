@@ -339,7 +339,12 @@ emerge会忠实的到vim的网站上下载vim的代码，解压，编译，然�
 
 第二个问题，命令行下无解。如果使用图形工具可以方便的浏览仓库中所有的软件。还是分门别类的哦！
 
-\chapter{快速安装 Linux}
+\chapter{安装 Linux}
+
+\begin{quotes}[0.5]{insomnia}
+It only takes three commands to install Gentoo!
+\end{quotes}
+
 Linux介绍了那么多，是时候将它安装到我们的电脑上了。接下来要边安装边学习哦。要安装一个Linux系统，我们总是选择一个发行版来安装。那么到底选择什么样的发行版呢? 理想的发行版通常是这样的一个发行版：它非常第容易安装，非常的容易适用；软件仓库里的软件非常丰富，我可以用包管理安装一切软件而不需要自己手动安装；对于一些软件我希望能容易的进行定制；快，非常快。在对各个发行版做里权衡后，我选择Gentoo作为本书中介绍Linux知识所使用的平台。
 
 
@@ -947,7 +952,7 @@ UNIX进程有父子关系。比如说你在shell下执行了一个程序，执�
 sysvinit有一个运行级别概念。每个级别用一个数字表示。预定义的运行级别如下：
 
 \begin{longtable}{|l|p{0.7\textwidth}|}\hline
-0　＆　关机\\\hline
+0　& 关机\\\hline
 1 & 单用户（救援）模式　\\\hline
 2 & 无网络模式　\\\hline
 3 & 多用户模式　\\\hline
@@ -955,7 +960,7 @@ sysvinit有一个运行级别概念。每个级别用一个数字表示。预定
 6 & 重启　\\\hline
 \end{longtable}
 
-不同的运行级别对sysvinit本身并没有特殊含义。只是认为人为这样的运行级别而已。
+不同的运行级别对sysvinit本身并没有特殊含义。只是人为这样的运行级别设定而已。
 sysvinit使用配置文件/etc/inittab决定启动过程。其中有一行
 \begin{code}
 id:3:initdefault:
@@ -1002,7 +1007,7 @@ S表示　Kill，?? 是一个两位数的数字，代表停止的次序（停止
 我表示我已经被Fedora这种模式弄晕了，Gentoo的openrc好歹是设置依赖关系自动决定启动次序的。这也是Fedora后来果断废除sysvinit的原因吧。Fedora的 /etc/init.d/下可是实实在在的shell脚本。没有依赖关系。引入Gentoo的openrc不如彻底革新到自动确定依靠关系或者是根本不需要依赖关系的新服务管理系统。
 
 \subsubsection{SystemD}
-sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本的一大特定就是慢。
+sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本的一大特点就是慢。
 另一个诟病的地方就是服务之间的关系复杂，很难搞懂。而且各个发行版并没有统一这些脚本。有的发行版为脚本加入了依赖关系，有的要依靠手工设置（是发行版打包的时候确定的）启动次序。管理上非常复杂。
 
 那么，针对sysvinit的问题：慢、管理复杂，Redhat的一个牛人开发了SystemD做为PID 1以克服sysvinit的缺陷。
@@ -1030,7 +1035,7 @@ sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本�
 
 \subsubsection{nano 编辑器快速入门}
 
-\chapter{Linux 探索}
+\chapter{使用Linux}
 \section{Shell 基础和日常应用}
 
 \section{文件管理}	
