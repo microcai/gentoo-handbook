@@ -9,10 +9,11 @@
 \usepackage[
 		paperwidth=195mm,
 		paperheight=271mm,
-		lmargin = 36mm,
-		rmargin = 30mm,
-		tmargin = 38mm,
-		bmargin = 35mm
+		%装订线宽10mm,页边距 28mm
+		lmargin = 38mm,
+		rmargin = 28mm,
+		tmargin = 36mm,
+		bmargin = 30mm
 	]{geometry}
 
 \usepackage{needspace}
@@ -60,9 +61,9 @@
 
 \newcounter{lizi}[chapter]
 
-\newenvironment{example}[1]{ \addtocounter{lizi}{1} \vskip 3ex \bf 例\hskip -0.05em\arabic{chapter}.\arabic{lizi}： #1%
+\newenvironment{example}[1]{ \addtocounter{lizi}{1} \vskip 2.5ex \bf 例\hskip -0.05em\arabic{chapter}.\arabic{lizi}： #1%
 \par %
- \tt\small\CJKfamily{zhfs}}{ \vskip 3ex  }
+ \tt\small\CJKfamily{zhfs}}{ \vskip 2.5ex  }
 
 \newcommand{\theexample}{\arabic{chapter}.\arabic{lizi}}
 
@@ -544,7 +545,7 @@ GPT包含128个分区表项，最多允许一个硬盘划分成128个分区，�
 
 Linux继承自UNIX树形目录。每个目录各司其职，并被FHS（Filesystem Hierarchy Standard）标准化。表3.1所列是一个不怎么完整的FHS标准，但是对于读者决定如何为他自己的电脑分区已经足够了。
 
-\begin{longtable}{|l|p{0.7\textwidth}|}
+\begin{longtable}{|l|p{0.7\textwidth}|}\hline
 \caption{FHS标准参考}\\
 \hline
 / & 根目录 \\\hline
@@ -876,14 +877,149 @@ chroot 命令能将某个目录变成根目录并在新的根目录里执行shel
 首先获取一个内核代码。推荐使用git获得内核的代码而不是下载tar压缩包。因为更新到下一个版本的时候git只会下载差异部分而不会重新下载。
 git的具体用法请参考　\secref{sec:git}。
 
+必须把内核代码放到　/usr/src/linux　哦，这样依赖内核头文件的软件才能找到所需的内核代码（仅限Gentoo设定）。
+
+{
+\bf\noindent 提示：
+}{
+\em shell　下一行太长可以在后面输入$\backslash$并在下一行输入剩余的命令。shell会在下一行自动出现提示符 $>$　。
+}
+
+
+\begin{code}
+\#cd /usr/src\\
+\#git clone \textbackslash \\
+>~ git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+\end{code}
+
+内核代码非常大，这一步操作会比较费时。可以先放一边，重新打开个新的终端然后chroot /gentoo，进行下一节的操作。等内核的代码克隆完成了再回到这里继续。
+
+Mark一下。
 
 \subsubsection{新手使用 genkernel}
 
+编译内核最难的地方就是配置内核了。 make menuconfig|xconfig|gconfig 最终的目的就是获得一个.config文件。其实后面的编译步骤都不难，难的就是一个能正常工作的 .config 配置文件。
+似乎某些重要配置不能随意回答Yes或No，对于没有多少经验的人来说，还是有不小的难度么。
+
+Gentoo开发者似乎注意到了不会自行编译内核的しんまい%ざこ%ばか
+\footnote{内核对你来说和这个词是一样的。}%
+，所以特意开发了しんまい的内核编译助手：genkernel。虽然genkernel能直接编译出一个工作内核，
+但是以genkernel获得一个能工作的.config文件并在此基础上修改定制才是修炼之道。
+
+这里就教大家用genkernel获得一个能启动的内核的.config配置文件好了。
+
+
 \subsection{init 系统选择}
-Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启动就完全交给了init程序。由于init是第一个启动的程序，所以他的PID\footnote{Linux用一个数字代表一个进程。需要对进程操作的地方可以使用该数字。比如向进程发送信号，就是用PID标识发送的目标的。}是1\footnote{PID 0是个特殊进程（或者是根本就不是进程吧），每当系统空闲下来的时候PID　0才会执行，PID 0只做一个事情，就是让CPU进入节能模式。而且PID　0的个数就是CPU的个数。每个CPU都有一个属于自己的PID 0。所以系统真正的进程号是从1开始的。}。
+Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启动就完全交给了init程序。由于init是第一个启动的程序，所以他的PID\footnote{Linux用一个数字代表一个进程。需要对进程操作的地方可以使用该数字。比如向进程发送信号，就是用PID标识发送的目标的。}是1。\footnote{PID 0是个特殊进程（或者是根本就不是进程吧），每当系统空闲下来的时候PID　0才会执行，PID 0只做一个事情，就是让CPU进入节能模式。而且PID　0的个数就是CPU的个数。每个CPU都有一个属于自己的PID 0。所以系统真正的进程号是从1开始的。}
+
+\begin{insertnote}
+\subsection*{Linux启动过程}
+计算机的启动步骤为 固件初始化 \textrightarrow 引导程序　\textrightarrow　内核加载并初始化　\textrightarrow　执行首个程序负责剩余的初始化　\textrightarrow　检查并挂载文件系统　\textrightarrow　启动后台服务　\textrightarrow　开启登录　\textrightarrow　（用户登录或者自动登录）　\textrightarrow　执行shell\footnote{Linux下命令行的shell就是bash。但是图形界面也可以算是一个shell哦，Desktop Shell是也。}。
+
+PID 1 的任务就是操作系统启动过程中的{\em 最后一英里（last mile）}。
+
+其实PID本身也不做什么操作，它只是依次启动其他服务：
+
+启动磁盘检查服务，启动文件系统挂载服务（这些都死一次性服务，系统启动过程中一次性执行）；
+
+启动udev服务，启动Dbus服务，启动电源管理服务等等（持续性服务，系统运行过程中一直执行的）；
+
+最后启动登录服务。
+
+命令行登录服务为 agetty 。在文本终端上显示登录提示接受用户登录。通常开启六个。tty1-tty6。使用组合键Ctrl+Alt+(F1-F6)访问。
+图形登录服务（显示管理器，Display Manager）为　GDM或者KDM或者XDM .... 好多，就看用户的选择了。通常发行版有一个默认的。一般和使用的默认桌面有关。
+默认使用Gnome桌面的发行版默认的显示管理器是GDM，默认使用KDE桌面的发行版默认使用的显示管理器就是KDM。也可以使用简洁的XDM。各有特点，但是功能都是一样的，可以随意互换。GDM一样能启动KDE桌面，KDM启动GNOME也没问题。
+
+\end{insertnote}
+
+简单的来说，启动操作系统过程中PID　1的任务就是bring up userspace。此外，PID 1还减负者收养孤儿的重任。
+
+\begin{insertnote}
+UNIX进程有父子关系。比如说你在shell下执行了一个程序，执行这个程序的进程就成为shell的子进程。子进程还可以有子进程的子进程。形成一个树形的进程关系。
+\end{insertnote}
+
+如果已经进程在子进程退出前就退出，那这个子进程就会成为没有父进程的“孤儿”。UNIX同时又规定一个进程必须有父进程，所以孤儿就被 PID 1收养成为PID 1 的子进程。
+
 
 \subsubsection{sysvinit+openrc}
+
+多数Linux发行版使用传统的sysvinit作为PID　1。　
+sysvinit有一个运行级别概念。每个级别用一个数字表示。预定义的运行级别如下：
+
+\begin{longtable}{|l|p{0.7\textwidth}|}\hline
+0　＆　关机\\\hline
+1 & 单用户（救援）模式　\\\hline
+2 & 无网络模式　\\\hline
+3 & 多用户模式　\\\hline
+5 & 图形模式　\\\hline
+6 & 重启　\\\hline
+\end{longtable}
+
+不同的运行级别对sysvinit本身并没有特殊含义。只是认为人为这样的运行级别而已。
+sysvinit使用配置文件/etc/inittab决定启动过程。其中有一行
+\begin{code}
+id:3:initdefault:
+\end{code}
+决定默认进入运行级别3。3替换改为5就可以默认进入运行级别5。
+
+/etc/inittab告诉了sysvinit每个运行级别下应该执行什么程序。例如inittab通常包含这么6行：
+\begin{code}
+c1:12345:respawn:/sbin/agetty 38400 tty1 linux\\
+c2:2345:respawn:/sbin/agetty 38400 tty2 linux\\
+c3:2345:respawn:/sbin/agetty 38400 tty3 linux\\
+c4:2345:respawn:/sbin/agetty 38400 tty4 linux\\
+c5:2345:respawn:/sbin/agetty 38400 tty5 linux\\
+c6:2345:respawn:/sbin/agetty 38400 tty6 linux
+\end{code}
+
+表示：在运行级别1 2 3 4 5下，启动c1，启动c1所需要执行的命令为/sbin/agetty 38400 tty1 linux, respawn表示服务退出后立即重新开启。
+c2 c3 c4 c5 c6 在运行级别 2 3 4 5下启动，　1 下不启动。因为1是单用户模式嘛。
+
+图形登录界面是由下面的设置控制的（以早期Fedora为例，现在的Fedora不使用Sysvinit）
+\begin{code}
+x:5:once:/etc/X11/prefdm 
+\end{code}
+/etc/X11/prefdm 查找用户偏好的DM\footnote{一般是GDM或者KDM。}并启动之。
+可以看出图形管理器是在运行级别5开启的。
+
+
+{\tt c1:12345:respawn:/sbin/agetty 38400 tty1 linux} 这一行的上面还包含了一些配置用于启动　/etc/init.d/ 下的服务程序。各个发行版的做法都不一样。没有借鉴意义。
+
+总之最后的结果是是\textbf{按循序}启动 /etc/init.d/　下的脚本
+（因为运行级别的关系不是每个脚本都会被执行。通常如果运行于级别5的话，所有服务都开启，也就是都会被执行。）。
+
+我在这里强调了一个次序。因为服务和服务之间是有明显的依赖关系的。举些例子吧：所有的服务都依赖　/etc/init.d/root。 这个服务确保正确的检查了根分区并以读写模式重新挂载根分区\footnote{系统启动的时候是以只读模式挂载根分区的}。所以 /etc/init.d/root 必须首先启动并且是正常启动才能执行后续操作；所有的系统服务都依赖正确的系统时间，所以 /etc/init.d/hwclock 也必须尽早完成启动，该服务读取CMOS时钟并设置好系统时间和时区信息；提供HTTP服务的服务apache必须于mysql之后启动。因为php页面需要和mysql数据库交互；等等等等。
+
+维护各种服务之间的依赖关系保证正确的启动次序是一个系统管理员非常非常重要的工作。
+但是也不必过于担心，发行版通常已经将这种重要的工作做的相当好了。
+
+对于Gentoo，/etc/init.d/　下的脚本并非bash脚本，而是openrc脚本。openrc主要的作用是“解析和缓存依赖关系”。
+每个脚本都包含　depend() 函数，openrc执行该函数获得依赖关系以决定脚本的执行次序。
+
+而对于Fedora/RHEL这样的系统（老Fedora，Fedora 从版本16开始不再使用sysvinit）， /etc/rc?.d/ （?为运行级别数字）下面有　S??XX K??XX 这样的符号链接到　/etc/init.d/XX 脚本。 %话说这也是Gentoo的启动脚本名为openrc的由来。
+S表示　Start，?? 是一个两位数的数字，代表启动的次序。
+S表示　Kill，?? 是一个两位数的数字，代表停止的次序（停止的次序和启动次序一样重要）。
+我表示我已经被Fedora这种模式弄晕了，Gentoo的openrc好歹是设置依赖关系自动决定启动次序的。这也是Fedora后来果断废除sysvinit的原因吧。Fedora的 /etc/init.d/下可是实实在在的shell脚本。没有依赖关系。引入Gentoo的openrc不如彻底革新到自动确定依靠关系或者是根本不需要依赖关系的新服务管理系统。
+
 \subsubsection{SystemD}
+sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本的一大特定就是慢。
+另一个诟病的地方就是服务之间的关系复杂，很难搞懂。而且各个发行版并没有统一这些脚本。有的发行版为脚本加入了依赖关系，有的要依靠手工设置（是发行版打包的时候确定的）启动次序。管理上非常复杂。
+
+那么，针对sysvinit的问题：慢、管理复杂，Redhat的一个牛人开发了SystemD做为PID 1以克服sysvinit的缺陷。
+
+那么SystemD到底有哪些好处呢？
+
+\begin{itemize}
+\item 极度并行化启动。
+		SystemD开发者说过，要系统启动更快的，第一条需要做到的是单位时间内启动更多服务。不像sysvinit那样串行启动，SystemD是高度并行的。SystemD同时启动多个服务。
+
+\item 无脚本启动。SystemD开发者说过，要系统启动更快，你还需要做到的是整个系统启动过程启动更少的程序。SystemD实现不依靠一行shell脚本启动完整的系统。
+
+\item 按需启动。SystemD开发者说过，要系统启动更快，按需启动是必不可少的。按需启动功能更进一步的使整个系统启动过程启动更少的程序。
+	按需启动还使得服务之间的依赖关系成了过去式。你不需要直接指定服务之间的依赖关系——只要一个服务用到了另一个服务，另一个服务会被按需启动，\em 就好像它本来就已经被启动了一样。
+
+\end{itemize}
+
 
 
 \subsection{引导管理器}
