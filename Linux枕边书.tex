@@ -45,7 +45,7 @@
 % define new command and environment 
 %=====================================================================================
 \newenvironment{notice}{\tt}{}
-\newenvironment{insertnote}{ \ttfamily\CJKfamily{KaiTi} }{\vskip 1cm }
+\newenvironment{insertnote}{ \ttfamily\CJKfamily{KaiTi} }{\vskip 0.5cm }
 \newenvironment{code}{\small\tt\begin{longtable}{p{0.8\textwidth}}}{\end{longtable}}
 
 \newcommand{\RTLpar}{% right-to-left paragraph alignment
@@ -993,7 +993,7 @@ x:5:once:/etc/X11/prefdm
 总之最后的结果是是\textbf{按循序}启动 /etc/init.d/　下的脚本
 （因为运行级别的关系不是每个脚本都会被执行。通常如果运行于级别5的话，所有服务都开启，也就是都会被执行。）。
 
-我在这里强调了一个次序。因为服务和服务之间是有明显的依赖关系的。举些例子吧：所有的服务都依赖　/etc/init.d/root。 这个服务确保正确的检查了根分区并以读写模式重新挂载根分区\footnote{系统启动的时候是以只读模式挂载根分区的}。所以 /etc/init.d/root 必须首先启动并且是正常启动才能执行后续操作；所有的系统服务都依赖正确的系统时间，所以 /etc/init.d/hwclock 也必须尽早完成启动，该服务读取CMOS时钟并设置好系统时间和时区信息；提供HTTP服务的服务apache必须于mysql之后启动。因为php页面需要和mysql数据库交互；等等等等。
+我在这里强调了一个次序。因为服务和服务之间是有明显的依赖关系的。举些例子吧：提供HTTP服务的服务apache必须于mysql之后启动。因为php页面需要和mysql数据库交互；NetworkManager依赖DBus,因为它需要和DBus提供通信功能；NetworkManger同时也依赖wpa\_suplicant，因为它需要wpa\_suplicant实现wifi加密认证；等等等等。
 
 维护各种服务之间的依赖关系保证正确的启动次序是一个系统管理员非常非常重要的工作。
 但是也不必过于担心，发行版通常已经将这种重要的工作做的相当好了。
@@ -1020,11 +1020,25 @@ sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本�
 
 \item 无脚本启动。SystemD开发者说过，要系统启动更快，你还需要做到的是整个系统启动过程启动更少的程序。SystemD实现不依靠一行shell脚本启动完整的系统。
 
-\item 按需启动。SystemD开发者说过，要系统启动更快，按需启动是必不可少的。按需启动功能更进一步的使整个系统启动过程启动更少的程序。
-	按需启动还使得服务之间的依赖关系成了过去式。你不需要直接指定服务之间的依赖关系——只要一个服务用到了另一个服务，另一个服务会被按需启动，\em 就好像它本来就已经被启动了一样。
+\item	按需启动。SystemD开发者说过，要系统启动更快，按需启动是必不可少的。按需启动功能更进一步的使整个系统启动过程启动更少的程序。
+
+\item	无需配置依赖性。
+		按需启动还使得服务之间的依赖关系成了过去式。你不需要直接指定服务之间的依赖关系——只要一个服务用到了另一个服务，另一个服务会被按需启动，\em 就好像它本来就已经被启动了一样。
 
 \end{itemize}
 
+SystemD能实现按需启动和避开依赖性配置，原因就是实现了socket activation。
+
+\subsection*{Socket Activation解释}
+如果所有的服务可以同时启动而不考虑依赖性，服务就可以最大化的并行启动了。如果不考虑依赖性，管理员也可以大大的轻松。
+那么服务和服务之间为何会相互依赖呢？答案是依赖它创建的Socket。{ \it Apache要在mysql之后启动，是因为网页需要数据库，需要mysql提供的数据库服务。它只所以需要这个服务，是因为它需要连接到mysql创建的socket。NetworkManager需要DBus服务，是因为NetworkManager需要连接到DBus，其实是连接到DBus创建的那个socket。}
+
+如果，如果所有的Socket一开始就已经全部创建完成，所有的服务就可以同时启动了。因为他们连接到对方的时候不会再遇到“连接拒绝：地址不存在”错误。
+
+如果没有Socket Activation, 同时启动NetworkManager和DBus的后果是，如果NetworkManager试图连接到DBus的时候，DBus还为创建它的socket,NetworkManager将出现连接错误而是服务启动失败。
+
+有了Socket Activation, NetworkManager和DBus不再需要串行化启动，同时启动接口，NetworkManager总能连接上需要的Socket，因为它已经在那里了。
+甚至DBus自身都不用启动，NetworkManager也能正常开启直到NetworkManager向这个socket发送了一些数据——这个时候DBus必须开起以便处理这个数据。这就是“安需启动”的实现方式。
 
 
 \subsection{引导管理器}
