@@ -1003,8 +1003,8 @@ x:5:once:/etc/X11/prefdm
 
 而对于Fedora/RHEL这样的系统（老Fedora，Fedora 从版本16开始不再使用sysvinit）， /etc/rc?.d/ （?为运行级别数字）下面有　S??XX K??XX 这样的符号链接到　/etc/init.d/XX 脚本。 %话说这也是Gentoo的启动脚本名为openrc的由来。
 S表示　Start，?? 是一个两位数的数字，代表启动的次序。
-S表示　Kill，?? 是一个两位数的数字，代表停止的次序（停止的次序和启动次序一样重要）。
-我表示我已经被Fedora这种模式弄晕了，Gentoo的openrc好歹是设置依赖关系自动决定启动次序的。这也是Fedora后来果断废除sysvinit的原因吧。Fedora的 /etc/init.d/下可是实实在在的shell脚本。没有依赖关系。引入Gentoo的openrc不如彻底革新到自动确定依靠关系或者是根本不需要依赖关系的新服务管理系统。
+S表示　Kill，?? 是一个两位数的数字，代表停止的次序（停止的次序和启动次序一样重要）。\footnote{
+我表示我已经被Fedora这种模式弄晕了，Gentoo的openrc好歹是设置依赖关系自动决定启动次序的。这也是Fedora后来果断废除sysvinit的原因吧。}Fedora的 /etc/init.d/下是实实在在的shell脚本。没有依赖关系。引入Gentoo的openrc不如彻底革新到自动确定依靠关系或者是根本不需要依赖关系的新服务管理系统。
 
 \subsubsection{SystemD}
 sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本的一大特点就是慢。
@@ -1029,6 +1029,7 @@ sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本�
 
 SystemD能实现按需启动和避开依赖性配置，原因就是实现了socket activation。
 
+\begin{insertnote}
 \subsection*{Socket Activation解释}
 如果所有的服务可以同时启动而不考虑依赖性，服务就可以最大化的并行启动了。如果不考虑依赖性，管理员也可以大大的轻松。
 那么服务和服务之间为何会相互依赖呢？答案是依赖它创建的Socket。{ \it Apache要在mysql之后启动，是因为网页需要数据库，需要mysql提供的数据库服务。它只所以需要这个服务，是因为它需要连接到mysql创建的socket。NetworkManager需要DBus服务，是因为NetworkManager需要连接到DBus，其实是连接到DBus创建的那个socket。}
@@ -1037,12 +1038,63 @@ SystemD能实现按需启动和避开依赖性配置，原因就是实现了sock
 
 如果没有Socket Activation, 同时启动NetworkManager和DBus的后果是，如果NetworkManager试图连接到DBus的时候，DBus还为创建它的socket,NetworkManager将出现连接错误而是服务启动失败。
 
-有了Socket Activation, NetworkManager和DBus不再需要串行化启动，同时启动接口，NetworkManager总能连接上需要的Socket，因为它已经在那里了。
+有了Socket Activation, NetworkManager和DBus不再需要串行化启动，同时启动即可。NetworkManager总能连接上需要的Socket，因为它已经在那里了。
 甚至DBus自身都不用启动，NetworkManager也能正常开启直到NetworkManager向这个socket发送了一些数据——这个时候DBus必须开起以便处理这个数据。这就是“安需启动”的实现方式。
 
+Socket Activation 将创建socket的任务交给了SystemD——利用了UNIX父进程可以向子进程遗传文件描述符\footnote{socket也是文件。也是使用的文件描述符标识的。}的特性——由SystemD创建后再由其启动的服务继承。
+\end{insertnote}
+
+除了Socket Activation，还有类似的Path Activation，DBus Activation。 
+
+DBus Activation好理解，有的服务提供的并不是Socket，而是在DBus下的一个名称接口。服务使用者并不连接到该服务，而是直接连接到DBus，然后向DBus发送请求，由DBus转发给对应的服务。这是一种RPC\footnote{远程过程调用。}实现的说。如果该服务不存在（比如还未启动），DBus会返回错误。DBus Activation将未启动的服务的接口提前标记为“可用”，等该服务真的被用到的时候再将对应的服务启动。
+
+Path　Activation原理类似。比如邮件投递服务，只要在 /var/spool/mail 下有文件，该服务就应该进行邮件投递，将成功投递的邮件删除。Path Activation将监视该文件夹的任务交给了SystemD，文件存在后SystemD激活邮件投递服务。
+
+那么，决定使用sysvinit还是SystemD了么？话说Gentoo给的不就是选择么？如果决定使用sysvinit什么都不用做，stage3里已经带上sysvinit了。如果决定用SystemD就继续哦，话说现在还不着急安装，内核代码下好了么？下好的话可以回到上面编译内核去了的说哦。
 
 \subsection{引导管理器}
+
+之前说Linux启动过程的时候说过，首先是硬件的初始化——也就是固件初始化——接着是固件加载并执行引导程序。
+引导程序负责将内核启动起来。引导程序自身是如何实现的我们不必关心，倒是引导程序如何被固件找到载，以及引导程序如何找到内核是个重点话题。
+
+IBM创造PC的时候给PC开发了一个名字叫BIOS（Basic Input Output System）的固件。该固件被存储在一个ROM\footnote{只读存储器，断电后内容不会消失，存储内容生产的时候固化，无法修改}上。 BIOS提供了基本的输入输出功能，负责机器的上电自检（POST，Power On Self Test）和操作系统加载（其实是加载MBR。MBR再加载DOS。）。操作系统运行后BIOS作为基本输入输出设备的驱动程序存在\footnote{Windows、Linux这样的操作系统使用自己的驱动，并不依赖BIOS提供的驱动。}。
+
+也就是说，固件初始化完成后，就读取硬盘的第一个扇区（MBR）并执行这一小段程序。那么，固件并不关心你用的是什么操作系统，用的是什么引导程序，它只是遵照约定，执行MBR而已。
+
+微软的操作系统，不管是DOS还是Windows，其MBR都是一样的。就是查找活动分区\footnote{分区的一个额外属性。活动或者非活动。值得一提的是DOS无法访问非活动主分区。}并执行分区的第一个扇区（PBR）。所以微软操作系统的真正引导程序在系统安装分区（C：）的第一个扇区里，也称呼为分区引导扇区，Partition Boot Record。这是GRUB所以能支持引导Windows的关键原因哦。我们下文马上会介绍到。
+
+Linux下普遍使用的引导程序——或者说是事实标准——是GRUB（GRand Unified Bootloader）。其大名是如醍醐灌顶，如雷贯耳，谁人不知，谁人不晓啊。
+
+BIOS这种固件使用简单的伎俩查找引导程序。不过MBR只有区区512个字节，还要留64个字节给分区表，用于引导程序就只有448个字节了。想要做功能多点的引导程序都不行啊！空间问题。
+
+GRUB使用的办法就是接力加载。存在MBR上的那份代码只是完整GRUB的加载器。因为完成的GRUB需要支持ext2/ext3/ext4/fat/iso9660等等各种文件系统，以便读取存储在磁盘上的内核，还要支持配置文件，还要有命令行模式，故而GRUB的代码不可能少于448个字节。
+
+GRUB完整启动后，读取配置 /grub/grub.conf\footnote{注意，此/非Linux启动后的/，而是安装了GRUB的那个分区。如果没有/grub.conf 会查找 /boot/grub/grub.conf。所以在Linux环境下配置文件路径就是/boot/grub/grub.conf而不管/boot分区是不是独立的。}，显示操作系统选择列表。
+
+Linux下第一个硬盘的第一个分区是/dev/sda1，但是GRUB下却是从0开始的，(hd0,0)。这点需要注意。grub.conf的引导项配置以title开始，例如
+
+\begin{code}
+title Gentoo\\
+kernel /vmlinuz ro root=LABEL=GENTOO\\
+initrd /initrd.img
+\end{code}
+
+这里的 /　指的是GRUB安装分区。如果GRUB被安装到/boot分区，那么grub下的/对应的Linux下的路径就是/boot。
+kernel　命令指示后面加载一个Linux内核，内核文件后面跟随的字符串将成为内核参数。好多参数可以控制内核的行为。参数的介绍参考　\faqref{FAQ：kernelparamter}
+
+如果 vmlinuz不在 /boot分区，比如想在命令行模式启动其他内核的时候，可以用　root (hdX,Y) 的格式指定一个GRUB根。如下面的
+
+\begin{code}
+title Test-kernel\\
+root (hd0,1)\\
+kernel /usr/src/linux/arch/x86/boot/bzImage ro root=/dev/sda2
+\end{code}
+
+kernel用来加载一个内核，initrd 用来加载initramfs。对启动Linux来说，initrd并不是必须的。initrd的详细解释可以参考　\faqref{FAQ:initramfs}。
+
 \subsubsection{UEFI}
+
+
 
 \subsection{安装基础系统}
 \subsection{系统初步配置—重启前配置}
