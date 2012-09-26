@@ -1094,6 +1094,19 @@ kernel用来加载一个内核，initrd 用来加载initramfs。对启动Linux�
 
 \subsubsection{UEFI}
 
+IBM发明PC的时候远见不足，BIOS的历史局限性逐渐显现。BIOS最大的禁锢就是运行于16位模式。在连32位都要过时的年代，BIOS却还是16位的。
+
+彻底的革新，就是要从固件开始就让CPU处于64位模式运行，固件的代码再也不用遇到16位模式下的限制了。固件能集成更多的功能，甚至能直接访问文件系统，集成功能强大的引导程序。
+
+UEFI就是Intel提出的新的BIOS。和BIOS相比，UEFI对于操作系统来说区别就是：
+\begin{itemize}
+\item 纯64位启动。从UEFI到GRUB（并不是必须的存在，UEFI可以直接启动Linux）到Linux，中间没有16位代码。
+\item UEFI使用GPT分区表，支持访问FAT文件系统。
+\item 引导程序是EFI系统分区（标记EFI系统分区属性，文件系统为FAT）里的文件，扩展名为.efi。
+\item Linux可以由　grub.efi　引导，也可以将自身直接作为　vmlinuz.efi 被UEFI直接引导。
+\item 在操作系统环境下可以直接控制UEFI的引导选项。BIOS下必须进入BIOS设置程序才能设置。
+\end{itemize}
+
 
 
 \subsection{安装基础系统}
