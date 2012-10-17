@@ -26,7 +26,7 @@
 \usepackage{wasysym}
 \usepackage{amsthm}
 \usepackage{stmaryrd}
-
+\usepackage{xltxtra}
 % always load hyperref as last packages
 \usepackage[colorlinks,linkcolor=black]{hyperref}
 
@@ -73,7 +73,7 @@
 }\makeatother
 
 \newcommand{\chatuNoStar}[3][scale=0.35]{%
-\begin{figure}[h]%
+\begin{figure}[htb]%
 \noindent\centering%
 \includegraphics[#1]{pics/#2}%
 \caption{#3\label{fig:#2}}%
@@ -460,165 +460,7 @@ Gentoo下几乎所有软件都是本机编译的，自然不存在兼容性问�
 启动LiveCD，首先配置好网络环境，有关网络环境的配置请参考 \secref{sec:ifconfig}。
 
 
-\section{分区规划}
-任何系统都是安装到硬盘使用的
-\footnote{好吧，先忽略掉LiveCD 和  WinPE 这类不需要安装的系统，咱讨论的是一般用途的桌面操作系统。}，
-安装到硬盘之前，必须先划好家。在介绍如何分区前，首先得知道什么是分区，然后参考
-FHS\footnote{FHS 是文件系统目录结构的一个标准。规定了根分区下各个子目录的名称和用途。}
-指示结合自己的实际情况规划好分区。
-
-\subsection{分区基础知识}
-最初，计算机使用软盘，软盘是没有分区的。后来蓝色巨人IBM发明了硬盘。硬盘的容量一下子比软盘大出好多倍。当时的MS-DOS所使用的FAT12文件系统无法管理那么大的硬盘。于是西雅图的巨人和蓝色巨人想出来把硬盘划成逻辑上的几个区域，每个区域大小都在MS-DOS能管理的范围之内——这样的逻辑区域就是分区。人们发现将硬盘划分为逻辑上的几个区域后，更容易组织硬盘上的数据了；而且一个文件系统错误只会影响到一个分区的数据，其他分区不受影响，数据的安全性也得到的提升。因而后来的DOS虽然将FAT12进化到了FAT16，能管理当时的大容量硬盘了，但是分区这个功能却保留了下来\footnote{虽然是MS-DOS的发明，但是Linux可不会拒绝这样的发明。Linux还支持 BSD 发明的分区格式，总之，Linux决定支持越多的分区表格式越好，这极大的方便了用户，不是么？}。
-
-既然用户划了分区，操作系统总得知道用户到底怎么划分的，描述分区的数据被称作分区表。既有分区表，必须有个地方存储，也必须知道到哪里去读取分区表。MS-DOS的把分区表和引导程序放入硬盘的第一个扇区\footnote{扇区是硬盘最小寻址单位。参考附录A. FAQ里的条目“什么是扇区”。}。
-
-硬盘的第一个扇区又被称呼为MBR\footnote{MBR是硬盘的第一个扇区，具体解释请参考附录A. FAQ 里的条目“什么是 MBR”。}。
-MBR既要存储引导程序，又要储存分区表，是个寸土寸金的地方，分区表大小受限，只有4个表项。也就是说，一个 MBR分区表最多只能有4个分区。要是只有四个，似乎并不够用。
-
-MS-DOS将其中一个分区作为扩展分区，然后再扩展分区里再建分区表。扩展分区里面的分区就是逻辑分区，MBR 上的分区表就是主分区表。主分区表里划分的分区自然就是主分区了。所以一个MBR格式分区表最多允许3个主分区和1个扩展分区，或者4个主分区。扩展分区里再创建逻辑分区，没有数量限制。
-\chatu{logicalpart}{链式逻辑分区表}
-
-\begin{notice}
-注意：扩展分区里的逻辑分区并不是表格形式存储的，而是“链式”存储。如图\thefigure所示。每个逻辑分区包含查找下一个逻辑分区的信息。因而一个逻辑分区的破坏有可能造成链式效应，将所有的逻辑分区全部摧毁。
-\end{notice}
-
-由于近来UEFI\footnote{参考附录A “UEFI 和 BIOS”。}  的兴起，
-UEFI指定的分区表格式GPT也流行开来了。
-和MBR不同的是UEFI不需要专门的引导扇区，引导程序由UEFI直接从文件系统上加载。所以GPT只是分区表，不需要和引导程序共存。
-
-MBR 的分区表只有64个字节大小，只能包含最多4个分区的信息。
-GPT包含128个分区表项，最多允许一个硬盘划分成128个分区，足够了。
-能表示更多的分区并不是GPT唯一的优点，MBR分区表只能管理2.2TB
-\footnote{MBR使用4个字节表示分区起始位置的偏移量。
-偏移量以扇区为单位，一个扇区为512字节，那么MBR分区表能管理的最大硬盘大小为$2^{31}*512Byte = 2TB$。
-又因为硬盘厂家以1000为进制而不是1024，故而大约为2.2TB。}%
-以下大小的硬盘，GPT却可以管理容量超过9ZB\footnote{1ZB=1024PB 1PB=1024TB. 硬盘厂家的计算是 1ZB=1000PB 1PB=1000TB。}的硬盘。
-在大容量硬盘越来越普遍的今天，MBR显得越来越力不从心。GPT正好接替MBR成为今后PC硬盘的主流分区表格式。
-
-如果你电脑的固件是UEFI，不管硬盘实际是否大于2TB，建议最好使用GPT分区表。
-
-\subsection{为磁盘分区}
-
-\chatu{gparted-gui}{gparted界面}
-
-\FloatBarrier
-
-\normalfont
-
-有很多种工具可以对硬盘进行分区。今天的主角是 gparted , 这个是一个非常简单易用的分区管理软件，带图形界面的哦~~
-
-要打开gparted，在终端执行sudo gparted。如果 Fedora 的LiveCD提示没有这个命令，则用命令sudo yum install gparted或者apt-get install gparted进行安装。gparted界面如图\thefigure所示。
-
-在gparted里所做的一切操作都不是立即执行的，只有应用操作后才被一次性执行。所以未应用前撤销操作是来得及的。
-下面我把为硬盘分区所需要的几个主要操作图解一下。请读者根据此处的图示熟悉操作流程，并在学习下一个小节后自行分区。
-
-\chatu{gparted-apply}{gparted应用操作}
-\noindent要应用操作：\\\indent
-1. 单击“编辑”|“应用全部操作”菜单。如图\thefigure所示。\\\indent
-2. 在弹出的警告对话框中选择“是”。
-
-\chatu{gparted-newpart-boot}{gparted新建分区}
-
-\noindent建立一个分区：\\\indent
-1. 选择磁盘的空白区域，右击后在菜单里选择“新建”。\\\indent
-2. 在弹出的对话框里指定一个大小、分区类型和文件系统，如图\thefigure所示。\\\indent
-\hskip 4em %
-\begin{notice} %
-  注意：分区表为GPT格式的只能选择主分区。
-\end{notice} \\\indent
-3. 单击“添加”按钮，新建的分区就编排在了任务列队里了\\\indent
-
-\chatu{gparted-delpart}{gparted删除分区}
-\noindent删除一个分区:\\\indent
-1. 右击要删除的分区在菜单里选择“删除”。如图\thefigure所示。 %\\\indent
-
-\chatu{gparted-newpt1.png}{新建分区表}
-
-\noindent新建一个分区表：\\\indent
-1. 单击“设备”｜“创建分区表”菜单，如图\thefigure所示。
-
-\chatu{gparted-newpt2.png}{新建分区表}
-
-\indent2.在打开的对话框里点“高级”前面的箭头，选择一个分区表类型。默认为MS-DOS分区表，也就是MBR分区表。
-我需要在这里我选择gpt分区表。如图\thefigure所示。
-
-\FloatBarrier
-
-好了，gparted的基本操作就完成了，接下来学习一下文件系统的结构后按照自己的意愿为自己的系统分区吧。
-
-\subsection{文件系统结构标准（FHS）}
-
-Linux继承自UNIX树形目录。每个目录各司其职，并被FHS（Filesystem Hierarchy Standard）标准化。表3.1所列是一个不怎么完整的FHS标准，但是对于读者决定如何为他自己的电脑分区已经足够了。
-
-\begin{longtable}{|l|p{0.7\textwidth}|}\hline
-\caption{FHS标准参考}\\
-\hline
-/ & 根目录 \\\hline
-/bin & 基本系统程序。如 ls cat grep \\\hline
-/sbin & 只供管理员使用的基本系统程序 \\\hline
-/boot & 内核和引导程序，通常为独立分区\\\hline
-/dev & 设备文件目录 \\\hline
-/etc & 存放系统配置文件。不允许存放为独立分区\\\hline
-/home & 存放非root用户的家目录。 
-比如foo用户的家目录就是/home/foo
-一般用来存在个人文件和个人设置。
-通常强烈建议独立为一个分区。\\\hline
-/lib & 系统基本库，被 /bin /sbin 里的程序依赖的库 \\\hline
-/media & 可移动媒体的挂载目录。比如cdrom和u盘。被/run/media代替\\\hline
-/mnt & 临时挂载目录\\\hline
-/opt & 通常用于安装非开源软件，如Adobe Reader \\\hline
-/proc & 虚拟的文件系统，用来获得内核和运行中的程序的信息\\\hline
-/root & root用户的家目录\\\hline
-/srv & 做服务器使用的时候 ，用来存储服务的数据。如一个git服务器通常将仓库存放于/srv/git\\\hline
-/tmp & 临时目录。其中文件关机丢失。建议挂载为tmpfs虚拟文件系统，对于tmpfs的介绍可以参考第7章。 \\\hline
-/usr & 非基本系统程序根目录，下面的结构和 / 差不多 \\\hline
-/usr/bin & 同 /bin。只是非基本程序。如xeye  elinks . \\\hline
-/usr/sbin & 同 /sbin。只是非基本程序。如system-config-firewall \\\hline
-/usr/include & 头文件目录。\\\hline
-/usr/lib & 同 /lib。只是其包含的库是不被/sbin、/bin使用的。\\\hline
-/usr/share &  保存架构无关的共享数据。如图标\\\hline
-/var & 系统运行中会不停变化的文件。比如各种log，包管理器的数据库，等等。通常在服务器上是独立分区，个人电脑可以不独立划分。\\\hline
-/var/cache & 缓存。该目录下的文件可以安全删除，要求使用它的程序必须能重建它。比如fontconfig的缓存。\\\hline
-/run 和 /var/run & 临时目录。包含本次系统运行时的信息。\\\hline
-/var/log & 存放各种日志文件。\\\hline
-/var/tmp & 临时文件，可能重启后还在。注意和/tmp的区别。\\\hline
-\end{longtable}
-
-
-知道了系统各个目录的作用，就好为目录进行分区了。通常我们使用4个分区 /boot、/、/home 和一个交换分区。
-
-\begin{notice}
-注意：我在使用“/home分区”这个术语的时候，我指的是为“/home”分一个单独的分区，并且将这个分区挂载到“/home”目录下。我通常不使用“挂载到/home目录的分区”而直接简述为“/home分区”。同样的，“/分区”（或者根分区）指的就是挂载到根目录的分区。
-\end{notice}
-
-/boot独立为一个分区的好处是防止根文件系统的错误蔓延导致/boot/*文件破坏无法正常启动。另一个好处是 /分区可以使用引导程序（如GRUB）不支持的文件系统格式。例如GRUB不支持XFS文件系统格式，但是你可以让/boot分区使用ext2格式从而使 /分区可以使用XFS格式。如果/boot没有独立出一个分区。那 /分区就只能使用引导程序所支持的文件系统了。
-
-/home独立一个分区的好处就是将用户数据彻底和系统数据分离。由于/home目录通常频繁读取写入，和 /分区隔离可以避免 /分区被碎片化。
-
-提示：其他目录，比如“/var”，可以独立一个分区也可以不独立。就看你系统的用处了。作为桌面用途，完全没必要。如果是服务器，“/var/log”可能会很大。邮件服务器的“/var/mail”就可能会非常大，所以非常有必要使用独立分区。
-
-\subsection{文件系统选择}
-
-
-Linux支持的文件系统非常多，有自家系列 ext2/ext3/ext4、甲骨文公司开发的btrfs，来自硅谷图像的XFS等等等等。
-
-不过选一个文件系统没那么纠结的。对于根分区\footnote{根目录所在分区}，既然大部分发行版默认使用ext4，那就ext4吧。
-
-为了引导程序的兼容性，/boot分区仍旧使用ext2或者ext3。
-
-对于/tmp这样的目录，强烈建议使用tmpfs\footnote{参考第7章“文件系统”。}。tmpfs是一种内存文件系统，所有tmpfs上创建的文件都是在内存里的，关机后就会消失。非常适合用作/tmp的文件系统。既能加快系统速度，又能保护硬盘。
-
-对于/home目录，如果是个BT爱好者，会有很多大文件，我推荐使用XFS文件系统。其他情况下还是ext4各方面性能比较平衡。
-
-如果希望为自己选择最佳的分区格式，请参考第7章“文件系统”的内容。
-
-\section{开始安装}
-
-废话了那么多，介绍了一些安装前需要知道的基础知识，现在终于要进入正题了，安装Gentoo。
-Gentoo的安装非常简单，首先是分区。这个前面已经介绍过了。我现在假定读者已经在LiveCD 环境中完成分区了。下面开始真正的安装。
-
-
-\subsection{shell 快速入门}
+\section{shell 快速入门}
 
 由于安装Gentoo需要执行shell命令，所以我需要讲解一下最基本的shell命令。高级的shell操作讲解要到
 
@@ -787,134 +629,142 @@ execv("/bin/ls",argv);
 \item 避免空格成为参数之间的分割的办法也是将带有空格的参数用引号引起来。
 \end{itemize}
 
-掌握这些知识应该用于完成安装Gentoo足够了。
+掌握这些shell知识应该用于完成安装Gentoo足够了。
 
-\subsection{正式开始安装过程}
 
-现在，Gentoo的安装可以正式开始了！现在再检查一下
+\section{引导管理器}
+Linux的启动过程是一个令人着迷的过程，首先是硬件的初始化——也就是固件初始化——接着是固件加载并执行引导程序。
+引导程序负责将内核启动起来。然后内核执行第一个程序/sbin/init，后续的启动就交给init完成了。
 
+引导程序自身是如何实现的我们不必关心，倒是引导程序如何被固件找到载，以及引导程序如何找到内核是个重点话题。
+
+IBM创造PC的时候给PC开发了一个名字叫BIOS（Basic Input Output System）的固件。该固件被存储在一个ROM\footnote{只读存储器，断电后内容不会消失，存储内容生产的时候固化，无法修改}上。 BIOS提供了基本的输入输出功能，负责机器的上电自检（POST，Power On Self Test）和操作系统加载（其实是加载MBR。MBR再加载DOS。）。操作系统运行后BIOS作为基本输入输出设备的驱动程序存在\footnote{Windows、Linux这样的操作系统使用自己的驱动，并不依赖BIOS提供的驱动。}。
+
+也就是说，固件初始化完成后，就读取硬盘的第一个扇区（MBR）并执行这一小段程序。那么，固件并不关心你用的是什么操作系统，用的是什么引导程序，它只是遵照约定，执行MBR而已。
+
+微软的操作系统，不管是DOS还是Windows，其MBR都是一样的。就是查找活动分区\footnote{分区的一个额外属性。活动或者非活动。值得一提的是DOS无法访问非活动主分区。}并执行分区的第一个扇区（PBR）。所以微软操作系统的真正引导程序在系统安装分区（C：）的第一个扇区里，也称呼为分区引导扇区，Partition Boot Record。这是GRUB所以能支持引导Windows的关键原因哦。我们下文马上会介绍到。
+
+Linux下普遍使用的引导程序——或者说是事实标准——是GRUB（GRand Unified Bootloader）。其大名是如醍醐灌顶，如雷贯耳，谁人不知，谁人不晓啊。
+
+BIOS这种固件使用简单的伎俩查找引导程序。不过MBR只有区区512个字节，还要留64个字节给分区表，用于引导程序就只有448个字节了。想要做功能多点的引导程序都不行啊！空间问题。
+
+GRUB使用的办法就是接力加载。存在MBR上的那份代码只是完整GRUB的加载器。因为完成的GRUB需要支持ext2/ext3/ext4/fat/iso9660等等各种文件系统，以便读取存储在磁盘上的内核，还要支持配置文件，还要有命令行模式，故而GRUB的代码不可能少于448个字节。
+
+GRUB完整启动后，读取配置 /grub/grub.conf\footnote{注意，此/非Linux启动后的/，而是安装了GRUB的那个分区。如果没有/grub.conf 会查找 /boot/grub/grub.conf。所以在Linux环境下配置文件路径就是/boot/grub/grub.conf而不管/boot分区是不是独立的。}，显示操作系统选择列表。
+
+Linux下第一个硬盘的第一个分区是/dev/sda1，但是GRUB下却是从0开始的，(hd0,0)。这点需要注意。grub.conf的引导项配置以title开始，例如
+
+\begin{code}
+title Gentoo\\
+kernel /vmlinuz ro root=LABEL=GENTOO\\
+initrd /initrd.img
+\end{code}
+
+这里的 /　指的是GRUB安装分区。如果GRUB被安装到/boot分区，那么grub下的/对应的Linux下的路径就是/boot。
+kernel　命令指示后面加载一个Linux内核，内核文件后面跟随的字符串将成为内核参数。好多参数可以控制内核的行为。参数的介绍参考　\faqref{FAQ：kernelparamter}
+
+如果 vmlinuz不在 /boot分区，比如想在命令行模式启动其他内核的时候，可以用　root (hdX,Y) 的格式指定一个GRUB根。如下面的
+
+\begin{code}
+title Test-kernel\\
+root (hd0,1)\\
+kernel /usr/src/linux/arch/x86/boot/bzImage ro root=/dev/sda2
+\end{code}
+
+kernel用来加载一个内核，initrd 用来加载initramfs。对启动Linux来说，initrd并不是必须的。initrd的详细解释可以参考　\faqref{FAQ:initramfs}。
+
+安装grub，执行下面的命令进行安装
+\begin{code}
+\#emerge grub-static
+\end{code}
+
+这个时候　grub　会被安装到 /sbin/grub，　16位模式的GRUB会被安装到/usr/lib/grub ，　然后拷贝一份到 /boot/grub。
+/sbin/grub 这个命令可以在Linux环境下执行，除了不能启动Linux内核，GRUB能用的其他命令可以在这个命令行下使用。
+执行：
+\begin{code}
+\#grub
+\end{code}
+
+会出现grub的交互式命令行模式，这个和BIOS启动GRUB，按C进入的命令行模式是一样的。唯一的区别就是这个模式不能真正的启动Linux。
+现在我们要做的就是执行　root (hdX,Y)命令定位到 /boot　分区（如果/boot分区列位有划分独立的分区的话，否则就是定位到/分区。），然后执行 setup (hd0)。
+这么做的意思就是将 grub 的“接头人”装到MBR上，由这份接头人性质的代码加载 /boot/grub/stage2实现GRUB的启动。
+
+也可以不进入grub命令行模式，直接使用 grub-install 命令进行安装。但是熟悉grub交互式命令行模式对以后使用grub修复受损的MBR也是非常有用的。所以推荐使用grub的交互式命令行模式。
+
+不过，这样的GRUB可是对UEFI无效的哦~。
+
+\subsubsection{UEFI}
+
+IBM发明PC的时候远见不足，BIOS的历史局限性逐渐显现。BIOS最大的禁锢就是运行于16位模式。在连32位都要过时的年代，BIOS却还是16位的。
+
+彻底的革新，就是要从固件开始就让CPU处于64位模式运行，固件的代码再也不用遇到16位模式下的限制了。固件能集成更多的功能，甚至能直接访问文件系统，集成功能强大的引导程序。
+
+UEFI就是Intel提出的新的BIOS。和BIOS相比，UEFI对于操作系统来说区别就是：
 \begin{itemize}
-\item	使用LiveCD启动，处于LiveCD环境中。
-\item	LiveCD里已经配置好网络，能访问Internet。
-\item	完成分区规划。已经为将要安装的Gentoo规划并划分好分区。
-\item	现在处于LiveCD的命令提示符下。
+\item 纯64位启动。从UEFI到GRUB（并不是必须的存在，UEFI可以直接启动Linux）到Linux，中间没有16位代码。
+\item UEFI使用GPT分区表，支持访问FAT文件系统。
+\item 引导程序是EFI系统分区（标记EFI系统分区属性，文件系统为FAT）里的文件，扩展名为.efi。
+\item Linux可以由　grub.efi　引导，也可以将自身直接作为　vmlinuz.efi 被UEFI直接引导。
+\item 在操作系统环境下可以直接控制UEFI的引导选项。BIOS下必须进入BIOS设置程序才能设置。
 \end{itemize}
 
-一切准备就绪，可以开始安装了。
+要使用UEFI启动，需要两个要素：
+\begin{itemize}
+\item 一个UEFI能识别的分区，里面存放引导程序。UEFI使用GPT分区表，支持访问FAT文件系统。需要将一个FAT分区的分区类型设置为EF00。
+\item 告诉UEFI从哪个引导程序\footnote{扩展名.efi，也就是EFI可执行程序。}引导。可以在UEFI的设置界面设置，也可以使用efibootmgr命令行实用工具设置。
+\end{itemize}
 
-首先要做的事情就是创建一个　gentoo　目录。这个将要用来安装Gentoo的分区就暂时挂载到这个目录下。如不特殊说明，我使用 \#　代表命令提示符， \#后的命令表示需要手工输入并敲回车执行。
+能用于UEFI的引导程序并是上文所提到的grub。您有三个选择：一是使用打了EFI补丁的GRUB；二是去使用GRUB2；三是使用内核自己\footnote{没错，编译好后的内核文件本身也是一个合法的EFI可执行文件！当然，前提是打开EFU stub选项。}。GRUB2的语法比较晦涩难懂，暂时没什么必要的话还是继续使用GRUB比较好。我会在后面的章节再次详解GRUB和GRUB2的配置文件语法，如果将来想换到GRUB2进行引导的话还是可以修炼的哦。
 
-\begin{code}
-\#mkdir　/gentoo\\
-\#mount /dev/sdXX /gentoo
-\end{code}
+打过补丁的GRUB可以从Fedora\footnote{Fedora从18开始BOOTX64.EFI不再是GRUB了。默哀。追Fedora还真难。没准等读者买到我的书的时候，Fedora 18已经成了落后的过去式了。}的LiveCD上提取。光盘根目录下的 /EFI/Boot/BOOTX64.EFI 就是EFI版的GRUB。如果没有Fedora光盘，其他的支持EFI启动的LiveCD上也有。通常在光盘根目录的EFI子目录里。
 
-\begin{insertnote}
-\subsection*{mount命令解释}
-
-在UNIX操作系统下，一个文件系统是要挂载到某个目录下才能访问其中的文件的。Windows和DOS下，操作系统会分配一个“盘符”，但在UNIX下，使用挂载命令将文件系统挂到一个目录下。被挂载的目录就成了那个挂载的文件系统的根目录，也称为挂载点。
-
-\end{insertnote}
-
-这里　/dev/sdXX　是读者为Gentoo划分的根目录。
-
-系统目录准备好了，接下来下载Gentoo的stage3。打开　\url{http://mirrors.163.com/gentoo/releases/amd64/current-stage3/} 或者如果打算使用x86就打开\url{http://mirrors.163.com/gentoo/releases/x86/current-stage3/}下载以最近的日期结尾的 stage3 压缩包。
-
-然后解压到 /gentoo
-\begin{code}
-\#tar stage3-*.tar.bz2 -C /gentoo 
-\end{code}
-
-接着下载　portage 快照
-\begin{code}
-\#wget http://mirrors.163.com/gentoo/snapshots/portage-latest.tar.bz2\\
-\#tar portage-latest.tar.bz2 -C /gentoo/usr/portage
-\end{code}
-
-解压完成后，复制dns配置　
-\begin{code}
-\#cp /etc/resolv.conf /gentoo/etc/resolv.conf
-\end{code}
-
-如果还有划分了其他目录，也要一并挂载进来
-
-挂载home分区，boot分区等（如果有划分独立分区的话）
-\begin{code}
-\#mount /dev/sdXX /gentoo/boot\\
-\#mount /dev/sdXX /gentoo/home
-\end{code}
-
-各使用读者划分好的分区代替命令中的　/dev/sdXX。
-
-下面是挂载/dev/ /proc /sys的。这里使用宿主系统的/dev /proc 和 /sys　目录。
-\begin{code}
-\#mount --rbind /dev/ /gentoo/dev\\
-\#mount --rbind /sys /gentoo/sys\\
-\#mount --rbind /proc /gentoo/proc
-\end{code}
-
-好了，最好这些操作，Gentoo最小环境（能用但是不能启动）的基本环境就搭建完毕了。
-执行
-
-\begin{code}
-\#chroot /gentoo　/bin/bash
-\end{code}
-或者如果你喜欢简洁的操作
-\begin{code}
-\#chroot /gentoo
-\end{code}
-
-\begin{insertnote}
-\subsection*{chroot命令解释}
-
-chroot 命令能将某个目录变成根目录并在新的根目录里执行shell或者命令行第二个参数指定的程序。
-
-执行 chroot /gentoo 后，chroot 将自己的根目录（不影响系统其他进程的根目录）切换到新的目录，然后执行新的根目录里的 \$SHELL（通常是/bin/bash）。
-这样获得的新shell就继承了chroot的根目录设定，也就是 /gentoo。 试试在里面执行　mkdir /test。然后开个新的终端检查看看　/gentoo/test 目录是不是在了。
-\end{insertnote}
-
-
-好了，现在就已经进入Gentoo的环境了。接下来要做的就是编译一个可启动的内核，编译一些引导必备软件，安装一个引导程序Gentoo就能启动了。
-
-\subsection{内核编译}
-编译内核，对初学者来说是个艰巨的任务。不过这是通往资深用户和熟练管理员的必经之路。该做的迟早要做，不如现在就做个了断吧。
-
-首先获取一个内核代码。推荐使用git获得内核的代码而不是下载tar压缩包。因为更新到下一个版本的时候git只会下载差异部分而不会重新下载。
-git的具体用法请参考　\secref{sec:git}。
-
-必须把内核代码放到　/usr/src/linux　哦，这样依赖内核头文件的软件才能找到所需的内核代码（仅限Gentoo设定）。
-
-{
-\bf\noindent 提示：
-}{
-\em shell　下一行太长可以在后面输入$\backslash$并在下一行输入剩余的命令。shell会在下一行自动出现提示符 $>$　。
+也可以上网找grub的rpm包
+\footnote{%\begin{longtable}{p{\textwidth}}  
+http://mirrors.163.com/fedora/releases/17/Everything/x86\_64/os/Packages/g/grub-efi-0.97-93.fc17.x86\_64.rpm
+%\end{longtable}
 }
+然后提取 grub.efi。
 
+获得grub.efi（BOOTX64.EFI）后，将grub.efi拷贝到EFI分区。\footnote{其实我比较推荐直接将EFI系统分区挂载为/boot，但是有的人更喜欢的做法是将EFI系统分区挂载到/boot/efi/。}
 
+拷贝完成后执行efibootmgr将其添加到UEFI的引导程序列表中。
+
+\subsubsection*{使用efibootmgr}
+
+上文提到过UEFI支持在操作系统环境下管理启动选项。这个管理操作由efibootmgr工具实现。当然，前提是系统是由EFI模式启动的。目前大部分EFI主板都提供了BIOS模拟，所以很有可能您的LiveCD是用BIOS模拟模式启动的，这样就会失去EFI管理能力。所以确保您是用EFI模式启动的LiveCD，可以参考　\faqref{FAQ:UseLiveCD}。
+
+%TODO
+TOOD: 指南
+%当然第一件事情是安装它。
+%\begin{code}
+%\#emerge efibootmgr
+%\end{code}
+
+首先显示出现有的引导选项
 \begin{code}
-\#cd /usr/src\\
-\#git clone \textbackslash \\
->~ git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+\#efibootmgr
 \end{code}
 
-内核代码非常大，这一步操作会比较费时。可以先放一边，重新打开个新的终端然后chroot /gentoo，进行下一节的操作。等内核的代码克隆完成了再回到这里继续。
+添加GRUB引导选项，将　\textbackslash{}grub.efi 添加到引导选项中去。
+\begin{code}
+\#efibootmgr　-c -L GRUB -l '\textbackslash{}grub.efi'
+\end{code}
 
-Mark一下。
+确认结果
+\begin{code}
+\#efibootmgr
+\end{code}
 
-\subsubsection{新手使用 genkernel}
+记住　Boot????*GRUB　那4个问号代表的数字，表示新添加的GRUB处于何种次序。将GRUB设为第一引导次序，也就是默认引导项，如下文的命令。????就是刚刚找到的新添加的GRUB引导项的数字。
 
-编译内核最难的地方就是配置内核了。 make menuconfig|xconfig|gconfig 最终的目的就是获得一个.config文件。其实后面的编译步骤都不难，难的就是一个能正常工作的 .config 配置文件。
-似乎某些重要配置不能随意回答Yes或No，对于没有多少经验的人来说，还是有不小的难度么。
+\begin{code}
+\#efibootmgr　-o ????
+\end{code}
 
-Gentoo开发者似乎注意到了不会自行编译内核的しんまい%ざこ%ばか
-\footnote{内核对你来说和这个词是一样的。}%
-，所以特意开发了しんまい的内核编译助手：genkernel。虽然genkernel能直接编译出一个工作内核，
-但是以genkernel获得一个能工作的.config文件并在此基础上修改定制才是修炼之道。
+这样就可以了。重启后系统会自动运行 grub.efi　进入grub模式，grub就可以将内核加载了。
 
-这里就教大家用genkernel获得一个能启动的内核的.config配置文件好了。
+\section{init 系统选择}
 
-
-\subsection{init 系统选择}
 Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启动就完全交给了init程序。由于init是第一个启动的程序，所以他的PID\footnote{Linux用一个数字代表一个进程。需要对进程操作的地方可以使用该数字。比如向进程发送信号，就是用PID标识发送的目标的。}是1。\footnote{PID 0是个特殊进程（或者是根本就不是进程吧），每当系统空闲下来的时候PID　0才会执行，PID 0只做一个事情，就是让CPU进入节能模式。而且PID　0的个数就是CPU的个数。每个CPU都有一个属于自己的PID 0。所以系统真正的进程号是从1开始的。}
 
 \begin{insertnote}
@@ -1052,67 +902,354 @@ Path　Activation原理类似。比如邮件投递服务，只要在 /var/spool/
 
 那么，决定使用sysvinit还是SystemD了么？话说Gentoo给的不就是选择么？如果决定使用sysvinit什么都不用做，stage3里已经带上sysvinit了。如果决定用SystemD就继续哦，话说现在还不着急安装，内核代码下好了么？下好的话可以回到上面编译内核去了的说哦。
 
-\subsection{引导管理器}
 
-之前说Linux启动过程的时候说过，首先是硬件的初始化——也就是固件初始化——接着是固件加载并执行引导程序。
-引导程序负责将内核启动起来。引导程序自身是如何实现的我们不必关心，倒是引导程序如何被固件找到载，以及引导程序如何找到内核是个重点话题。
+\section{分区规划}
+任何系统都是安装到硬盘使用的
+\footnote{好吧，先忽略掉LiveCD 和  WinPE 这类不需要安装的系统，咱讨论的是一般用途的桌面操作系统。}，
+安装到硬盘之前，必须先划好家。在介绍如何分区前，首先得知道什么是分区，然后参考
+FHS\footnote{FHS 是文件系统目录结构的一个标准。规定了根分区下各个子目录的名称和用途。}
+指示结合自己的实际情况规划好分区。
 
-IBM创造PC的时候给PC开发了一个名字叫BIOS（Basic Input Output System）的固件。该固件被存储在一个ROM\footnote{只读存储器，断电后内容不会消失，存储内容生产的时候固化，无法修改}上。 BIOS提供了基本的输入输出功能，负责机器的上电自检（POST，Power On Self Test）和操作系统加载（其实是加载MBR。MBR再加载DOS。）。操作系统运行后BIOS作为基本输入输出设备的驱动程序存在\footnote{Windows、Linux这样的操作系统使用自己的驱动，并不依赖BIOS提供的驱动。}。
+\subsection{分区基础知识}
+最初，计算机使用软盘，软盘是没有分区的。后来蓝色巨人IBM发明了硬盘。硬盘的容量一下子比软盘大出好多倍。当时的MS-DOS所使用的FAT12文件系统无法管理那么大的硬盘。于是西雅图的巨人和蓝色巨人想出来把硬盘划成逻辑上的几个区域，每个区域大小都在MS-DOS能管理的范围之内——这样的逻辑区域就是分区。人们发现将硬盘划分为逻辑上的几个区域后，更容易组织硬盘上的数据了；而且一个文件系统错误只会影响到一个分区的数据，其他分区不受影响，数据的安全性也得到的提升。因而后来的DOS虽然将FAT12进化到了FAT16，能管理当时的大容量硬盘了，但是分区这个功能却保留了下来\footnote{虽然是MS-DOS的发明，但是Linux可不会拒绝这样的发明。Linux还支持 BSD 发明的分区格式，总之，Linux决定支持越多的分区表格式越好，这极大的方便了用户，不是么？}。
 
-也就是说，固件初始化完成后，就读取硬盘的第一个扇区（MBR）并执行这一小段程序。那么，固件并不关心你用的是什么操作系统，用的是什么引导程序，它只是遵照约定，执行MBR而已。
+既然用户划了分区，操作系统总得知道用户到底怎么划分的，描述分区的数据被称作分区表。既有分区表，必须有个地方存储，也必须知道到哪里去读取分区表。MS-DOS的把分区表和引导程序放入硬盘的第一个扇区\footnote{扇区是硬盘最小寻址单位。参考附录A. FAQ里的条目“什么是扇区”。}。
 
-微软的操作系统，不管是DOS还是Windows，其MBR都是一样的。就是查找活动分区\footnote{分区的一个额外属性。活动或者非活动。值得一提的是DOS无法访问非活动主分区。}并执行分区的第一个扇区（PBR）。所以微软操作系统的真正引导程序在系统安装分区（C：）的第一个扇区里，也称呼为分区引导扇区，Partition Boot Record。这是GRUB所以能支持引导Windows的关键原因哦。我们下文马上会介绍到。
+硬盘的第一个扇区又被称呼为MBR\footnote{MBR是硬盘的第一个扇区，具体解释请参考附录A. FAQ 里的条目“什么是 MBR”。}。
+MBR既要存储引导程序，又要储存分区表，是个寸土寸金的地方，分区表大小受限，只有4个表项。也就是说，一个 MBR分区表最多只能有4个分区。要是只有四个，似乎并不够用。
 
-Linux下普遍使用的引导程序——或者说是事实标准——是GRUB（GRand Unified Bootloader）。其大名是如醍醐灌顶，如雷贯耳，谁人不知，谁人不晓啊。
+MS-DOS将其中一个分区作为扩展分区，然后再扩展分区里再建分区表。扩展分区里面的分区就是逻辑分区，MBR 上的分区表就是主分区表。主分区表里划分的分区自然就是主分区了。所以一个MBR格式分区表最多允许3个主分区和1个扩展分区，或者4个主分区。扩展分区里再创建逻辑分区，没有数量限制。
+\chatu{logicalpart}{链式逻辑分区表}
 
-BIOS这种固件使用简单的伎俩查找引导程序。不过MBR只有区区512个字节，还要留64个字节给分区表，用于引导程序就只有448个字节了。想要做功能多点的引导程序都不行啊！空间问题。
+\begin{notice}
+注意：扩展分区里的逻辑分区并不是表格形式存储的，而是“链式”存储。如图\thefigure所示。每个逻辑分区包含查找下一个逻辑分区的信息。因而一个逻辑分区的破坏有可能造成链式效应，将所有的逻辑分区全部摧毁。
+\end{notice}
 
-GRUB使用的办法就是接力加载。存在MBR上的那份代码只是完整GRUB的加载器。因为完成的GRUB需要支持ext2/ext3/ext4/fat/iso9660等等各种文件系统，以便读取存储在磁盘上的内核，还要支持配置文件，还要有命令行模式，故而GRUB的代码不可能少于448个字节。
+由于近来UEFI\footnote{参考附录A “UEFI 和 BIOS”。}  的兴起，
+UEFI指定的分区表格式GPT也流行开来了。
+和MBR不同的是UEFI不需要专门的引导扇区，引导程序由UEFI直接从文件系统上加载。所以GPT只是分区表，不需要和引导程序共存。
 
-GRUB完整启动后，读取配置 /grub/grub.conf\footnote{注意，此/非Linux启动后的/，而是安装了GRUB的那个分区。如果没有/grub.conf 会查找 /boot/grub/grub.conf。所以在Linux环境下配置文件路径就是/boot/grub/grub.conf而不管/boot分区是不是独立的。}，显示操作系统选择列表。
+MBR 的分区表只有64个字节大小，只能包含最多4个分区的信息。
+GPT包含128个分区表项，最多允许一个硬盘划分成128个分区，足够了。
+能表示更多的分区并不是GPT唯一的优点，MBR分区表只能管理2.2TB
+\footnote{MBR使用4个字节表示分区起始位置的偏移量。
+偏移量以扇区为单位，一个扇区为512字节，那么MBR分区表能管理的最大硬盘大小为$2^{31}*512Byte = 2TB$。
+又因为硬盘厂家以1000为进制而不是1024，故而大约为2.2TB。}%
+以下大小的硬盘，GPT却可以管理容量超过9ZB\footnote{1ZB=1024PB 1PB=1024TB. 硬盘厂家的计算是 1ZB=1000PB 1PB=1000TB。}的硬盘。
+在大容量硬盘越来越普遍的今天，MBR显得越来越力不从心。GPT正好接替MBR成为今后PC硬盘的主流分区表格式。
 
-Linux下第一个硬盘的第一个分区是/dev/sda1，但是GRUB下却是从0开始的，(hd0,0)。这点需要注意。grub.conf的引导项配置以title开始，例如
+如果你电脑的固件是UEFI，不管硬盘实际是否大于2TB，建议最好使用GPT分区表。
 
-\begin{code}
-title Gentoo\\
-kernel /vmlinuz ro root=LABEL=GENTOO\\
-initrd /initrd.img
-\end{code}
+\subsection{为磁盘分区}
 
-这里的 /　指的是GRUB安装分区。如果GRUB被安装到/boot分区，那么grub下的/对应的Linux下的路径就是/boot。
-kernel　命令指示后面加载一个Linux内核，内核文件后面跟随的字符串将成为内核参数。好多参数可以控制内核的行为。参数的介绍参考　\faqref{FAQ：kernelparamter}
+\chatu{gparted-gui}{gparted界面}
 
-如果 vmlinuz不在 /boot分区，比如想在命令行模式启动其他内核的时候，可以用　root (hdX,Y) 的格式指定一个GRUB根。如下面的
+\FloatBarrier
 
-\begin{code}
-title Test-kernel\\
-root (hd0,1)\\
-kernel /usr/src/linux/arch/x86/boot/bzImage ro root=/dev/sda2
-\end{code}
+\normalfont
 
-kernel用来加载一个内核，initrd 用来加载initramfs。对启动Linux来说，initrd并不是必须的。initrd的详细解释可以参考　\faqref{FAQ:initramfs}。
+有很多种工具可以对硬盘进行分区。今天的主角是 gparted , 这个是一个非常简单易用的分区管理软件，带图形界面的哦~~
 
-\subsubsection{UEFI}
+要打开gparted，在终端执行sudo gparted。如果 Fedora 的LiveCD提示没有这个命令，则用命令sudo yum install gparted或者apt-get install gparted进行安装。gparted界面如图\thefigure所示。
 
-IBM发明PC的时候远见不足，BIOS的历史局限性逐渐显现。BIOS最大的禁锢就是运行于16位模式。在连32位都要过时的年代，BIOS却还是16位的。
+在gparted里所做的一切操作都不是立即执行的，只有应用操作后才被一次性执行。所以未应用前撤销操作是来得及的。
+下面我把为硬盘分区所需要的几个主要操作图解一下。请读者根据此处的图示熟悉操作流程，并在学习下一个小节后自行分区。
 
-彻底的革新，就是要从固件开始就让CPU处于64位模式运行，固件的代码再也不用遇到16位模式下的限制了。固件能集成更多的功能，甚至能直接访问文件系统，集成功能强大的引导程序。
+\chatu{gparted-apply}{gparted应用操作}
+\noindent要应用操作：\\\indent
+1. 单击“编辑”|“应用全部操作”菜单。如图\thefigure所示。\\\indent
+2. 在弹出的警告对话框中选择“是”。
 
-UEFI就是Intel提出的新的BIOS。和BIOS相比，UEFI对于操作系统来说区别就是：
+\chatu{gparted-newpart-boot}{gparted新建分区}
+
+\noindent建立一个分区：\\\indent
+1. 选择磁盘的空白区域，右击后在菜单里选择“新建”。\\\indent
+2. 在弹出的对话框里指定一个大小、分区类型和文件系统，如图\thefigure所示。\\\indent
+\hskip 4em %
+\begin{notice} %
+  注意：分区表为GPT格式的只能选择主分区。
+\end{notice} \\\indent
+3. 单击“添加”按钮，新建的分区就编排在了任务列队里了\\\indent
+
+\chatu{gparted-delpart}{gparted删除分区}
+\noindent删除一个分区:\\\indent
+1. 右击要删除的分区在菜单里选择“删除”。如图\thefigure所示。 %\\\indent
+
+\chatu[scale=0.2]{gparted-newpt1.png}{新建分区表}
+
+\noindent新建一个分区表：\\\indent
+1. 单击“设备”｜“创建分区表”菜单，如图\thefigure所示。
+
+\chatu[scale=0.2]{gparted-newpt2.png}{新建分区表}
+
+\indent2.在打开的对话框里点“高级”前面的箭头，选择一个分区表类型。默认为MS-DOS分区表，也就是MBR分区表。
+我需要在这里我选择gpt分区表。如图\thefigure所示。
+
+好了，gparted的基本操作就完成了，接下来学习一下文件系统的结构后按照自己的意愿为自己的系统分区吧。
+
+\FloatBarrier
+
+\subsubsection*{UEFI模式注意}
+
+值得注意的是，如果使用GPT分区表，必须有一个200M左右大小的FAT分区并设置为EFI系统分区，如图\ref{fig:EFI-part}所示，为该分区打上boot 标记即可（操作：右击分区选择“管理标志(A)”）。
+
+EFI系统分区一般挂载到 /boot/efi下，但是个人喜欢EFI系统分区和/boot共用。自由选择的说。为了日后少麻烦，请务必让EFI系统分区为第一个分区。虽然说不一定非得是第一个分区，但是第一个分区是eifbootmgr的默认假定，嫌麻烦的研究手册的话，还是以第一个分区作为EFI系统分区为佳。
+
+\chatu{EFI-part}{为分区设置EFI启动属性}
+
+\FloatBarrier
+
+\subsection{文件系统结构标准（FHS）}
+
+Linux继承自UNIX树形目录。每个目录各司其职，并被FHS（Filesystem Hierarchy Standard）标准化。表3.1所列是一个不怎么完整的FHS标准，但是对于读者决定如何为他自己的电脑分区已经足够了。
+
+\begin{longtable}{|l|p{0.7\textwidth}|}\hline
+\caption{FHS标准参考}\\
+\hline
+/ & 根目录 \\\hline
+/bin & 基本系统程序。如 ls cat grep \\\hline
+/sbin & 只供管理员使用的基本系统程序 \\\hline
+/boot & 内核和引导程序，通常为独立分区\\\hline
+/dev & 设备文件目录 \\\hline
+/etc & 存放系统配置文件。不允许存放为独立分区\\\hline
+/home & 存放非root用户的家目录。 
+比如foo用户的家目录就是/home/foo
+一般用来存在个人文件和个人设置。
+通常强烈建议独立为一个分区。\\\hline
+/lib & 系统基本库，被 /bin /sbin 里的程序依赖的库 \\\hline
+/media & 可移动媒体的挂载目录。比如cdrom和u盘。被/run/media代替\\\hline
+/mnt & 临时挂载目录\\\hline
+/opt & 通常用于安装非开源软件，如Adobe Reader \\\hline
+/proc & 虚拟的文件系统，用来获得内核和运行中的程序的信息\\\hline
+/root & root用户的家目录\\\hline
+/srv & 做服务器使用的时候 ，用来存储服务的数据。如一个git服务器通常将仓库存放于/srv/git\\\hline
+/tmp & 临时目录。其中文件关机丢失。建议挂载为tmpfs虚拟文件系统，对于tmpfs的介绍可以参考第7章。 \\\hline
+/usr & 非基本系统程序根目录，下面的结构和 / 差不多 \\\hline
+/usr/bin & 同 /bin。只是非基本程序。如xeye  elinks . \\\hline
+/usr/sbin & 同 /sbin。只是非基本程序。如system-config-firewall \\\hline
+/usr/include & 头文件目录。\\\hline
+/usr/lib & 同 /lib。只是其包含的库是不被/sbin、/bin使用的。\\\hline
+/usr/share &  保存架构无关的共享数据。如图标\\\hline
+/var & 系统运行中会不停变化的文件。比如各种log，包管理器的数据库，等等。通常在服务器上是独立分区，个人电脑可以不独立划分。\\\hline
+/var/cache & 缓存。该目录下的文件可以安全删除，要求使用它的程序必须能重建它。比如fontconfig的缓存。\\\hline
+/run 和 /var/run & 临时目录。包含本次系统运行时的信息。\\\hline
+/var/log & 存放各种日志文件。\\\hline
+/var/tmp & 临时文件，可能重启后还在。注意和/tmp的区别。\\\hline
+\end{longtable}
+
+
+知道了系统各个目录的作用，就好为目录进行分区了。通常我们使用4个分区 /boot、/、/home 和一个交换分区。
+
+\begin{notice}
+注意：我在使用“/home分区”这个术语的时候，我指的是为“/home”分一个单独的分区，并且将这个分区挂载到“/home”目录下。我通常不使用“挂载到/home目录的分区”而直接简述为“/home分区”。同样的，“/分区”（或者根分区）指的就是挂载到根目录的分区。
+\end{notice}
+
+/boot独立为一个分区的好处是防止根文件系统的错误蔓延导致/boot/*文件破坏无法正常启动。另一个好处是 /分区可以使用引导程序（如GRUB）不支持的文件系统格式。例如GRUB不支持XFS文件系统格式，但是你可以让/boot分区使用ext2格式从而使 /分区可以使用XFS格式。如果/boot没有独立出一个分区。那 /分区就只能使用引导程序所支持的文件系统了。
+
+/home独立一个分区的好处就是将用户数据彻底和系统数据分离。由于/home目录通常频繁读取写入，和 /分区隔离可以避免 /分区被碎片化。
+
+提示：其他目录，比如“/var”，可以独立一个分区也可以不独立。就看你系统的用处了。作为桌面用途，完全没必要。如果是服务器，“/var/log”可能会很大。邮件服务器的“/var/mail”就可能会非常大，所以非常有必要使用独立分区。
+
+\subsection{文件系统选择}
+
+
+Linux支持的文件系统非常多，有自家系列 ext2/ext3/ext4、甲骨文公司开发的btrfs，来自硅谷图像的XFS等等等等。
+
+不过选一个文件系统没那么纠结的。对于根分区\footnote{根目录所在分区}，既然大部分发行版默认使用ext4，那就ext4吧。
+
+为了引导程序的兼容性，/boot分区仍旧使用ext2或者ext3。
+
+对于/tmp这样的目录，强烈建议使用tmpfs\footnote{参考第7章“文件系统”。}。tmpfs是一种内存文件系统，所有tmpfs上创建的文件都是在内存里的，关机后就会消失。非常适合用作/tmp的文件系统。既能加快系统速度，又能保护硬盘。
+
+对于/home目录，如果是个BT爱好者，会有很多大文件，我推荐使用XFS文件系统。其他情况下还是ext4各方面性能比较平衡。
+
+如果希望为自己选择最佳的分区格式，请参考第7章“文件系统”的内容。
+
+\section{开始安装}
+
+废话了那么多，介绍了一些安装前需要知道的基础知识，现在终于要进入正题了，安装Gentoo。
+Gentoo的安装非常简单，首先是分区。这个前面已经介绍过了。我现在假定读者已经在LiveCD 环境中完成分区了。下面开始真正的安装。
+
+
+\subsection{正式开始安装过程}
+
+现在，Gentoo的安装可以正式开始了！现在再检查一下
+
 \begin{itemize}
-\item 纯64位启动。从UEFI到GRUB（并不是必须的存在，UEFI可以直接启动Linux）到Linux，中间没有16位代码。
-\item UEFI使用GPT分区表，支持访问FAT文件系统。
-\item 引导程序是EFI系统分区（标记EFI系统分区属性，文件系统为FAT）里的文件，扩展名为.efi。
-\item Linux可以由　grub.efi　引导，也可以将自身直接作为　vmlinuz.efi 被UEFI直接引导。
-\item 在操作系统环境下可以直接控制UEFI的引导选项。BIOS下必须进入BIOS设置程序才能设置。
+\item	使用LiveCD启动，处于LiveCD环境中。
+\item	LiveCD里已经配置好网络，能访问Internet。
+\item	完成分区规划。已经为将要安装的Gentoo规划并划分好分区。
+\item	现在处于LiveCD的命令提示符下。
 \end{itemize}
 
+一切准备就绪，可以开始安装了。
 
+首先要做的事情就是创建一个　gentoo　目录。这个将要用来安装Gentoo的分区就暂时挂载到这个目录下。如不特殊说明，我使用 \#　代表命令提示符， \#后的命令表示需要手工输入并敲回车执行。
+
+\begin{code}
+\#mkdir　/gentoo\\
+\#mount /dev/sdXX /gentoo
+\end{code}
+
+\begin{insertnote}
+\subsection*{mount命令解释}
+
+在UNIX操作系统下，一个文件系统是要挂载到某个目录下才能访问其中的文件的。Windows和DOS下，操作系统会分配一个“盘符”，但在UNIX下，使用挂载命令将文件系统挂到一个目录下。被挂载的目录就成了那个挂载的文件系统的根目录，也称为挂载点。
+
+\end{insertnote}
+
+这里　/dev/sdXX　是读者为Gentoo划分的根目录。
+
+系统目录准备好了，接下来下载Gentoo的stage3。打开　\url{http://mirrors.163.com/gentoo/releases/amd64/current-stage3/} 或者如果打算使用x86就打开\url{http://mirrors.163.com/gentoo/releases/x86/current-stage3/}下载以最近的日期结尾的 stage3 压缩包。
+
+然后解压到 /gentoo
+\begin{code}
+\#tar stage3-*.tar.bz2 -C /gentoo 
+\end{code}
+
+接着下载　portage 快照
+\begin{code}
+\#wget http://mirrors.163.com/gentoo/snapshots/portage-latest.tar.bz2\\
+\#tar portage-latest.tar.bz2 -C /gentoo/usr/portage
+\end{code}
+
+解压完成后，复制dns配置　
+\begin{code}
+\#cp /etc/resolv.conf /gentoo/etc/resolv.conf
+\end{code}
+
+如果还有划分了其他目录，也要一并挂载进来
+
+挂载home分区，boot分区等（如果有划分独立分区的话）
+\begin{code}
+\#mount /dev/sdXX /gentoo/boot\\
+\#mount /dev/sdXX /gentoo/home
+\end{code}
+
+各使用读者划分好的分区代替命令中的　/dev/sdXX。
+
+下面是挂载/dev/ /proc /sys的。这里使用宿主系统的/dev /proc 和 /sys　目录。
+\begin{code}
+\#mount --rbind /dev/ /gentoo/dev\\
+\#mount --rbind /sys /gentoo/sys\\
+\#mount --rbind /proc /gentoo/proc
+\end{code}
+
+好了，最好这些操作，Gentoo最小环境（能用但是不能启动）的基本环境就搭建完毕了。
+执行
+
+\begin{code}
+\#chroot /gentoo　/bin/bash
+\end{code}
+或者如果你喜欢简洁的操作
+\begin{code}
+\#chroot /gentoo
+\end{code}
+
+\begin{insertnote}
+\subsection*{chroot命令解释}
+
+chroot 命令能将某个目录变成根目录并在新的根目录里执行shell或者命令行第二个参数指定的程序。
+
+执行 chroot /gentoo 后，chroot 将自己的根目录（不影响系统其他进程的根目录）切换到新的目录，然后执行新的根目录里的 \$SHELL（通常是/bin/bash）。
+这样获得的新shell就继承了chroot的根目录设定，也就是 /gentoo。 试试在里面执行　mkdir /test。然后开个新的终端检查看看　/gentoo/test 目录是不是在了。
+\end{insertnote}
+
+
+好了，现在就已经进入Gentoo的环境了。
+
+TODO make.conf 调节。
+
+TODO emerge 用法简介
+
+
+\subsection*{处理循环依赖}
+软件之间相互依赖并不是很罕见的事情。既然要从头进行编译安装，过程中必然会出现“A依赖B，B依赖A”这样的循环依赖。
+有时候循环依赖还是间接的：“A依赖B，B依赖C，C依赖A”。可以把C想象成多个软件。
+最典型的循环依赖就是工具链了：要编译任何软件都需要GCC和GLIBC，但是编译GLIBC自己也需要GCC，编译GCC自己也需要GCC和GLIBC。正因为这样会发生循环依赖，
+所以完全从头编译一个Linux环境是非常麻烦的。如果非要这么做，参考LFS。
+
+我们下载的是Gentoo提供的stage3。这里必要提一下何为stage3，有stage3必然有stage2、stage1咯。所谓stage1就是只包含一个bootstrap.sh脚本和配置文件的压缩包。
+如果从stage1开始安装，就是执行bootstrap脚本。这个脚本的做法就是和LFS一样，从0开始构筑stage2。stage2则意味着包含了一个最小的“工具链”环境。
+这个环境有编译器，链接器，bash，必要的命令行工具。也就是stage2就是个能编译自己的“最小”环境。从stage2开始继续bootstrap就能获得stage3。stage3包含了一个能编译自己的最小“Gentoo”环境——包含了emerge程序。因为emerge是python编写的，故而不能放入stage2。
+
+也就是说，stage1/2/3 就是处理循环依赖，每次将基础扩大。到stage3开始，基本就可以避免循环依赖了。但是并没有绝对避免。是否会遇到循环依赖取决于用户的配置和需要安装的软件。
+这也就是Gentoo已经很久不再提倡从stage1开始安装Gentoo的原因：解决循环依赖是噩梦。
+
+stage3开始，已经没有硬循环依赖了。这个时候的循环依赖通常是这样的“A依赖B，但是B有个可选的选项导致会依赖A”。这样只要将那个可选的选项关闭，编译好B，然后再编译A，如果那个功能用户需要的话，重新打开后再次编译B。
+
+\begin{example}{Dbus和SystemD相互依赖}
+
+直接使用 emerge systemd 的时候，系统会提示dbus开了[systemd]选项后依赖systemd，而systemd也依赖dbus。同时systemd编译的时候并不依赖开启systemd选项的dbus，但是运行的时候却依赖。
+
+直接的后果就是emerge出现错误提示后退出。emerge的关键提示信息为 systemd depends on by dbus, dbus depends on systemd, systemd depends on dbus.
+随后提示Note that circular dependencies can often be avoided by temporarily disabling USE flags that trigger optional dependencies.
+
+较高版本的portage还会提示关闭可能避开循环依赖需要关闭的USE选项。而低版本做法则为进一布提示：systemd依赖dbus, dbus[systemd]依赖systemd。注意dbus后面加了个[systemd]，说明USE包含systemd后dbus才依赖systemd。
+
+\end{example}
+
+
+接下来要做的就是编译一个可启动的内核，编译一些引导必备软件，安装一个引导程序Gentoo就能启动了。
+
+
+\subsection{内核编译}
+编译内核，对初学者来说是个艰巨的任务。不过这是通往资深用户和熟练管理员的必经之路。该做的迟早要做，不如现在就做个了断吧。
+
+首先获取一个内核代码。推荐使用git获得内核的代码而不是下载tar压缩包。因为更新到下一个版本的时候git只会下载差异部分而不会重新下载。
+git的具体用法请参考　\secref{sec:git}。
+
+必须把内核代码放到　/usr/src/linux　哦，这样依赖内核头文件的软件才能找到所需的内核代码（仅限Gentoo设定）。
+
+{
+\bf\noindent 提示：
+}{
+\em shell　下一行太长可以在后面输入$\backslash$并在下一行输入剩余的命令。shell会在下一行自动出现提示符 $>$　。
+}
+
+
+\begin{code}
+\#cd /usr/src\\
+\#git clone \textbackslash \\
+>~ git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+\end{code}
+
+内核代码非常大，这一步操作会比较费时。可以先放一边，重新打开个新的终端然后chroot /gentoo，进行下一节的操作。等内核的代码克隆完成了再回到这里继续。
+
+Mark一下。
+
+\subsubsection{新手使用 genkernel}
+
+编译内核最难的地方就是配置内核了。 make menuconfig|xconfig|gconfig 最终的目的就是获得一个.config文件。其实后面的编译步骤都不难，难的就是一个能正常工作的 .config 配置文件。
+似乎某些重要配置不能随意回答Yes或No，对于没有多少经验的人来说，还是有不小的难度么。
+
+Gentoo开发者似乎注意到了不会自行编译内核的しんまい%ざこ%ばか
+\footnote{内核对你来说和这个词是一样的。}%
+，所以特意开发了しんまい的内核编译助手：genkernel。虽然genkernel能直接编译出一个工作内核，
+但是以genkernel获得一个能工作的.config文件并在此基础上修改定制才是修炼之道。
+
+这里就教大家用genkernel获得一个能启动的内核的.config配置文件好了。
 
 \subsection{安装基础系统}
-\subsection{系统初步配置—重启前配置}
 
-\subsubsection{nano 编辑器快速入门}
+除了内核，引导程序，和init程序，还有一些必须的基础程序需要安装。主要是：开机fsck需要用到的各种文件系统的辅助工具。stage3默认只包含了ext2/3/4系列的工具。
+如果使用了XFS、ResierFS、Btrfs之类的，就需要自己安装对应的文件系统工具。如果需要使用DHCP网络，还需要DHCP客户端。还有系统日志服务。
+
+
+
+
+\subsection{系统初步配置—重启前配置}
+在chroot环境中我们需要做的就是进行必备系统的安装，配置好基本系统然后重启进入Gentoo环境中进行后续的安装。所以这里基础系统的配置非常关键，他关系到你第一次能否成功地进入Gentoo系统。
+
+\subsubsection{时区域设置}
+
+
+\subsubsection{fstab配置}
+安装Gentoo，可以说，最重要的配置莫过于fstab了。fstab配置文件是Linux文件系统树的根基。正是fstab指明了文件系统的建筑结构。
+
+
+\subsubsection{nano 编辑器快速入门}\label{sec:nano}
+现在才讲nano我都觉得有点罪过。由于Gentoo的stage3里并没有包含vim，所以一开始必须使用nano进行系统配置，直到portage配置好后emerge了vim才能使用vim。在次之前还是得用nano。
 
 \chapter{使用Linux}
 \section{Shell 基础和日常应用}
