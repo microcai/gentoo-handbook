@@ -1563,6 +1563,17 @@ kernel /vmlinuz ro root=LABEL=GENTOO\\
 
 如果使用了 initrd 的话（强烈的不推荐Gentoo系统使用initrd），还需要加上 initrd 命令加载 initrd文件。initrd文件可以由dracut程序生成。参考 \secref{sec:initrd}
 
+\section{重启后安装}
+
+前面的安装都是在liveCD环境下进行的。现在要进行重启并进入Gentoo自己的环境中进行后续安装。这次重启万一失败就得重新进入liveCD进行修缮。
+通常失败无外忽 grub 没有正确安装，或者内核没有配置正确。
+
+好了，退出 liveCD 下的那么多 shell , 重启电脑吧。
+
+运气好的话，大概你的电脑已经出现登录提示了。以 root 登录进行安装。既然一个基本的Gentoo已经能自我启动了（不一定进入可用状态），Gentoo的自我救赎式的安装就已经完成了。
+剩下的无非就是按照自己的需求将一些用到的软件进行安装以让系统进入可用状态。让我们随着使用Linux的过程中随着安装缺失软件吧！
+
+
 \chapter{使用Linux}
 \section{Shell 基础和日常应用}
 
