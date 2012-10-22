@@ -1344,16 +1344,18 @@ Gentoo开发者似乎注意到了不会自行编译内核的しんまい%ざこ%
 
 这里就教大家用genkernel获得一个能启动的内核的.config配置文件好了。
 
-\subsection{安装基础系统}
-
-除了内核，引导程序，和init程序，还有一些必须的基础程序需要安装。主要是：开机fsck需要用到的各种文件系统的辅助工具。stage3默认只包含了ext2/3/4系列的工具。
-如果使用了XFS、ResierFS、Btrfs之类的，就需要自己安装对应的文件系统工具。如果需要使用DHCP网络，还需要DHCP客户端。还有系统日志服务。
-
-
-
 
 \subsection{系统初步配置—重启前配置}
 在chroot环境中我们需要做的就是进行必备系统的安装，配置好基本系统然后重启进入Gentoo环境中进行后续的安装。所以这里基础系统的配置非常关键，他关系到你第一次能否成功地进入Gentoo系统。
+
+
+\subsubsection{nano 编辑器快速入门}\label{sec:nano}
+现在才讲nano我都觉得有点罪过。由于Gentoo的stage3里并没有包含vim，所以一开始必须使用nano进行系统配置，直到portage配置好后emerge了vim才能使用vim。
+在此之前还是得用nano。
+
+nano 编辑器的使用非常简单，打开一个文件用“ nano 要编辑的文件” 这种简单的指令就可以了。编辑也非常简单，支持
+\textuparrow \textdownarrow \textleftarrow \textrightarrow 上下左右移动。退出按Ctrl-X，提示是否保存，回答yes就可以了。
+
 
 \subsubsection{时区设置}
 
@@ -1434,23 +1436,54 @@ Retype new UNIX password: *再次输入密码*\\
 passwd: password updated successfully
 \end{code}
 
+这样就设置好root帐号的密码了。
 
-\subsubsection{nano 编辑器快速入门}\label{sec:nano}
-现在才讲nano我都觉得有点罪过。由于Gentoo的stage3里并没有包含vim，所以一开始必须使用nano进行系统配置，直到portage配置好后emerge了vim才能使用vim。
-在此之前还是得用nano。
+\subsection{安装基础系统}
 
+除了内核，引导程序，和init程序，还有一些必须的基础程序需要安装。主要是：开机fsck需要用到的各种文件系统的辅助工具和网络工具。
 
+\subsubsection{安装网络工具}
+
+网络工具的具体用法请参考 %TODO 网络章节的内容。
+
+这里作为一个快速安装的指南，算是一个占位符吧。告诉你，现在就得把网络工具安装了，否则待会重启进的了系统却用不了网络，无法继续安装哦！
+
+安装何种工具就看你使用的是何种网络环境了。
+一般如果是静态网络，安装 net-tools 即可。它提供了ifconfig。
+但是强烈的推荐使用 NetworkManager 这样的成熟的动态配置工具，尤其是还有好用的GUI可用。NetworkManager依赖较多，如果你的网络可以用 ifconfig 配置下来，可以等重启后再安装。
+
+不过如果使用了无线网络，最好还是现在就把NetworkManager装了，免得重启后无法继续安装系统。
+
+如果使用 PPPoE 进行拨号的（ADSL接入，在电脑上进行拨号。），除了安装NetworkManager还得安装 rp-pppoe。这样 NetworkManager就可以进行拨号了。具体用法请参考%TODO 网络章节的内容。
+
+因为 networkmanager会引入 bluetooth 依赖，现在还用不到，可以关闭。之后可以重新编译。
+
+\begin{code}
+\#emerge rp-pppoe\\
+\#USE=-bluetooth emerge networkmanager
+\end{code}
+
+\subsubsection{文件系统工具}
+
+众所周知，不正常的关机会导致磁盘数据丢失。所以每次linux开机都会进行一次磁盘检查。如果上次是正常关机，通常检查会很快结束，网络词语叫秒杀。
+如果上次经历了非正常关机，就需要花比较长的时间进行检查。至于检查嘛，自然是使用各种文件系统检查工具了。init系统会统一调用 /sbin/fsck 来检查文件系统，不过 fsck 只做一件事情（UNIX哲学嘛）：检查文件系统类型，调用 fsck.??? 进行检查。而fsck.??? 自然就是属于各个文件系统专用工具集合里的了。
+
+\begin{code}
+\#emerge e2fsprogs	\#安装 ext2/ext3/ext4 系列的文件系统工具\\
+\#emerge xfsprogs	\#安装 xfs 文件系统工具\\
+\#emerge reiserfsprogs	\#安装 reiserfs 文件系统工具\\
+\#emerge btrfs-progs	\#安装 btrfs 文件系统工具\\
+\end{code}
 
 \subsubsection*{使用efibootmgr}
 
 上文提到过UEFI支持在操作系统环境下管理启动选项。这个管理操作由efibootmgr工具实现。当然，前提是系统是由EFI模式启动的。目前大部分EFI主板都提供了BIOS模拟，所以很有可能您的LiveCD是用BIOS模拟模式启动的，这样就会失去EFI管理能力。所以确保您是用EFI模式启动的LiveCD，可以参考　\faqref{FAQ:UseLiveCD}。
 
-%TODO
-TOOD: 指南
-%当然第一件事情是安装它。
-%\begin{code}
-%\#emerge efibootmgr
-%\end{code}
+%TODO: 指南
+当然第一件事情是安装它。
+\begin{code}
+\#emerge efibootmgr
+\end{code}
 
 首先显示出现有的引导选项
 \begin{code}
@@ -1474,7 +1507,6 @@ TOOD: 指南
 \end{code}
 
 这样就可以了。重启后系统会自动运行 grub.efi　进入grub模式，grub就可以将内核加载了。
-
 
 \chapter{使用Linux}
 \section{Shell 基础和日常应用}
