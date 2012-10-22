@@ -652,7 +652,7 @@ execv("/bin/ls",argv);
 掌握这些shell知识应该用于完成安装Gentoo足够了。
 
 
-\section{引导管理器}
+\section{引导管理器}\label{sec:grub}
 Linux的启动过程是一个令人着迷的过程，首先是硬件的初始化——也就是固件初始化——接着是固件加载并执行引导程序。
 引导程序负责将内核启动起来。然后内核执行第一个程序/sbin/init，后续的启动就交给init完成了。
 
@@ -1314,6 +1314,8 @@ git的具体用法请参考　\secref{sec:git}。
 
 Mark一下。
 
+\subsubsection{initrd}\label{sec:initrd}
+
 \subsubsection{新手使用 genkernel}
 
 编译内核最难的地方就是配置内核了。 make menuconfig|xconfig|gconfig 最终的目的就是获得一个.config文件。其实后面的编译步骤都不难，难的就是一个能正常工作的 .config 配置文件。
@@ -1492,7 +1494,26 @@ passwd: password updated successfully
 
 也可以不进入grub命令行模式，直接使用 grub-install 命令进行安装。但是熟悉grub交互式命令行模式对以后使用grub修复受损的MBR也是非常有用的。所以推荐使用grub的交互式命令行模式。
 
-\subsubsection*{使用efibootmgr}
+如果是UEFI的机器，则需要安装 EFI 版本的grub。不过linux内核本身也是可以直接被UEFI启动的。但是使用引导程序提供了一些灵活性，还是值得的。
+grub-efi 在 gentoo-zh overlay里。介绍和使用overlay请参考 \secref{sec:overlay}
+
+\begin{code}
+\#emerge grub-efi
+\end{code}
+
+如果还没添加 gentoo-zh overlay 将找不到对应的包，可以使用下面的命令添加 gentoo-zh overlay。具体请务必查阅\secref{sec:overlay}。
+
+\begin{code}
+\#USE=git emerge layman \#管理 overlay 的工具\\
+
+\#layman -a gentoo-zh \# 添加 gentoo-zh overlay，如果还没添加的话 
+
+\#echo~source~/var/lib/layman/make.conf~>>~/etc/portage/make.conf
+\end{code}
+
+按照提示，拷贝 /usr/lib/grub/grub.efi 到 EFI 分区。
+
+\subsubsection*{使用efibootmgr将grub.efi加入引导}
 
 上文提到过UEFI支持在操作系统环境下管理启动选项。这个管理操作由efibootmgr工具实现。当然，前提是系统是由EFI模式启动的。目前大部分EFI主板都提供了BIOS模拟，所以很有可能您的LiveCD是用BIOS模拟模式启动的，这样就会失去EFI管理能力。所以确保您是用EFI模式启动的LiveCD，可以参考　\faqref{FAQ:UseLiveCD}。
 
@@ -1525,6 +1546,23 @@ passwd: password updated successfully
 
 这样就可以了。重启后系统会自动运行 grub.efi　进入grub模式，grub就可以将内核加载了。
 
+\subsection{配置引导程序}
+
+grub 的配置文件就是 grub.conf。 UEFI 模式下，是和 grub.efi 在同一个目录下。 BIOS模式下，是在 /boot/grub/grub.conf。（果把grub安装到boot分区的话）
+
+在 \secref{sec:grub} 我们已经大概熟悉了一下grub.conf文件的语法。
+这里要做的就是将内核加入 grub 的引导选项了。
+
+\begin{code}
+title Gentoo\\
+kernel /vmlinuz ro root=LABEL=GENTOO\\
+\end{code}
+
+主要，这里的 /vmlinuz 是按照 grub 的路径来算的。比如 grub 安装到/boot分区，而内核文件（通过 make install 安装）通常为 /boot/vmlinuz-内核版本。相对 grub 的路径就是 /vmlinuz-内核版本。如果 grub 安装到 /boot/efi/ (/boot/efi 为独立的 EFI 分区) ，则必须使用 root (hdX,Y) 这样的语句选择 /boot 分区或者 / 分区（如果/boot不是独立分区的话）。
+然后再使用 /vmlinuz-内核版本 或者 /boot/vmlinuz-内核版本 （/boot不是独立分区的时候） 这样的路径。
+
+如果使用了 initrd 的话（强烈的不推荐Gentoo系统使用initrd），还需要加上 initrd 命令加载 initrd文件。initrd文件可以由dracut程序生成。参考 \secref{sec:initrd}
+
 \chapter{使用Linux}
 \section{Shell 基础和日常应用}
 
@@ -1545,7 +1583,9 @@ passwd: password updated successfully
 \section{软件的分发}
 \section{软件的编译}
 \section{发行版的包管理}\label{section:pkgmgr}
-	
+\section{portage和emerge}
+\subsection{overlay}\label{sec:overlay}
+
 \chapter{图形界面}
 对命令行是不是有点枯燥了？是时候来电新鲜的东西了 只所以现在才讲，因为图形实在是太复杂了。
 
