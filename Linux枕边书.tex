@@ -59,6 +59,26 @@
 \begin{minipage}{#1\textwidth}\begin{flushright}\noindent\it\RTLpar}{%
  \\------\popQED{}\end{flushright}\end{minipage}\end{flushright}\vskip 8mm }%
 
+\newenvironment{filecontent}[1]{
+
+\addtolength{\linewidth}{-\parindent}
+\begin{minipage}{\linewidth}
+
+\vskip 1ex
+
+文件: #1
+
+\vskip -2ex
+\rule{\textwidth}{0.02pt}
+\vskip -1ex
+
+%\hline
+
+}{	\end{minipage}}
+
+
+
+
 \newcounter{lizi}[chapter]
 
 \newenvironment{example}[1]{ \addtocounter{lizi}{1} \vskip 2.5ex \bf 例\hskip -0.05em\arabic{chapter}.\arabic{lizi}： #1%
@@ -337,7 +357,7 @@ emerge会忠实的到vim的网站上下载vim的代码，解压，编译，然�
 
 第一个问题，属于特定发行版下的“软件包改名”问题。一般使用发行版的软件管理工具的搜索命令。以软件本身的名字作为关键词搜索即可。比如　yum search vim、apt-cache search sudo、emerge -s vnc。
 
-第二个问题，命令行下无解。如果使用图形工具可以方便的浏览仓库中所有的软件。还是分门别类的哦！
+第二个问题，命令行下无解。如果使用图形工具可以方便的浏览仓库中所有的软件。还是分门别类的哦！当然，最快的办法莫过于祭出伟大的Google。
 
 \chapter{安装 Linux}
 
@@ -729,40 +749,6 @@ http://mirrors.163.com/fedora/releases/17/Everything/x86\_64/os/Packages/g/grub-
 
 拷贝完成后执行efibootmgr将其添加到UEFI的引导程序列表中。
 
-\subsubsection*{使用efibootmgr}
-
-上文提到过UEFI支持在操作系统环境下管理启动选项。这个管理操作由efibootmgr工具实现。当然，前提是系统是由EFI模式启动的。目前大部分EFI主板都提供了BIOS模拟，所以很有可能您的LiveCD是用BIOS模拟模式启动的，这样就会失去EFI管理能力。所以确保您是用EFI模式启动的LiveCD，可以参考　\faqref{FAQ:UseLiveCD}。
-
-%TODO
-TOOD: 指南
-%当然第一件事情是安装它。
-%\begin{code}
-%\#emerge efibootmgr
-%\end{code}
-
-首先显示出现有的引导选项
-\begin{code}
-\#efibootmgr
-\end{code}
-
-添加GRUB引导选项，将　\textbackslash{}grub.efi 添加到引导选项中去。
-\begin{code}
-\#efibootmgr　-c -L GRUB -l '\textbackslash{}grub.efi'
-\end{code}
-
-确认结果
-\begin{code}
-\#efibootmgr
-\end{code}
-
-记住　Boot????*GRUB　那4个问号代表的数字，表示新添加的GRUB处于何种次序。将GRUB设为第一引导次序，也就是默认引导项，如下文的命令。????就是刚刚找到的新添加的GRUB引导项的数字。
-
-\begin{code}
-\#efibootmgr　-o ????
-\end{code}
-
-这样就可以了。重启后系统会自动运行 grub.efi　进入grub模式，grub就可以将内核加载了。
-
 \section{init 系统选择}
 
 Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启动就完全交给了init程序。由于init是第一个启动的程序，所以他的PID\footnote{Linux用一个数字代表一个进程。需要对进程操作的地方可以使用该数字。比如向进程发送信号，就是用PID标识发送的目标的。}是1。\footnote{PID 0是个特殊进程（或者是根本就不是进程吧），每当系统空闲下来的时候PID　0才会执行，PID 0只做一个事情，就是让CPU进入节能模式。而且PID　0的个数就是CPU的个数。每个CPU都有一个属于自己的PID 0。所以系统真正的进程号是从1开始的。}
@@ -900,7 +886,8 @@ DBus Activation好理解，有的服务提供的并不是Socket，而是在DBus�
 
 Path　Activation原理类似。比如邮件投递服务，只要在 /var/spool/mail 下有文件，该服务就应该进行邮件投递，将成功投递的邮件删除。Path Activation将监视该文件夹的任务交给了SystemD，文件存在后SystemD激活邮件投递服务。
 
-那么，决定使用sysvinit还是SystemD了么？话说Gentoo给的不就是选择么？如果决定使用sysvinit什么都不用做，stage3里已经带上sysvinit了。如果决定用SystemD就继续哦，话说现在还不着急安装，内核代码下好了么？下好的话可以回到上面编译内核去了的说哦。
+那么，决定使用sysvinit还是SystemD了么？话说Gentoo给的不就是选择么？
+%如果决定使用sysvinit什么都不用做，stage3里已经带上sysvinit了。如果决定用SystemD就继续哦，话说现在还不着急安装，内核代码下好了么？下好的话可以回到上面编译内核去了的说哦。
 
 
 \section{分区规划}
@@ -940,11 +927,67 @@ GPT包含128个分区表项，最多允许一个硬盘划分成128个分区，�
 
 如果你电脑的固件是UEFI，不管硬盘实际是否大于2TB，建议最好使用GPT分区表。
 
+在UNIX操作系统下，一个文件系统是要挂载到某个目录下才能访问其中的文件的。Windows和DOS下，操作系统会分配一个“盘符”，但在UNIX下，使用挂载命令将文件系统挂到一个目录下。被挂载的目录就成了那个挂载的文件系统的根目录，也称为挂载点。实现这个挂载操作的命令就是\textbf{mount}。mount将一个分区“挂载”到一个目录下，命令格式为
+
+\begin{code}
+mount 磁盘设备  挂载目录 [-t 文件系统] [选项]
+\end{code}
+
+选项是可选的，文件系统类型没有给出的话，mount会进行自动探测，所以一般也不需要给出。
+
+\begin{notice}
+注意：mount只有root用户才能运行。
+\end{notice}
+
+\begin{example}{挂载U盘}
+\it 通常大家只有一个硬盘。按照第一个硬盘为/dev/sda，第二个硬盘为/dev/sdb这样的编号，通常U盘就是/dev/sdb（U盘也是硬盘的一种）。所以我这里假设用户插入的U盘被识别为/dev/sdb。U盘一般只有一个分区，所以正确的表示U盘的设备文件就是 /dev/sdb1了。
+
+\normalfont
+
+建立一个/media/usbdisk目录用于挂载，然后执行mount将U盘挂载到/media/usbdisk。
+
+\begin{code}
+mkdir -p /media/usbdisk
+
+mount /dev/sdb1 /media/usbdisk
+\end{code}
+
+执行成功后，跑到（cd命令进去） /media/usbdisk目录下看看（ls命令列出），是不是U盘上的文件都跑到这个目录下了呢！
+
+\end{example}
+
+
+有mount操作自然也有撤销的操作。撤销mount的操作由命令unmount完成。试试看执行unmount /media/usbdisk，等等！命令未找到？
+
+是的，UNIX就是这么矫情。看似应该使用unmount的地方，UNIX使用的却是umount命令。umount命令的语法不用说都猜到了：
+\begin{code}
+umount 磁盘设备
+\end{code}
+或者
+\begin{code}
+umount 挂载目录
+\end{code}
+
+用哪个形式都可以。要卸载一个文件系统，必须那个文件系统里所有的文件都被关闭。如果还有程序在使用上面的文件就无法卸载。可以使用 lsof 命令查看打开的文件。比如
+\begin{code}
+lsof /media/usbdisk
+\end{code}
+就可以查看/media/usbdisk目录下所有被打开的文件以及是哪个程序打开的。确保lsof的输出为空即可安全卸载了。
+
+\begin{example}{卸载U盘}
+U盘用完后直接拔出是不正确的\footnote{尽管这是个美好的传说。}。操作系统可能还有未来得及写入U盘的数据，直接拔出会导致数据丢失。所以在拔出U盘前必须先卸载U盘。
+执行：
+\begin{code}
+umount /media/usbdisk
+\end{code}
+
+然后就可以拔出U盘了。如果卸载失败，可以用lsof查看是否还有正在使用的文件。
+
+\end{example}
+
 \subsection{为磁盘分区}
 
 \chatu{gparted-gui}{gparted界面}
-
-\FloatBarrier
 
 \normalfont
 
@@ -1091,13 +1134,6 @@ Gentoo的安装非常简单，首先是分区。这个前面已经介绍过了�
 \#mount /dev/sdXX /gentoo
 \end{code}
 
-\begin{insertnote}
-\subsection*{mount命令解释}
-
-在UNIX操作系统下，一个文件系统是要挂载到某个目录下才能访问其中的文件的。Windows和DOS下，操作系统会分配一个“盘符”，但在UNIX下，使用挂载命令将文件系统挂到一个目录下。被挂载的目录就成了那个挂载的文件系统的根目录，也称为挂载点。
-
-\end{insertnote}
-
 这里　/dev/sdXX　是读者为Gentoo划分的根目录。
 
 系统目录准备好了，接下来下载Gentoo的stage3。打开　\url{http://mirrors.163.com/gentoo/releases/amd64/current-stage3/} 或者如果打算使用x86就打开\url{http://mirrors.163.com/gentoo/releases/x86/current-stage3/}下载以最近的日期结尾的 stage3 压缩包。
@@ -1158,9 +1194,87 @@ chroot 命令能将某个目录变成根目录并在新的根目录里执行shel
 
 好了，现在就已经进入Gentoo的环境了。
 
-TODO make.conf 调节。
+\subsection{emerge用法}
 
-TODO emerge 用法简介
+说到Gentoo不得不提portage和emerge。portage是Gentoo的软件包管理器，emerge是portage的命令行工具。能使用portage的不止emerge一个，这个是有官方背景的工具，所谓正统是也。
+
+emerge的用法非常简单，假设你要安装pidgin，执行下面的命令就可以了:
+\begin{code}
+emerge pidgin
+\end{code}
+
+很简单，是不是？emerge会自动的下载pidgin然后编译安装，全程不需要人工干预。如果pidgin依赖的一些包没有安装，emerge会先下载这些包然后安装。再一次，全程自动化。不需要手工干预。
+
+如果认为emerge只是自动下载编译脚本你就大错特错了。执行
+\begin{code}
+\# -p参数表示不实际执行安装操作，只显示需要执行的操作
+
+\#-v表示输出详细信息。
+
+emerge -pv pidgin
+\end{code}
+
+看到什么了？
+
+\begin{code}
+[ebuild   N    ] net-im/pidgin-2.10.6 USE="dbus gnutls gstreamer gtk ncurses networkmanager nls xscreensaver (-aqua) -debug -doc -eds -gadu -groupwise -idn -meanwhile -perl -prediction -python -sasl -silc -spell -tcl -tk -zephyr -zeroconf"
+\end{code}
+
+注意看输出，ebuild 后面有个 N 代表新安装，如果是 R 表示重新安装，U表示升级。D表示降级（不常发生，但是出现新版本有重大错误，Gentoo会紧急撤销新版本，这样已经按照的人会降级）
+之后为包名，带版本号。有时候会出现NS，表示安装新版本和老版本共存。然后就是USE=$\cdots$ 了。USE=表示该包所有可选的USE参数。-xx 的表示关闭对应的功能， xx表示打开对应的功能。这些功能都是编译期选项。编译的时候就确定下来的。没有被编译进的功能软件运行时就好像这个功能本来就不存在一样。从源头上禁用了。
+有的功能会在外围打上括号，表示该功能对于本平台是强制启用或者禁用的。
+
+那怎么调节USE参数呢？ 3个办法。
+
+\begin{itemize}
+\item 使用USE环境变量。比如{ \tt  USE="-networkmanager -dbus sasl" emerge -v pidgin} 。 这个设置只影响本次编译的pidgin。
+\item 到 make.conf 设置 USE=。 比如在 /etc/portage/make.conf 文件中加入 {\tt USE="gtk networkmanager -dbus"}（USE变量要用引号。）。这里的设置会是全局设置，影响到所有后续编译的软件。
+\item 到 /etc/portage/package.use 文件中写一行“ { \tt  net-im/pidgin dbus gtk -ncurses -nls } ”（不包括引号）。 这个设置只影响pidgin，但是所有后续安装pidgin都会使用这个设置。
+\end{itemize}
+
+\subsection{配置make.conf}
+
+话说emerge虽然很智能，编译下载全自动，但不代表就不需要配置了。portage的主配置文件就是 /etc/portage/make.conf。
+
+make.conf 里最重要的设置莫过于CFLAGS和CXXFLAGS了。 
+CFLAGS 和 CXXFLAGS 设置 C 和 C++ 的编译参数。
+emerge所编译的所有程序都会使用这里的编译参数设置。
+
+要配置make.conf需要编辑器，请参考 \secref{sec:nano} %TODO 编译编辑器 + 编辑器入门
+的内容。
+
+CFLAGS是C编译器参数。在这里设置的参数会被所有软件作为C编译器参数。CXXFLAGS是c++编译器参数。通常两者设置为相同即可。
+
+推荐的设置是 CFLAGS="-O2 -march=native -pipe"。
+（CXXFLAGS 同 CFLAGS。）
+
+\begin{itemize}
+\item -pipe 表示使用管道代替临时文件把编译后的汇编文件交给汇编器。
+\item -O2 表示优化级别为2。gcc 有5个优化级别， -O0 -O1 -Os -O2 -O3。-O0 表示不优化。-O1 到 -O3，数字越大，优化级别越高，生成的代码也越快。之所以不推荐使用 -O3 乃是保守。-O3 优化太激进，可能会导致一些软件错误。-Os是一个特殊的优化级别，表示按照大小优化而不是速度。
+\item -march=native 指示编译器按照本地CPU的指令集优化。编译生成的二进制程序将不能在和本机CPU型号（比仅仅是CPU牌子比一致，代数比一致也不行。比如在i7上编译的到奔腾上将无法执行。）不一致的机器上使用。这不正是使用Gentoo的一个原因么？
+\end{itemize}
+
+
+GENTOO\_MIRRORS 指示emerge下载源代码的时候使用的镜像。ebuild里虽然给出了软件的原始下载链接，但通常只作为后备资源。emerge会优先从Gentoo镜像服务器下载同名文件。
+Gentoo全球镜像站点非常多，所以需要设置离自己最近的镜像以加快下载速度。目前速度不错的两个国内镜像站点分别是搜狐和网易。\url{http://mirrors.sohu.com/gentoo/} \url{http://mirrors.163.com/gentoo/}。可以到 \url{http://www.gentoo.org/main/en/mirrors2.xml} 查看全部的镜像站点。
+
+SYNC %="rsync://mirrors.163.com/gentoo-portage"
+设置的是 portage 目录的更新源。emerge 依赖 /usr/portage 目录下的 ebuild 文件获得编译和依赖信息。所以及时的更新这个目录是很重要的。使用 emerge --sync 
+即可更新此目录。同样的，更新这样的目录也要选择一个快点的镜像。到Gentoo的网站查询镜像列表后选择一个填入。\footnote{网易提供的 \url{rsync://mirrors.163.com/gentoo-portage} 在大陆有不错的速度。}~ 由于 portage 树是用 rsync 进行增量更新的，所以将算不设置一个镜像也可以。因为如果每天更新的话，rsync的传输量并不大。所以可以不设置，使用默认的。
+
+ACCEPT\_KEYWORDS%="~amd64 amd64"
+指示emerge接受指定关键字的ebuild。关键字为 ARCH 和 \textasciitilde{}ARCH , ARCH为处理器架构名，如x86、amd64。设置了{\tt ACCEPT\_KEYWORDS="amd64"} （当然，这在amd64平台是默认设置）后，emerge只接受标记了amd64关键字的ebuild。
+这样就把没有标记此关键字的ebuild过滤掉了。这样的做法是因为有的软件只有某个平台可以用。而 \textasciitilde{}ARCH 则表示“不稳定的包”。
+比如一个ebuild如果标记为 \textasciitilde{}amd64 就表示在 amd64平台可用，但是不稳定。如果标记为 \textasciitilde{}x86就表示在32位x86平台可用，但不稳定。
+其实这个稳定是从服务器的角度说的。如果做桌面使用，\textasciitilde{}ARCH都是太稳定了的说。
+通常桌面使用会设置{\tt ACCEPT\_KEYWORDS="\textasciitilde{}amd64 amd64"} ， 如果是32位的则使用ACCEPT\_KEYWORDS="\textasciitilde{}x86 x86"。 这样标记为不稳定的包也能使用。通常一个软件发布新版本后，portage中出现的都是 \textasciitilde{}ARCH 版的ebuild，被测试充分稳定后才会进入 ARCH 。
+使用 \textasciitilde{}ARCH 是推荐设置。想尝新的朋友其实Gentoo有更不稳定的包，就是 masked 包。
+\url{/usr/portage/profiles/package.mask} 文件描述了portage树中所有被 masked 的包，被 masked 的包不论 KEYWORDS设置成什么，都会被过滤无法安装。除非手工解除屏蔽状态，具体的办法参考 %TODO emerge 详解。
+
+MAKEOPTS%="-j8"
+通常的设置为 -jN，其中 N 为cpu的数目。\begin{notice}
+注意，超线程被认为是2个CPU。比如双核超线程的i3，逻辑CPU数目就是4个。
+\end{notice} 这个设置被 make 使用，表示同时开启的编译数目。比如 make -j8，则 make 会尽可能的同时开启8个编译器进行编译。
 
 
 \subsection*{处理循环依赖}
@@ -1241,15 +1355,126 @@ Gentoo开发者似乎注意到了不会自行编译内核的しんまい%ざこ%
 \subsection{系统初步配置—重启前配置}
 在chroot环境中我们需要做的就是进行必备系统的安装，配置好基本系统然后重启进入Gentoo环境中进行后续的安装。所以这里基础系统的配置非常关键，他关系到你第一次能否成功地进入Gentoo系统。
 
-\subsubsection{时区域设置}
+\subsubsection{时区设置}
 
+类UNIX系统下，系统内核并不使用本地时间。内核使用的是被称为UTC\footnote{英文Coordinated Universal Time, 法文Temps Universel Coordonné。为了协调英文和法文用户，缩写为 UTC。}的时钟：文件系统上保存的文件最后修改时间即UTC时间而不是本地时间。
+需要设置时区才能正确从UTC转换到本地时间。
+
+同时，系统硬件存储的通常是本地时间——为了和Windows兼容，以及发挥定时开机等功能——内核启动的时候也需要将本地时间转化为UTC。
+所以时区信息分2个，第一，硬件时间是UTC还是本地时间，第二，本地时区。
+系统在启动过程中会使用 /etc/adjtime 的信息确定是否为本地时间。
+
+\begin{filecontent}{/etc/adjtime}
+0.0 0.0 0.0\\
+0\\
+LOCAL
+\end{filecontent}
+
+前两行忽略，后最后一行 LOCAL 即向系统传达硬件时钟为本地时间这个信息。如果不存在这个文件，就默认为UTC时间。赶快拿起编辑器生成这个文件吧。呵呵。
+
+时区信息保存在/etc/localtime，但是这个文件不要手工编辑。在系统的 /usr/share/zoneinfo/ 下保存有各个时区的 localtime 文件。拷贝为 /etc/localtime 就可以了。
+比如大陆使用东八区，城市为上海\footnote{居然不是北京的说}，所以拷贝 /usr/share/zoneinfo/Asia/Shanghai 为 /etc/localtime 就完成时区设置了。
+
+系统启动的时候，会读取硬件时间，然后转化为 UTC 时间设置为内核时间，该操作由hwclock程序完成。systemd的做法是由内核直接读取硬件时间（配置内核的时候选上 “Set system time from RTC on startup and resume”）， 到systemd启动的时候，按照本地时间和UTC的差拨快或拨慢内核时间即可。
+
+使用 date 命令打印的时间是从内核获得的 UTC 时间然后依据时区设置转化为本地时间再显示。
 
 \subsubsection{fstab配置}
 安装Gentoo，可以说，最重要的配置莫过于fstab了。fstab配置文件是Linux文件系统树的根基。正是fstab指明了文件系统的建筑结构。
 
+fstab 每行配置一个文件系统。语法是:
+\begin{small}
+\tt 
+\begin{longtable}{cccccc}
+文件系统设备	& 挂载点 & 文件系统类型 & 挂载选项 & dump & pass
+\end{longtable}
+\end{small}
+
+文件系统设备可以直接使用 /dev/sdXX 这样的设备，也可以使用 UUID= LABEL= 这样的形式。
+挂载选项每个文件系统都有特定的选项。如果没有特殊的需要使用 defaults 即可。dump 位如果设置为 1 表示如果检查失败就不能继续启动系统。通常设置为 1。
+pass 对于 / 设置为 1, 其他都设置为 2 。
+
+下面给出的是挂载 / 的例子。
+\begin{small}
+\tt 
+\begin{longtable}{cccccc}
+/dev/sda2	& /	 & ext4	& defaults & 1 & 1
+\end{longtable}
+\end{small}
+
+使用 LABEL也可以，假设 / 分区的 LABEL 是 Gentoo
+
+\begin{small}
+\tt 
+\begin{longtable}{cccccc}
+LABEL=Gentoo	& /	 & ext4	& defaults & 1 & 1
+\end{longtable}
+\end{small}
+
+值得注意的是，swap分区也是在这里设置的。只不过， 挂载点设置为 none，文件系统类型为 swap , dump 和 pass 设置为 0 
+
+\begin{small}
+\tt 
+\begin{longtable}{cccccc}
+LABEL=SWAP	& none	 & swap	& defaults & 0 & 0
+\end{longtable}
+\end{small}
+
+实际上Gentoo带的stage3已经提供了一个 fstab的模板，只要将自己的/boot分区、/分区、/home分区对应的设备写进去，调节一下文件系统类型就可以了。呵呵。
+
+
+\subsubsection{配置帐号，设置密码}
+
+我安装Gentoo的时候常常忘记为Gentoo设置root密码，结果重启后发现无法使用root登录。无密码和空密码不是一回事。Linux不允许登录无密码帐号。所以这个时候要做的事情就是设置一个root密码。
+
+\begin{code}
+\#passwd\\
+New UNIX password: *输入密码，注意这里不回显*\\
+Retype new UNIX password: *再次输入密码*\\
+passwd: password updated successfully
+\end{code}
+
 
 \subsubsection{nano 编辑器快速入门}\label{sec:nano}
-现在才讲nano我都觉得有点罪过。由于Gentoo的stage3里并没有包含vim，所以一开始必须使用nano进行系统配置，直到portage配置好后emerge了vim才能使用vim。在次之前还是得用nano。
+现在才讲nano我都觉得有点罪过。由于Gentoo的stage3里并没有包含vim，所以一开始必须使用nano进行系统配置，直到portage配置好后emerge了vim才能使用vim。
+在此之前还是得用nano。
+
+
+
+\subsubsection*{使用efibootmgr}
+
+上文提到过UEFI支持在操作系统环境下管理启动选项。这个管理操作由efibootmgr工具实现。当然，前提是系统是由EFI模式启动的。目前大部分EFI主板都提供了BIOS模拟，所以很有可能您的LiveCD是用BIOS模拟模式启动的，这样就会失去EFI管理能力。所以确保您是用EFI模式启动的LiveCD，可以参考　\faqref{FAQ:UseLiveCD}。
+
+%TODO
+TOOD: 指南
+%当然第一件事情是安装它。
+%\begin{code}
+%\#emerge efibootmgr
+%\end{code}
+
+首先显示出现有的引导选项
+\begin{code}
+\#efibootmgr
+\end{code}
+
+添加GRUB引导选项，将　\textbackslash{}grub.efi 添加到引导选项中去。
+\begin{code}
+\#efibootmgr　-c -L GRUB -l '\textbackslash{}grub.efi'
+\end{code}
+
+确认结果
+\begin{code}
+\#efibootmgr
+\end{code}
+
+记住　Boot????*GRUB　那4个问号代表的数字，表示新添加的GRUB处于何种次序。将GRUB设为第一引导次序，也就是默认引导项，如下文的命令。????就是刚刚找到的新添加的GRUB引导项的数字。
+
+\begin{code}
+\#efibootmgr　-o ????
+\end{code}
+
+这样就可以了。重启后系统会自动运行 grub.efi　进入grub模式，grub就可以将内核加载了。
+
 
 \chapter{使用Linux}
 \section{Shell 基础和日常应用}
