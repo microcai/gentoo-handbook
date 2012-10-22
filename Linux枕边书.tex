@@ -693,24 +693,6 @@ kernel /usr/src/linux/arch/x86/boot/bzImage ro root=/dev/sda2
 
 kernel用来加载一个内核，initrd 用来加载initramfs。对启动Linux来说，initrd并不是必须的。initrd的详细解释可以参考　\faqref{FAQ:initramfs}。
 
-安装grub，执行下面的命令进行安装
-\begin{code}
-\#emerge grub-static
-\end{code}
-
-这个时候　grub　会被安装到 /sbin/grub，　16位模式的GRUB会被安装到/usr/lib/grub ，　然后拷贝一份到 /boot/grub。
-/sbin/grub 这个命令可以在Linux环境下执行，除了不能启动Linux内核，GRUB能用的其他命令可以在这个命令行下使用。
-执行：
-\begin{code}
-\#grub
-\end{code}
-
-会出现grub的交互式命令行模式，这个和BIOS启动GRUB，按C进入的命令行模式是一样的。唯一的区别就是这个模式不能真正的启动Linux。
-现在我们要做的就是执行　root (hdX,Y)命令定位到 /boot　分区（如果/boot分区列位有划分独立的分区的话，否则就是定位到/分区。），然后执行 setup (hd0)。
-这么做的意思就是将 grub 的“接头人”装到MBR上，由这份接头人性质的代码加载 /boot/grub/stage2实现GRUB的启动。
-
-也可以不进入grub命令行模式，直接使用 grub-install 命令进行安装。但是熟悉grub交互式命令行模式对以后使用grub修复受损的MBR也是非常有用的。所以推荐使用grub的交互式命令行模式。
-
 不过，这样的GRUB可是对UEFI无效的哦~。
 
 \subsubsection{UEFI}
@@ -1474,6 +1456,41 @@ passwd: password updated successfully
 \#emerge reiserfsprogs	\#安装 reiserfs 文件系统工具\\
 \#emerge btrfs-progs	\#安装 btrfs 文件系统工具\\
 \end{code}
+
+\subsubsection{安装内核}
+
+去去去，查看一下内核编译完成了没。内核编译完成后，就剩下安装了。
+
+\begin{code}
+\#cd /usr/src/linux\\
+\#make install modules\_install
+\end{code}
+
+\subsubsection{安装引导程序}
+
+引导程序前面已经介绍过了，现在我们要做的就是安装一个。对于BIOS机器，执行下面的命令安装的老版本的grub:
+
+\begin{code}
+\#emerge grub-static
+\end{code}
+
+这个时候　grub　会被安装到 /sbin/grub，　16位模式的GRUB模块会被安装到/usr/lib/grub。拷贝/usr/lib/grub/一份到 /boot/grub。
+
+\begin{code}
+\#cp -a /usr/lib/grub /boot/
+\end{code}
+
+/sbin/grub 这个命令可以在Linux环境下执行，除了不能启动Linux内核，GRUB能用的其他命令可以在这个命令行下使用。
+执行：
+\begin{code}
+\#grub
+\end{code}
+
+会出现grub的交互式命令行模式，这个和BIOS启动GRUB，按C进入的命令行模式是一样的。唯一的区别就是这个模式不能真正的启动Linux。
+现在我们要做的就是执行　root (hdX,Y)命令定位到 /boot　分区（如果/boot分区列位有划分独立的分区的话，否则就是定位到/分区。），然后执行{\tt setup (hd0)} (或者 hd1,看你要安装到哪个硬盘的MBR上。)。
+这么做的意思就是将 grub 的“接头人”装到MBR上，由这份接头人性质的代码加载 /boot/grub/stage2实现GRUB的启动。
+
+也可以不进入grub命令行模式，直接使用 grub-install 命令进行安装。但是熟悉grub交互式命令行模式对以后使用grub修复受损的MBR也是非常有用的。所以推荐使用grub的交互式命令行模式。
 
 \subsubsection*{使用efibootmgr}
 
