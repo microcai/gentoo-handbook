@@ -1585,6 +1585,54 @@ Yeah. You know, regular stuff
 
 我们需要一个称心如意的系统，必定是需要悉心调教和了解的系统。
 
+\section{某日常的man-pages}
+
+UNIX命令繁多，载籍浩瀚。一个一个介绍纯属不可能之任务。所以一个随时可以借用的手册（manual）是比不可少的。
+不过且不论manual是怎么被缩写成man的，man已经成了UNIX管理员的必备工具了。正所谓有问题，man 一下。
+
+上千条命令和系统API的帮助页面被收集起来，形成了man pages，需要查阅的时候只需要使用 ~man + 命令名/API名称~即可方便调阅。
+
+实战演练：
+\begin{code}
+\$man man
+\end{code}
+
+进入阅读模式后，可以使用上下方向键翻动。按“Q”键退出。按“/”键，终端底行会由行数显示改为显示一个/,然后键入字符串，按回车即可查找该字符串。
+man本质上是调用的less进行最终的显示。所以其实这里使用的就是less的命令。使用参数 -P 还可以制定其他的分页器。
+
+man pages将系统手册分成8个类别。
+\begin{enumerate}
+       \item      命令行命令
+       \item      系统调用
+       \item      标准C库和POSIX定义的API
+       \item      设备文件
+       \item      文件格式
+       \item      游戏
+       \item      杂项
+       \item      系统管理工具和后台服务
+\end{enumerate}
+
+遇到有重名的时候就可以指定一个数字表示显示指定类别的手册。否则显示序号最小的那个类别的手册。
+
+\begin{example}{printf}
+shell提供了printf命令用于打印格式化的字符串，同时printf()也是标准C库的组成部分。
+
+直接使用 \texttt{\$man printf} 得到的就是printf命令的手册。要显示 printf() 函数的手册， 必须使用 \texttt{\$man 3 printf}。
+\end{example}
+
+%由于man手册为手册划分了类别，所以我们提到参阅某某某的时候，后面都会打上括号，指出是哪个类别。比如会有“参考man手册 printf(3)”这样的说法，指的就是参考第3类目的手册，也就是说，使用 \texttt{ \$man 3 printf } 查看。有时也会省略“man手册”，直接使用“参考printf(3)”这样的用法。
+
+{
+\bf 
+由于man手册为手册划分了类别，所以我们提到参阅某某某的时候，后面都会打上括号，指出是哪个类别。比如会有“参考man手册 printf(3)”这样的说法，指的就是参考第3类目的手册，也就是说，使用 \texttt{ \$man 3 printf } 查看。有时也会省略“man手册”，直接使用“参考printf(3)”这样的用法。
+也就是说，“参考XXX(1-8之间的数字) ” 已经成为“让读者使用man命令参考相应内容，并指出该内容隶属于哪个类别”的固定句式。英文里，通常是 “see printf(3)” 这样的用法。
+
+\it 
+%由于man手册为手册划分了类别，所以我们提到参阅某某某的时候，后面都会打上括号，指出是哪个类别。比如会有“参考man手册 printf(3)”这样的说法，指的就是参考第3类目的手册，也就是说，使用 \texttt{ \$man 3 printf } 查看。有时也会省略“man手册”，直接使用“参考printf(3)”这样的用法。
+
+}
+
+
 \section{UNIX权限基础}
 
 UNIX是一个多用户系统，意味着UNIX支持同时登录多个帐号互不干扰的操作。要实现这一点就需要对帐号进行权限隔离。良好的权限设计也是杜绝恶意软件的基石。
@@ -1772,14 +1820,39 @@ mkdir 是 make directiroy 的缩写。DOS/Windows 下的缩写为MD。
 mkdir 接受一个或多个目录名作为参数。如果目录已经存在，mkdir会失败。加 -p 参数可以忽略已经存在的文件夹。
 
 如果要想一次创建多个层次的目录，可以加 -p 参数。如 \texttt{mkdir -p a/b/c/d/e/f/g}。
-文件夹创建后的访问模式默认为
+文件夹创建后的访问模式默认为 0775。
+
+mkdir的具体用法请参考mkdir(1)。
 
 
+~ \newline
+
+相比之下，创建文件的方法就多了去了。通常用户文件是由编辑器\footnote{不要光理解为文本编辑器啊，绘图软件也是图像文件的编辑器不是么。}创建。
+另外创建空白文件的办法是使用touch命令。
+
+\subsubsection*{touch}
+
+touch 可不光是用来创建文件，还可以修改文件的最后修改时间——如果文件已经存在的话。
+
+touch 的用法很简单，以文件名作为参数即可新建空白文件或者更新文件的最后修改时间。如果指定了 -d 或者 -t 还可以使用指定的时间作为文件的最后修改时间，默认使用当前时间。
+-d 参数使用的格式同 date 命令的输出， -t 参数使用的格式为 [[CC]YY]MMDDhhmm[.ss]\footnote{[~] 表示可选。}。 
+如:
 
 \begin{code}
-\#mkdir a
+\noindent touch linuxbook.tex -d "2012-10-29 13:37:20"\\
+\indent \quad 或者 \\
+\noindent touch linuxbook.tex -t "201210291337.20"
 \end{code}
+touch的具体用法请参考touch(1)。
 
+
+重命名文件和移动文件（夹）是同样的操作。使用的都是 mv 命令。
+
+\subsubsection*{mv}
+
+mv乃move的缩写，命令很简单：\texttt{mv OLDNAME NEWNAME}。具体用法请参考mv(1)。
+
+复制的英文单词是copy，考虑到UNIX的神缩写传统，你一定不指望UNIX会使用copy作为复制文件的命令名称。没错，复制文件的命令名称也被缩写了，非常精简的cp。
 
 \subsection{bash是们编程语言}
 
