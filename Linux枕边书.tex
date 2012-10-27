@@ -1854,6 +1854,10 @@ mv乃move的缩写，命令很简单：\texttt{mv OLDNAME NEWNAME}。具体用�
 
 复制的英文单词是copy，考虑到UNIX的神缩写传统，你一定不指望UNIX会使用copy作为复制文件的命令名称。没错，复制文件的命令名称也被缩写了，非常精简的cp。
 
+直接使用cp的话并不能进行文件夹的复制。文件夹有子文件夹，子又有子，子又有孙，子子孙孙无穷尽。要拷贝一个文件夹，必然是一个递归的操作。所以拷贝文件夹需要添加 -R 参数。
+至于符号链接\footnote{见 \faqref{faq:symlink}}，
+
+
 \subsection{bash是们编程语言}
 
 Bash作为一个shell是尽职的。有了各种实用小工具\footnote{已经在system集合里，默认安装，自行安装使用\#emerge coreutils）} 和管道的配合，
