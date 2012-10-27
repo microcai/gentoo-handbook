@@ -1845,16 +1845,58 @@ xpdf	\$mybook.pdf
 \$~\$tex	\$texbook.tex
 \end{code}
 
+
 这里，“\$\{tex\} \$\{tex\}book.tex”时间上被替换后是执行的“xelatex xelatexbook.tex”。
+
+\end{example}
+
+shell的变量不需要声明，给一个新变量赋值就是声明了。
+一个变量使用 export 导出后就变成环境变量了，会被子进程继承。
+
+比如这样设置环境变量USE给emerge：
+
+\begin{code}
+\$~ export USE=go  \\
+\$~ emerge gcc
+\end{code}
+
+后续启动的任何子进程都将继承到USE环境变量。如果只想让本次的emerge继承到这个变量，可以用下面的形式。
+
+\begin{code}
+\$~ USE=go emerge gcc
+\end{code}
+
+这种情况下，USE会变成子进程 emerge 的环境变量，emerge结束后，USE变量就撤销了。
+
+有关变量的另一个注意事项是，变量是在字符串展开之前替换的，也就是说，变量展开后，会继续对展开后的字符串再次进行字符串展开功能。使用单引号会禁止变量替换。
+
+\begin{example}{字符串展开和shell变量}
+
+\begin{code}
+\$~ anyfile='*' \\
+\$~ echo '\$anyfile'\\
+\$~ echo "\$anyfile"\\
+\$~ ls "\$anyfile"\\
+\$~ echo \$anyfile\\
+\$~ ls -d \$anyfile\\
+\$~ ls \$anyfile\\
+\end{code}
+
+解释：
+\begin{enumerate}
+\item echo '\$anyfile' 变量没进行替换，所以显示结果为 \$anyfile
+
+\item  echo "\$anyfile" , 变量被替换为 * , 所以显示的结果就是 * 
+\item ls "\$anyfile" , 由上一条命令证实，变量被替换为 * ,显示结果却是 “ls: 无法访问*: 没有那个文件或目录”，表明引号禁止了字符串展开。
+\item echo \$anyfile ，变量首先被替换为 * , 然后执行字符串展开，所以显示了当前文件夹的内容。
+\item ls -d \$anyfile ， 变量首先被替换为 * , 然后执行字符串展开，所以执行结果和 ls -d * 一致。所以显示了当前文件夹的内容。不显示子文件夹内容，由 -d 参数保证\footnote{参考ls(1)}。
+\item ls \$anyfile ， 变量首先被替换为 * , 然后执行字符串展开，所以执行结果和 ls * 一致。显示当前文件夹的文件和当前文件夹的子文件夹的文件。
+\end{enumerate}
 
 
 \end{example}
 
 
-
-\begin{insertnote}
-注意:字符串展开发生在变量展开之后。
-\end{insertnote}
 
 \subsection{shell和文件管理}
 
