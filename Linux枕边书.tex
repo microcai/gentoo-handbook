@@ -1813,7 +1813,48 @@ m.c m.cpp m.o m.s m.h
 
 \end{example}
 
+\subsection{shell变量和环境变量}
+环境变量和shell变量都是字符串变量。使用的时候都通过 \$变量名 引用。shell会使用变量具体的值替换掉引用对象。
+环境变量和shell变量在使用的时候没有区别。唯一的区别是环境变量会被子进程继承，而一般的shell变量只限在该shell中使用。
+变量的赋值使用=号，不能两边有空格。
 
+\begin{example}{变量展示}
+
+下面的命令，将字符串“linuxbook”赋值给变量mybook,然后通过 \$mybook引用。shell会将\$mybook替换为“linuxbook”。
+
+\begin{code}
+mybook="linuxbook"
+xelatex \$mybook.tex
+xpdf	\$mybook.pdf
+\end{code}
+\end{example}
+
+可是如果我已经有一个变量叫 my ， 则 my 和 mybook 两个变量会发生混淆：我实际想使用的是  \$my然后在后面接上book。但是shell会按照mybook变量来替换。
+
+ 取消这种混淆的办法是使用 \$\{变量名\} 进行引用。
+
+\begin{example}{变量展示 -ver 2}
+
+下面的命令，将字符串“linuxbook”赋值给变量texfile,然后通过 \$texfile引用。
+将字符串"xelatex"赋值给变量tex,然后用 \$\{tex\}引用。
+
+\begin{code}
+\$~tex="xelatex" \\
+\$~texfile="linuxbook" \\
+\$~\$\{tex\} \$\{tex\}book.tex \\
+\$~\$tex	\$texbook.tex
+\end{code}
+
+这里，“\$\{tex\} \$\{tex\}book.tex”时间上被替换后是执行的“xelatex xelatexbook.tex”。
+
+
+\end{example}
+
+
+
+\begin{insertnote}
+注意:字符串展开发生在变量展开之后。
+\end{insertnote}
 
 \subsection{shell和文件管理}
 
@@ -1869,6 +1910,7 @@ mv乃move的缩写，命令很简单：\texttt{mv OLDNAME NEWNAME}。具体用�
 拷贝文件的时候提到了递归，提一下，删除文件也得递归。因为删除目录的系统调用rmdir(2)必须用在空目录上。所以对于一个非空的目录是不能删除的。
 要删除一个非空文件夹，首先删除其下的所有文件和文件夹。对于非空的子文件夹，先删除子文件夹下的文件和文件夹。这就是一个递归操作了。
 删除文件和文件夹使用rm(1)命令，rm默认不进行递归，所以对非空文件夹执行rm会失败。使用-r参数能让rm执行递归操作。
+
 
 \subsection{管道和重定向}
 
@@ -1941,6 +1983,33 @@ Bash作为一个shell是尽职的。有了各种实用小工具\footnote{已经�
 不过，要想完全发挥shell的作用，就需要将shell作为一门编程语言，使用shell提供的判断和循环语句。
 
 \subsubsection{条件判断}
+
+shell之条件判断分两种，一种基于 if-then-else-fi ， 另一种是 cmd1 \&\& cmd2 和 cmd1 || cmd2。
+
+我们首先介绍 cmd1 \&\& cmd2 这种形式的命令。
+
+写过 "hello world" 程序的人都知道，main() 函数的最后都要有一个 “return 0;”。 这个返回值到底放回给了谁？答案是调用它的父进程。如果是shell调用的，就是返回给shell咯。
+执行过一条命令后，通过 \$? 变量就能获得刚刚执行过的命令的返回值。
+
+做个测试吧：
+
+\begin{code}
+\$ ls \\
+\$ echo \$?
+\$ ls /root \\
+\$ echo \$? \\
+\end{code}
+
+第一次调用 ls 显示当前目录的内容，返回值很明显是 0 。第二次显示 /root ，很明显没有权限，返回值是 2 。
+
+shell有时候必须知道一条命令执行成功还是执行失败，shell就是通过查看命令退出的时候的返回值判断命令是否成功执行的。像“ls /root”这样的命令如果不是以root权限执行的话，一定会因为没有权限而失败。 shell规定了，一条命令执行后返回0表示成功，非0表示失败。
+
+这个成功和失败就用在了 cmd1 \&\& cmd2 和 cmd1 || cmd2 语法上。
+简单的说，“cmd1 \&\& cmd2” 表示cmd1命令执行成功就执行cmd2。而“cmd1 || cmd2”表示cmd1命令执行失败就执行cmd2。
+
+
+
+
 
 \subsubsection{whill循环}
 
