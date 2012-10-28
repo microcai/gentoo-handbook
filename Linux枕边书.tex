@@ -2049,6 +2049,19 @@ shell有时候必须知道一条命令执行成功还是执行失败，shell就�
 这个成功和失败就用在了 cmd1 \&\& cmd2 和 cmd1 || cmd2 语法上。
 简单的说，“cmd1 \&\& cmd2” 表示cmd1命令执行成功就执行cmd2。而“cmd1 || cmd2”表示cmd1命令执行失败就执行cmd2。
 
+拿先前的例子来说，我在while循环里使用了一个判断 
+\begin{code}
+  [ -d \$filename ] \&\&  ls -d -1 \$filename
+\end{code}
+
+意思是，如果“ [ -d \$filename ]” 成功，执行“ls -d -1 \$filename”。
+
+在shell中， “ [~] ” 的意思就是执行条件判断。
+如“\texttt{ [ "a" = "b" ] }” 就表示判断字符串 "a" 和 "b" 是否相等。
+ [] 对于表达式成立会退出码0,不成立为1。再依据shell对退出码所采取的行为，就能使用 [] 编写表达式是否成立的条件而执行的命令了。
+ 
+在本利中， [ -d \$filename ] 的意思是判断 \$filename 是否为存在且为目录。
+事实上。 [] 是 test 的别名。“test -d \$filename” 等价于 “ [ -d \$filename ]” 。 所以想知道 [] 的用法可以查看man手册 test(1) 。
 
 
 
@@ -2274,6 +2287,8 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 \appendix
 
 \include{faq}
+
+\include{manpage}
 
 \chapter{名称缩写}
 
