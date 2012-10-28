@@ -14,7 +14,7 @@ ${BOOKNAME}.toc ${BOOKNAME}.xdv:${BOOKNAME}.tex coverpage.tex  faq.tex  preface.
 	${XDVTEX} ${BOOKNAME}.tex && ${XDVTEX} ${BOOKNAME}.tex
 
 clean:
-	rm -rf *.pdf *.out *.blg *.aux *.bbl *.toc *.log *.xdv
+	rm -rf *.pdf *.out *.blg *.aux *.bbl *.toc *.log *.xdv *.lof
 
 all: ${BOOKNAME}.pdf
 

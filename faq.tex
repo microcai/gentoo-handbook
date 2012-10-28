@@ -1,6 +1,6 @@
 \renewcommand{\thesection}{\arabic{section}}
 
-\chapter{FAQ}\label{FAQ}
+\chapter{FAQ}\label{chap:FAQ}
 
 \section{什么是 LiveCD ?}\label{FAQ:LiveCD}
 一种让 Linux 系统脱离硬盘，只需要一张 DVD 或者 CD 运行的技术。使用者只需要插入一张 LiveCD 就可以使用 Linux  系统了。当然，由于 CD-ROM 是只读的，所以对 LiveCD 系统本身所做的更改重启后都会消失。由于 Linux 发行版的膨胀，一张 CD-ROM 无法装下，于是就有了 LiveDVD , 除了容量增加外，和LiveCD 是一致的。此外还有 LiveUSB , 也就是使用 USB 存储设备的 liveCD。用法和 LiveCD 并无二致。
@@ -21,8 +21,15 @@
 
 \section{如何不重新登录切换到root帐号？}\label{FAQ:su}
 
-\section{内核参数}\label{FAQ：kernelparamter}
+正如 \secref{sec:usersandgroups} 所讲，UNIX支持多账户登录。如果当前使用普通帐号登录，而某些命令需要使用root帐号的时候，就需要用到su这个命令了。
+使用su命令的前提是加入wheel组，否则不能使用su切换到root。 “su”切换到root帐号，但是没有切换环境变量和工作目录，亦没有执行/root/.bash\_profile。{}“\hbox{su -}” 能切换到 /root 目录，提供类似直接登录的环境。用户很可能需要的就是带 - 参数的su。
 
+su 还可以切换到其他用户，如“su smith - ”可以切换到smith帐号上。
+
+另外一个临时使用root权限的办法就是在执行的命令前加 sudo 。 sudo 需要用户加入wheel组并在 /etc/sudoers 加入 “\%wheel ALL=(ALL) ALL” 一行。
+sudo 通常来说只应该授权给信任的普通帐号 —— 比如管理员自己给自己设定的日常登录帐号（如果是桌面用户，自然就是自己用来登录桌面的帐号） —— 并且为普通用户设定好强壮的密码。
+
+\section{内核参数}\label{FAQ：kernelparamter}
 
 
 \section{Initramfs是什么}　\label{FAQ:initramfs}

@@ -110,7 +110,7 @@
 }
 
 
-\newcommand{\faqref}[1]{~附录A.\nameref{FAQ}~“\nameref{#1}”}
+\newcommand{\faqref}[1]{~附录 \ref{chap:FAQ}.\nameref{chap:FAQ}~“\nameref{#1}”}
 \newcommand{\secref}[1]{ { \it节\ref{#1}~\nameref{#1}} }
 
 \newcommand{\chapref}[1]{ { \it第\ref{#1}章~\nameref{#1}} }
@@ -498,6 +498,8 @@ Gentoo下几乎所有软件都是本机编译的，自然不存在兼容性问�
 \end{code}
 
 选项是可选的，可以有一个或多个；多个选项间用空格隔开；有些命令没有选项；目标通常是一个文件的文件名，或者目录名。
+一行可以写多个命令，多个命令用“;”隔开。一个命令也可以跨行，在最后行尾使用  “\textbackslash”  即可在下一行继续写。
+
 
 请看一个命令做为例子： 
 
@@ -1657,7 +1659,7 @@ UNIX是一个多用户系统，意味着UNIX支持同时登录多个帐号互不
 为什么管理员的权限要凌驾于系统之上呢？ 因为操作系统是“被管理员授权来管理计算机”的。所以，UNIX系统本身严格遵循“不做管理员没有授权的事情”，和“不阻止管理员做任何事情”。
 哪怕管理员要 \texttt{"rm -rf /"} UNIX都不会阻止管理员做这件事情。如果哪个系统阻止管理员做危险的事情，已经是“仆人成了主人”——本末倒置了。
 
-\subsection{用户和组}
+\subsection{用户和组}\label{sec:usersandgroups}
 
 UNIX权限是按照用户和组进行组织的。权限最高的是root用户，也称特权帐号，非root用户被称为普通用户。
 在内核中，每个用户都对应一个UID，每个组也对应一个GID。root用户即UID=0,GID=0。
@@ -2061,12 +2063,24 @@ shell有时候必须知道一条命令执行成功还是执行失败，shell就�
  [] 对于表达式成立会退出码0,不成立为1。再依据shell对退出码所采取的行为，就能使用 [] 编写表达式是否成立的条件而执行的命令了。
  
 在本利中， [ -d \$filename ] 的意思是判断 \$filename 是否为存在且为目录。
-事实上。 [] 是 test 的别名。“test -d \$filename” 等价于 “ [ -d \$filename ]” 。 所以想知道 [] 的用法可以查看man手册 test(1) 。
+事实上。 [] 是 test 的别名。“test -d \$filename” 等价于 “ [ -d \$filename ]” 。 所以想知道 [] 的详细用法可以查看man手册 test(1) 。
+
+\subsubsection{while循环}
+
+例子中还有一个用到的shell功能就是循环。 bash shell支持while循环和for循环。
+
+while循环的语法为 
+\begin{code}
+
+while cmd of condition ; do \\
+	cmd1\\
+	cmd2\\
+	...\\
+done\\
+
+\end{code}
 
 
-
-
-\subsubsection{whill循环}
 
 \subsubsection{for循环}
 
