@@ -2271,25 +2271,35 @@ for f in \$dirlis  ; do  \textbackslash \\
 
 \end{example}
 
+\subsubsection{读取输入}
+在 \textbf{统计portage拥有的软件包数目} 例子中看到过 \texttt{while read f} 这样的用法。读者猜想这是读取输入到变量f的意思。
+没错，正是这个意思。
+准确的说， read 的与否是这样的：
 
+\begin{code}
+read var1 var2 var3 ...
+\end{code}
 
+read 从标准输入读取一行，并将一行中的字符串分别赋值给 var1 var2 var3 等等变量。字符串的拆分规则和命令行一样，使用空格分隔。如果拆分出来的字符串个数比命令行提供的变量多，最后一个变量将包含余下的所有字符串。
 
-
-
-%\subsubsection{字符串操作}
-
-%\subsubsection{字符串操作}
+如果读取输入的时候遇到文件结束（在例子中，管道的输出方结束输出），退出状态就是非0，导致例子中while循环终止。
 
 \section{文件编辑器}
-\subsection{编辑器之神 vim	}
-\subsection{神之编辑器 emacs	}
-\subsection{够用就好 gedit	}
+
+日常使用Linux的过程中，无法避免的一件事就是要编辑文本。可以说，计算机除了“计算”之外的一大用途就是“编辑\footnote{不论是编辑文本还是编辑视频，通通都是编辑的说。}”。
+
+
+
+\subsection{编辑器之神 vim}
+\subsection{神之编辑器 emacs}
+\subsection{够用就好 gedit}
+
 \section{系统管理基础}
 
 \subsection{进程管理}
 \subsection{系统服务管理}
 
-\section{shell 进阶应用}
+%\section{shell 进阶应用}
 
 
 \chapter{软件管理}\label{软件管理}
