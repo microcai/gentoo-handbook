@@ -641,6 +641,23 @@ argv[3]=NULL;
 execv("/bin/ls",argv);
 \end{code}
 
+\subsection*{转义序列}
+
+既然说过，空格作为参数分格符。如果用引号将带有空格的字符串引起来，则两个引号之间的所有内容都作为一个字符串。也就是说，那之间的空格就失去了分割参数的功能。
+引号还可以用于避免字符串展开。功能如此强大，结果就是字符串本身如果就打算使用引号怎么办？shell将搞不清楚引号到底是代表这是一个字符串还是引号本身是字符串的一部分。
+
+shell引入了转义操作。使用在字符串内部使用{\textbackslash\tt{}"}就可以表示这是一个引号。
+
+\begin{example}{显示带 引号的字符串}
+\begin{code}
+root@gentoo \textasciitilde \# echo "你好引号{\textbackslash\tt{}"}"
+
+你好引号"
+
+root@gentoo \textasciitilde \#
+\end{code}
+\end{example}
+
 \subsection*{本节回顾}
 
 目前shell知识讲解仅限于能让读者小小入门，并顺利完成Gentoo的安装。现在小结一下shell的简单用法。
@@ -1850,6 +1867,8 @@ xpdf	\$mybook.pdf
 
 这里，“\$\{tex\} \$\{tex\}book.tex”时间上被替换后是执行的“xelatex xelatexbook.tex”。
 
+可以把变量理解为一个宏，shell处理的时候会将\$和变量名本身 替换成变量的内容。
+
 \end{example}
 
 shell的变量不需要声明，给一个新变量赋值就是声明了。
@@ -2080,13 +2099,186 @@ done\\
 
 \end{code}
 
+命令可以和 do 写在一行上也可以不写在一行上。
+do如果不和while写在同一行，while后面的那个命令的“ ;” 就可以不写。
+
+如果“cmd of condition”执行成功就执行 do 和 done 之间的命令。重复执行直到命令执行失败。也就是返回值不为0。
+
+
+\subsubsection{until循环}
+
+until循环和while循环语法一致，不过是用until替换while。
+
+
+\begin{code}
+
+until cmd of condition ; do \\
+	cmd1\\
+	cmd2\\
+	...\\
+done\\
+
+\end{code}
+
+不一样的是，until循环是条件不成立才执行的循环。而while循环是条件成立时执行。
 
 
 \subsubsection{for循环}
 
-\subsubsection{字符串操作}
+while循环用户知道循环条件的地方，for循环用于知道循环的内容的地方。
+
+for的语法为：
+
+\begin{code}
+
+for var in array ; do \\
+cmd1 \\
+cmd2 \\
+... \\
+done 
+
+\end{code}
 
 
+array 是一个字符串的集合。比如 “/usr/portage/*-*/*” 会导致 shell 将其扩展为数万个文件名的集合。for为集合中的每个元素运行一次循环。
+每次循环，都可以用“\$var”引用集合中的一个元素。
+
+
+例中命令使用 for 循环可以修改成这样，于是出现版本3：
+
+\begin{example}{统计portage拥有的软件包数目 - ver 3}
+
+\begin{code}
+for f in /usr/portage/*-*/* ; do  \textbackslash \\
+	\qquad [ -d \$f ] \&\&  ls -d \$f ; done | wc -l
+\end{code}
+\end{example}
+
+除了用通配符制造的文件名，for 循环还可以使用数组。数组将在下面的章节中节介绍。
+
+
+\subsubsection{字符串}
+
+字符串是shell的基本数据类型。有多种方式可以进行字符串的操作。所以到现在才介绍，是因为日常使用很少需要用到字符串操作。
+
+\begin{enumerate}
+\item 合并字符串	
+
+合并两个字符串的办法很简单，就是将连个变量“贴”到一起，如变量 A 和 B ， 获得 A 和 B 连接在一起的字符串的办法就是 {\tt "\$A\$B"}。
+
+\item 字符串替换
+
+\$\{var/查找字符/替换字符\}
+
+	这个操作中除了第一个参数是变量外其它两个都是字符;还有一点就是这个操作并不是把变量“var”中的字符替换了，而是返回一个替换后的字符串。原字符串并没有被替换。
+这个查找是正向查找，就是从左到右执行查找，把找到的第一个字符串替换到。执行反向查找使用的是这个语句：
+
+
+\$\{var/\%查找字符/替换字符\}
+
+上面两个查找替换都是找到第一个匹配的字符串进行替换，而下面这个可以执行全部替换。
+
+\$\{var//查找字符/替换字符\}
+
+以上所有的操作都不会修改原始变量var而是返回一个新的字符串。如果要修改原始变量可以把新的字符串重新赋值给var嘛！
+
+\item 取子字符串
+
+从一个字符串变量获取子字符串的语法
+
+\$\{var:位置\}
+
+从“位置”开始取子串到最后。默认是从左边开始，如果“位置”为负数，则是从右边的第“位置”个字符开始，并且第一个位置为0。 %
+如果不取到结尾而是限定一个长度，可以使用下面的语法：
+%例：
+%str1=abcABCabc123ABC
+%echo ${str1:(-3)}#会输出ABC
+
+\$\{var:开始位置:结束位置\}
+
+
+%\$\{字串\#匹配字串\}
+
+%（说明一下，这个是从左边第一个开始匹配，剥去最短“匹配字串”） %
+%例：
+%str1=abcABCabc123
+%echo ${str1#a*c}#输出ABCabc123
+%(2)${字串##匹配字串}
+%（说明一下，这个是从左边第一个开始匹配，剥去最长“匹配字串”）
+%str1=abcABCabc123
+%echo ${str1#a*c}#输出123
+%echo ${str1#b*c}#输出abcABCabc123，因为没有从第一个开始匹配
+%(3)${字串%匹配字串}
+%(4)${字串%%匹配字串}
+%（说明一下，这与上面的（1）（2）是正好相反的，是从最后一个开始匹配的）
+
+\item  字符串长度
+
+\$\{\#字串\} %
+
+例： str=abcdefg
+
+echo \$\{\#str\} 输出7
+
+\end{enumerate}
+
+
+
+
+
+
+\subsubsection{数组}
+
+shell支持字符串数组。 %不过好像日常使用没什么大的用处。在编写shell程序的时候会用到。所以还是有必要知道一下。
+数组的语法有三种
+
+\begin{code}
+
+(1) array=(var1 var2 var3 ... varN) \\
+(2) array=([0]=var1 [1]=var2 [2]=var3 ... [n]=varN) \\
+(3) array[0]=var1 \\
+\leftskip=2em
+    arrya[1]=var2 
+    
+    ... 
+    
+    array[n]=varN 
+\end{code}
+
+计算数组元素个数：
+\begin{code}
+\$\{array[@]\}  或者  \$\{array[*]\}
+\end{code}
+
+引用数组的语法是 （n为下标）：
+\begin{code}
+ \$\{array[n]\}
+\end{code}
+
+可以使用 for 循环来遍历数组。
+
+\begin{example}{统计portage拥有的软件包数目 - ver 4}
+
+\begin{code}
+dirlist=/usr/portage/*-*/*
+
+for f in \$dirlis  ; do  \textbackslash \\
+	\qquad [ -d \$f ] \&\&  ls -d \$f ; done | wc -l
+\end{code}
+
+顺便一提，其实shell进行字符串扩展的时候生成的就是数组，数组再就地展开为命令参数。所以{}“dirlist=/usr/portage/*-*/*”{}这样的用法即让dirlist变量变成数组。
+
+
+\end{example}
+
+
+
+
+
+
+%\subsubsection{字符串操作}
+
+%\subsubsection{字符串操作}
 
 \section{文件编辑器}
 \subsection{编辑器之神 vim	}
@@ -2094,8 +2286,8 @@ done\\
 \subsection{够用就好 gedit	}
 \section{系统管理基础}
 
-\subsection{进程管理	}
-\subsection{系统服务管理	}
+\subsection{进程管理}
+\subsection{系统服务管理}
 
 \section{shell 进阶应用}
 
@@ -2300,9 +2492,8 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 
 \appendix
 
-\include{faq}
-
-\include{manpage}
+{ \include{faq} }
+{ \include{manpage} }
 
 \chapter{名称缩写}
 
