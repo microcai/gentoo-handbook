@@ -1445,13 +1445,17 @@ passwd: password updated successfully
 
 这样就设置好root帐号的密码了。
 
+\subsubsection{语言设置}\label{sec:lang}
+%TODO
+很多程序都有本地化语言支持。支持本地化的程序，通过检查环境变量LANG的内容决定使用何种语言。
+
 \subsection{安装基础系统}
 
 除了内核，引导程序，和init程序，还有一些必须的基础程序需要安装。主要是：开机fsck需要用到的各种文件系统的辅助工具和网络工具。
 
 \subsubsection{安装网络工具}
 
-网络工具的具体用法请参考 %TODO 网络章节的内容。
+网络工具的具体用法请参考\chapref{chap:network}。
 
 这里作为一个快速安装的指南，算是一个占位符吧。告诉你，现在就得把网络工具安装了，否则待会重启进的了系统却用不了网络，无法继续安装哦！
 
@@ -1461,7 +1465,8 @@ passwd: password updated successfully
 
 不过如果使用了无线网络，最好还是现在就把NetworkManager装了，免得重启后无法继续安装系统。
 
-如果使用 PPPoE 进行拨号的（ADSL接入，在电脑上进行拨号。），除了安装NetworkManager还得安装 rp-pppoe。这样 NetworkManager就可以进行拨号了。具体用法请参考%TODO 网络章节的内容。
+如果使用 PPPoE 进行拨号的（ADSL接入，在电脑上进行拨号。），除了安装NetworkManager还得安装 rp-pppoe。这样 NetworkManager就可以进行拨号了。
+具体用法请参考 \chapref{chap:network}
 
 因为 networkmanager会引入 bluetooth 依赖，现在还用不到，可以关闭。之后可以重新编译。
 
@@ -2434,18 +2439,39 @@ vim为了支持前面提到的“纯键盘”操作，把编辑器设定成两�
 	命令模式下，按‘v’就进入区块选择模式，并定义区块的起始位置。移动光标选择终止位置。被选中的文本会反白显示。
 
 \item 复制：
+
 	选择好区块后，按‘y’。选中的文本会被拷贝到vim自己的剪切板。
 
 \item 剪切：
+
 	选择好区块后，按‘d’。选中的文本会被剪切到vim自己的剪切板。
 	
 \item 粘贴：
+
 	在命令模式下，按 p 就可以把vim自己的剪切板的内容粘贴到光标位置。vim不是X程序，不能使用X界面的剪切板哦。
+
+\item 撤销：
+
+	按‘u’撤消最後執行的命令，按‘U’來修正整行。
 
 \end{enumerate}
 
 
+\subsubsection{从vim那获得帮助}
 
+惊奇的是，vim居然自带了教程！使用
+
+\begin{code}
+\$ vimtutor
+\end{code}
+
+就能打开这个教程了。默认会打开本地语言版本的教程！如果你的本地语言设置不是中文\footnote{到\secref{sec:lang}脑补。}，使用 
+
+\begin{code}
+\$ vimtutor zh
+\end{code}
+
+即可打开。虽然是繁体中文，不过阅读上并无大碍。
 
 \subsection{神之编辑器emacs}
 
@@ -2453,7 +2479,7 @@ emacs是GNU出品的正牌编辑器，出自RMS大神之手。故称之为神之
 %
 \keyboradparty{emacs}
 
-%对于键盘党\footnote{对惯用键盘操作电脑，提倡抛弃鼠标的人的称呼。}来说，让双手离开键盘是一种罪恶。没有比让双手保持在键盘上更能发挥打字的速度了。
+
 
 \section{系统管理基础}
 
@@ -2585,7 +2611,7 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 \subsection{ X 的错误	}
 \subsection{  直接渲染}
 
-\chapter{网络}
+\chapter{网络}\label{chap:network}
 \section{  网络基础知识}
 \subsection{  通信基础}
 \subsection{  IP地址和TCP/IP协议}
