@@ -23,6 +23,7 @@
 \usepackage{needspace}
 \usepackage{wrapfig}
 \usepackage[below,section]{placeins}
+\usepackage{color}
 \usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{multirow}
@@ -35,6 +36,7 @@
 % always load hyperref as last packages
 \usepackage[colorlinks,linkcolor=black]{hyperref}
 %\usepackage{todonotes}
+
 
 %\input{draftcopy}
 
@@ -54,6 +56,9 @@ TODO:#1%
 \color{blue}\footnotesize%
 TODO:#1}
 }
+
+\definecolor{gray}{rgb}{0.9,0.9,0.9}
+
 %=====================================================================================
 % define new command and environment 
 %=====================================================================================
@@ -2764,6 +2769,98 @@ GCC支持另一个特殊的优化级别：-Os。‘s’在这里的含义是size
 
 \end{insertnote}
 
+一些人认为，只有为内存受限的特定环境编写程序时才考虑-Os优化。但是Linus在一次邮件中鲜明的指出，至少在x86平台，-Os优化生成的结果总是最快的。下面列出邮件原文。
+
+\begin{insertnote}
+
+\subsubsection*{Linus讨论-Os和-O2的邮件}
+
+\leftskip 2em
+\rightskip 2em
+\parindent 0pt
+
+\colorbox{gray}{\hbox to 5em {Date} Thu, 6 Feb 2003 15:16:16 -0800 (PST)}
+
+\colorbox{gray}{\hbox to 5em {From}	 Linus Torvalds <>   }
+
+\colorbox{gray}{\hbox to 5em {Subject}	Re: gcc -O2 vs gcc -Os performance }
+
+\footnotesize 
+
+\parskip 4ex
+
+\noindent{}On Thu, 6 Feb 2003, Martin J. Bligh wrote:\\
+> \\
+> The observation re low repeat rate is interesting ... might be amusing \\
+> to do some really basic profile-guided optimisation on this grounds,\\
+> take readprofile / oprofile output, and compile the files that don't\\
+> get hammered at all with -Os rather than -O2. Given their low frequency\\
+> (by definition), I'm not sure that improving their icache footprint will\\
+> have a measureable effect though.
+
+Icache footprint has nothing to do with repeat rates, which is exactly why 
+repeat rates are interesting for -Os.
+
+Icache footprint is directly proportional to the \_static\_ size of the code 
+(ie exactly the thing that -Os is supposed to optimize for), while 
+instruction-level performance measurement is only valid on the \_dynamic\_ 
+code.
+
+And with modern CPU's with big caches, a \_lot\_ of cache misses are the 
+forced kind - the startup costs, not the actual runtime cost. That's not 
+always true (if you touch big data sets, you'll have replacement misses 
+too, of course), but it's not really false either.
+
+So think of the I\$ (and TLB, and page load/map - all the same) cost as a 
+fixed cost that will always be there, but that -Os tries to minimize. 
+That's \_one\_ dimension in the total cost.
+
+The "traditional" -O2 kind of "try to make the code run fast" 
+optimizations tend to try to minimize a totally different dimension, 
+namely the dynamic code speed.
+And the time required for running the program is the sum of the static and 
+dynamic factors. In other words, a \_good\_ optimization should try to 
+minimize not one or the other, but the sum.
+
+And low repeat rates means that the dynamic component is smaller, which 
+clearly makes the static component more important.
+
+For example, if you are doing mp3 encoding, the repeat rates for the core 
+loop are huge, and the code is small, so clearly the static component is 
+largely insignificant. Use -O2.
+
+But if you're running a GUI program then just the loading time is often
+quite noticeable, and if you can improve that by, say, 10%, then that can
+\_more\_ than make up for almost any amount of stupidity in your code.  
+Especially since a lot of the code isn't even all that loopy and tends to
+have low repeat rates. You're almost guaranteed to be better off using -Os
+than -O2.
+
+If you've got performance counter data, check the I\$ and ITLB miss ratios, 
+and if they are at all noticeable, think about the fact that a I\$ miss 
+tends to cost a lot more than a few more dynamic instructions. 
+
+I suspect the kernel I\$ behaviour is generally pretty good, and the ITLB 
+behaviour is improved even further thanks to large pages etc. That said, a 
+user app that blows the I\$ will blow the kernel out of the I\$ too, so 
+small is always beautiful, even in the kernel.
+
+\qquad Linus
+
+--\\
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in \\
+the body of a message to majordomo@vger.kernel.org \\
+More majordomo info at  \url{http://vger.kernel.org/majordomo-info.html}\\
+Please read the FAQ at  \url{http://www.tux.org/lkml/}
+
+\end{insertnote}
+
+在邮件中，Linus指出，CPU的指令缓存是有限的，更小的代码意味着程序能将自身更多的部分放入指令缓存从而带来指令缓存命中率的提升。更大的代码导致CPU更多的发生 Icache miss（指令缓存不命中），指令缓冲一旦没有命中，CPU不得不暂停执行到内存读取指令并刷新指令缓存。众所周知，CPU之所以有缓存设计，就是因为内存无法和CPU同频运行。
+CPU的一级缓存是单周期访问的，但是容量有限。通常只有数十KB；而二级和三级缓存虽然大很多\footnote{在i7级别的CPU上三级缓存有8MB。但是入门级别的CPU可能就没有三级缓存}，但是访问时间却要好几个时钟周期；但是内存的访问是更慢的了，达到数十个周期。也就是说，如果一次Icache miss发生，CPU将会浪费几十个周期到二级和三级缓冲刷新，但是如果三级缓存中都没有，必须到主内存刷新，浪费的时钟周期将达数百个\footnote{缓存刷新的时候会执行预读取，所以浪费的是数个内存访问周期。}。随着CPU主频的提升，访问一次内存导致的CPU时钟周期浪费也会越来越高。更大的指令除了导致更容易出现Icache miss，也导致可执行文件变的更大，也将是初次加载的
+时候要花费更多的时间将代码从硬盘读取到内存。
+
+不论是从运行时的速度上考虑还是从加载速度上考虑，更小的代码总是意味着更快的速度。更何况将算没有将缓冲填满，更小的代码也给其他程序留下了更多的缓存空间。所以整个系统以-Os参数进行优化似乎能获得从整体而言最快的系统。
+
 
 
 \subsection{  链接时优化（LTO）	}
@@ -2799,6 +2896,7 @@ GCC支持另一个特殊的优化级别：-Os。‘s’在这里的含义是size
 %{ \include{wars} }
 
 { \include{manpage} }
+
 
 \chapter{名称缩写}
 
