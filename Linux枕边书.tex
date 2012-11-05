@@ -2665,21 +2665,53 @@ overlay可以有多个，亦即PORTDIR\_OVERLAY可以设定多个路径，以空
 
 \item	管理窗口父子关系。
 
-\item	维护窗口层级。
-
-
+\item	维护窗口层级。因为运行窗口重叠，层级在前的窗口会覆盖掉层级在后的窗口的内容。
 
 \end{enumerate}
 
-\section{X 的历史}
+我为什么没有在这里提到窗口绘制呢？严格来说，窗口内容的绘制并不是窗口系统本身的工作，尽管窗口绘制也是图形界面的基础功能之一。窗口内容的绘制，包括文字的渲染，都是被称作为图形渲染系统的工作。
+图形渲染系统并不是窗口系统的一部分，而是作为一个基础系统被窗口系统所依赖——窗口习题利用图形渲染系统提供的功能进行窗口绘制。
+甚至为了安全，图形渲染系统只能透过窗口系统间接使用\footnote{Linux下可以绕过X直接在屏幕绘图的办法有
+/dev/fb*，DirectFB和KMS。}。
 
-TODO： X 是一个窗口系统，那么X为什么采用了 C/S 结构呢？
-\subsection{ 窗口管理}
-\subsection{ 渲染库和静态链接}
+图形渲染系统需要提供的功能有：
+\begin{enumerate}
+\item	提供一个framebuffer。这个framebuffer就是显示器的输出。显示器的内容是由framebuffer直接呈现的。提供framebuffer，意味着可有查询和设定framebuffer的分辨率，
+色深，刷新率。
+
+\item	提供绘图API。最基本的API就是bitblt，也就是向framebuffer执行块拷贝操作。其他的一切API都是可选的\footnote{这也就是为何现代X11被用到的渲染API只有XRender（硬件加速的块拷贝操作）一个而已。我们在wayland一节里提到。}。
+
+%\item	提供字体查找和绘制
+\item	（可选）提供硬件加速。也就是可有访问GPU，利用GPU加速图形操作。最佳的方式就是提供OpenGL绘图API并使用GPU加速。
+\end{enumerate}
+
+正图\ref{fig:guisystem}描述的那样。窗口系统是建立在图形渲染系统基础之上的。
+GUI程序使用窗口系统管理窗口，并通过窗口系统获得自己对应的framebuffer区域，然后时候图形渲染系统执行界面渲染向用户呈现图形化的界面。
+因为安全性的原因，GUI程序是不能直接使用图形渲染系统，必须通过窗口系统进行授权以获得一块屏幕区域。否则一个程序能向不属于自己的窗口绘制，不是乱套了么？
+
+\chatu{guisystem}{窗口系统}
+
+其他的功能，如“字体渲染”是建立在原有的功能基础之上的。应用程序可以将文字自行绘制为位图然后bitblt到framebuffer，所以字体功能并不是必须的。
+但是为了程序间字体的一致性，通常这个可选的功能仍然由图形系统统一提供\footnote{X提供了Xfont核心字体和Xft扩展，用于绘制X内建字体和freetype矢量字体。不过Gtk和Qt都不使用它，而是使用freetype2库自行绘制然后使用XRender绘制到窗口。这样freetype2+fontconfig而不是X提供的基础反而成了Linux下字体渲染的标准。Windows{}和{}Mac OS X{}也都在窗口系统上内建字体支持。}。由图形系统统一提供的好处是系统里只有一套字体管理机制，不容易带来混乱\footnote{在freetyp2和fontconfig接管X的字体功能之前，Linux下的字体管理曾经相当的混乱。安装一个字体需要到X、Xft和fontconfig下分别配置三次。而现在只需要利用fontconfig的自动配置能力即可实现即拷即用——拷贝字体到字体文件夹下即可使用。}。
+
+
+\section{X窗口系统}
+
+X的全称是X Window System。安装名称，是一个窗口系统。其实并不全面。X除了是一个窗口系统，还是一个图形渲染系统。X不仅提供窗口管理功能，也提供了图形绘制功能\footnote{而正是因为X提供了图形渲染，而导致了X成为性能低下的代名词。!\_!}。
+
+
+
+\todo{X 是一个窗口系统，那么X为什么采用了 C/S 结构呢？}[-2cm]
+
+\subsection{窗口管理}
+\subsection{渲染库和静态链接}
+
 \section{桌面环境}
+\subsection{KDE}
+
 \subsection{GNOME}
 GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
-\subsection{ KDE XFCE 和其他}
+\subsection{XFCE 和其他}
 
 \section{  办公和打印	}
 \subsection{  LibreOffice	}
