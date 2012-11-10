@@ -22,7 +22,9 @@
 
 \usepackage{needspace}
 \usepackage{wrapfig}
+\usepackage{float}
 \usepackage[below,section]{placeins}
+\usepackage{color}
 \usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{multirow}
@@ -35,6 +37,7 @@
 % always load hyperref as last packages
 \usepackage[colorlinks,linkcolor=black]{hyperref}
 %\usepackage{todonotes}
+
 
 %\input{draftcopy}
 
@@ -54,6 +57,9 @@ TODO:#1%
 \color{blue}\footnotesize%
 TODO:#1}
 }
+
+\definecolor{gray}{cmyk}{0,0,0,0.2}
+
 %=====================================================================================
 % define new command and environment 
 %=====================================================================================
@@ -106,7 +112,7 @@ TODO:#1}
 }\makeatother
 
 \newcommand{\chatuNoStar}[3][scale=0.35]{%
-\begin{figure}[htb]%
+\begin{figure}[htbp]%
 \noindent\centering%
 \includegraphics[#1]{pics/#2}%
 \caption{#3\label{fig:#2}}%
@@ -115,7 +121,7 @@ TODO:#1}
 
 
 \newcommand{\chatuStar}[3][scale=0.35]{%
-\begin{figure*}[!h]%
+\begin{figure*}[H]%
 \noindent\centering%
 \includegraphics[#1]{pics/#2}%
 \label{fig:#2}%
@@ -2626,64 +2632,212 @@ overlay可以有多个，亦即PORTDIR\_OVERLAY可以设定多个路径，以空
 
 
 \chapter{图形界面}
-对命令行是不是有点枯燥了？是时候来电新鲜的东西了 只所以现在才讲，因为图形实在是太复杂了。
+对命令行是不是有点枯燥了？是时候来点新鲜的东西了 只所以现在才讲，因为图形实在是太复杂了。说Linux图形系统的复杂度已经超过所有其他子系统的总和都不为过。
 
-\section{窗口和图形}
+所有的图形系统，都有一个“指点”设备。图形界面是一种“看得见”的界面，同时需要有种东西能模拟“摸得着”。模拟“摸得着”就需要“指点”设备。通常在桌面型电脑上是鼠标，而在平板电脑上则是触摸屏。“指点”设备告诉计算机，用户“指”的地方和“点”的地方。
 
-\section{X 的历史}
+除了“指点”设备，传统的键盘也是一个重要的组成部分\footnote{在平板上，键盘被取消了。取而代之使用屏幕键盘和手写输入法}。键盘和指点设备都是用户输入设备。
 
-TODO： X 是一个窗口系统，那么X为什么采用了 C/S 结构呢？
-\subsection{ 窗口管理}
-\subsection{ 渲染库和静态链接}
+图形界面下，多个图形程序相互之间共享输入设备和输出设备。输出设备通常就是指的屏幕。
+
+同控制台程序只能接收字符化的用户输入和输出字符串相比，图形程序能输出表意更直观的图像，接收的输入也更为复杂——有鼠标事件，有键盘事件，还有其他图形程序发来的消息，更有系统发送的重绘消息。
+
+由于系统要进行多任务处理，输入和输出设备就不可避免的需要进行共享。完成这个共享的，就是操作系统的窗口系统。
+
+\section{图形、字体和窗口}
+
+窗口是一块有属主并能联接到输入设备的屏幕区域（通常这个也是一块矩形区域）。这块有属主的区域可以为其所有者所控制，接受输入设备的输入并用来输出图形信息。
+
+在操控系统控制的屏幕上有且只有一个窗口能接受键盘输入。接受键盘输入的窗口被称为当前窗口。用户敲击键盘所产生的输入事件被发送给当前窗口，并由该窗口的所有者接受输入事件。
+
+用户可以移动和切换窗口。某个窗口变成当前窗口的操作称为激活。被激活了可以接受到键盘输入的窗口被称为拥有了键盘焦点。
+键盘事件总是发送给拥有键盘焦点的窗口。
+窗口之间可以相互遮挡，被称为窗口Z轴层级。
+拥有焦点的窗口需要处在顶层，所以被激活的窗口总是自动被提升到顶层。
+鼠标被移动的时候需要向鼠标经过的窗口发送移动事件。鼠标点击的时候向被点击的鼠标发送点击事件。
+
+从上面的描述可以推测，操作系统的窗口系统的主要任务有：
+
+\begin{enumerate}
+
+\item	提供输入设备的共享。鼠标消息总是发送给鼠标所在的窗口。键盘消息总是发送给拥有键盘焦点的窗口。键盘焦点可以切换。
+
+\item	维护窗口的位置、大小等属性。
+
+\item	管理窗口父子关系。
+
+\item	维护窗口层级。因为运行窗口重叠，层级在前的窗口会覆盖掉层级在后的窗口的内容。
+
+\end{enumerate}
+
+我为什么没有在这里提到窗口绘制呢？严格来说，窗口内容的绘制并不是窗口系统本身的工作，尽管窗口绘制也是图形界面的基础功能之一。窗口内容的绘制，包括文字的渲染，都是被称作为图形渲染系统的工作。
+图形渲染系统并不是窗口系统的一部分，而是作为一个基础系统被窗口系统所依赖——窗口习题利用图形渲染系统提供的功能进行窗口绘制。
+甚至为了安全，图形渲染系统只能透过窗口系统间接使用\footnote{Linux下可以绕过X直接在屏幕绘图的办法有
+/dev/fb*，DirectFB和KMS。}。
+
+图形渲染系统需要提供的功能有：
+\begin{enumerate}
+\item	提供一个framebuffer。这个framebuffer就是显示器的输出。显示器的内容是由framebuffer直接呈现的。提供framebuffer，意味着可有查询和设定framebuffer的分辨率，
+色深，刷新率。
+
+\item	提供绘图API。最基本的API就是bitblt，也就是向framebuffer执行块拷贝操作。其他的一切API都是可选的\footnote{这也就是为何现代X11被用到的渲染API只有XRender（硬件加速的块拷贝操作）一个而已。我们在wayland一节里提到。}。
+
+%\item	提供字体查找和绘制
+\item	（可选）提供硬件加速。也就是可有访问GPU，利用GPU加速图形操作。最佳的方式就是提供OpenGL绘图API并使用GPU加速。
+\end{enumerate}
+
+正图\ref{fig:guisystem}描述的那样。窗口系统是建立在图形渲染系统基础之上的。
+GUI程序使用窗口系统管理窗口，并通过窗口系统获得自己对应的framebuffer区域，然后时候图形渲染系统执行界面渲染向用户呈现图形化的界面。
+因为安全性的原因，GUI程序是不能直接使用图形渲染系统，必须通过窗口系统进行授权以获得一块屏幕区域。否则一个程序能向不属于自己的窗口绘制，不是乱套了么？
+
+\chatu{guisystem}{窗口系统}
+
+其他的功能，如“字体渲染”是建立在原有的功能基础之上的。应用程序可以将文字自行绘制为位图然后bitblt到framebuffer，所以字体功能并不是必须的。
+但是为了程序间字体的一致性，通常这个可选的功能仍然由图形系统统一提供\footnote{X提供了Xfont核心字体和Xft扩展，用于绘制X内建字体和freetype矢量字体。不过Gtk和Qt都不使用它，而是使用freetype2库自行绘制然后使用XRender绘制到窗口。这样freetype2+fontconfig而不是X提供的基础反而成了Linux下字体渲染的标准。Windows{}和{}Mac OS X{}也都在窗口系统上内建字体支持。}。由图形系统统一提供的好处是系统里只有一套字体管理机制，不容易带来混乱\footnote{在freetyp2和fontconfig接管X的字体功能之前，Linux下的字体管理曾经相当的混乱。安装一个字体需要到X、Xft和fontconfig下分别配置三次。而现在只需要利用fontconfig的自动配置能力即可实现即拷即用——拷贝字体到字体文件夹下即可使用。}。
+
+\chatu{fontsystem}{字体系统}
+
+可以看出的是，操作系统可以不提供字体字体系统，完全不影响。如图中所示，字体选择和光栅化\footnote{显示输出设备通常是像素构成的位图，而高质量的字体则是矢量图形。需要将矢量图形转化为位图，这个过程叫光栅化。}可以由应用程序自己\footnote{或自己写或拜托freetype2这样的库}进行。
+
+\section{X窗口系统}
+
+X的全称是X Window System。安装名称，是一个窗口系统。其实并不全面。X除了是一个窗口系统，还是一个图形渲染系统。X不仅提供窗口管理功能，也提供了图形绘制功能\footnote{而正是因为X提供了图形渲染，而导致了X成为性能低下的代名词。下面马上会讲到原因 !\_!}。
+
+X协议下的Linux图形系统构造是如图\ref{fig:Xstruct} 这样的。
+
+X是MIT在1984年的时候开发的，到1987年的时候出到了第11版本，也是当前正在使用的版本。当前的第11版X称为X11。
+
+X实际上只是一个协议。就像HTTP是个统治互联网的超文本协议一样，X是统治UNIX图形界面的协议。
+X是个协议就意味着必须有Server和Client。Server和Client相互使用X协议进行通信。所有的操作都是Server代为Client进行的。Client只需要通过X协议向Server发生请求即可。
+
+也就是说, Client可以和Server处在不同的电脑上。这也是X的一个优势——网络透明。
+
+\chatu{Xstruct}{X结构}
+
+X的优势也是一个劣势：通过网络进行的操作不可避免的带来了大量的开销和延时。X通过缓存一部分请求然后封装成一个包进行批量发送在一定程度上减小了网络开销。但是延时是不可避免的。
+
+\begin{notice}
+
+想想用户点击一个按钮后，要从硬件到内核再到X Server，这都是很快的，慢速的地方在进入X Server后开始了。X Server同时连接了大量的 X Client， 任意时间都有大量的请求过来，非常忙碌。鼠标事件首先被X Server缓存，等处理完X Client的请求，开始把鼠标事件进行翻译，找到鼠标所在的窗口，将鼠标点击事件按照X协议格式化，再发送给X Client。X Client收到鼠标信息后，要进行“视觉回馈”。于是紧接着开始了大量的绘图操作，而所有的绘图操作，在X环境下，都是通过X协议透过网络转发到X Server上代为执行的。
+想到一个简单的鼠标点击就产生多少次网络来回的数据包吧。 再想想，X同时为数十个X Client服务——极限环境下可能成百上千个——X Server 很有可能忙于处理X Client的请求而导致延时大大增加。
+
+% 想如果X学Windows 7在入门版只允许开3个程序。
+
+\chatu{XstructInteract}{一个按钮的交互}
+
+\end{notice}
+
+
+不过X也使用了很多的办法来提高速度。当前大部分环境下，基于X Server和X Client都是在同一台电脑上执行的事实，X还可以做很多的优化。比如使用共享内存代替网络传输。
+
+\begin{notice}
+
+\chatu{Xstructuselesscopy}{多余的拷贝}
+
+这对视频播放软件特别有用。播放器在播放一个高清视频视频的时候，相当于每秒向X Server发送25幅全尺寸未压缩的高清图片。这是接近每秒198MB的数据量。想到这么多的数据，事实上发生了至少3次拷贝：一次是从播放器到内核（调用send(2)），一次是从内核到
+X server（X Server使用recv(2)接收网络数据），一次是X Server拷贝到显存。放大这些拷贝因素后，得出实际上是每秒近600MB的数据量。这大大占用了系统的总线带宽。
+如果这个时候共享内存介入，拷贝就只有一次了：播放器准备好的数据直接被X Server共享获得，然后拷贝到显存。
+
+
+
+\end{notice}
+
+\subsection{窗口管理}
+
+用户移动窗口，改变大小，全屏/最大化窗口，最小化窗口，改变窗口次序，切换键盘焦点等这些操作都是所谓的窗口管理。有管理就会有策略。移动窗口，可以移出屏幕不？
+改变大小，可以任意变小不？改变次序，以何种形式更改窗口堆叠次序呢？这些都是属于策略问题。不同的人有不同的喜好。一些人还有不允许窗口重叠的喜好，想让所有的窗口都平铺到屏幕上；不同的人喜好不同的窗口装饰\footnote{窗口的外框，最上门一排有窗口的标题和各种控制按钮——最大化，最小化和关闭按钮}风格$\cdots\cdots$
+
+既然策略是一直非常众口难调的东西，MIT发明X的时候决定，X只提供实现窗口管理的机制，不实现窗口管理策略。窗口的管理策略连同窗口装饰，都由一个特殊的程序——窗口管理器——实现。
+
+窗口管理器和其他X程序一样，都是X Client。只不过这个Client比较特殊，一个X Server上有且仅有一个Client能是窗口管理器——在同一个X Server下不能启动两个窗口管理器。
+
+\chatu[width=0.8\textwidth]{kwinconfigfocuspolicy}{KWin配置焦点策略}
+
+窗口管理器定义了窗口管理的规则。比如大部分窗口管理器都使用“点击获得焦点”的策略。点击一个窗口后，能将键盘焦点移动到被点击的窗口上，并将窗口提升到最前端。许多窗口管理器（通过可配置选项）还支持由鼠标所在的窗口自动获得焦点。如图 \ref{fig:kwinconfigfocuspolicy}所示，KWin\footnote{KDE默认的窗口管理器}允许4中焦点策略。默认是“点击获得焦点”。
+
+\chatu[width=0.8\textwidth]{kwinconfigstyle1}{KWin配置装饰风格}
+\chatu[width=0.8\textwidth]{kwinconfigstyle2}{KWin配置装饰风格}
+
+窗口装饰是窗口管理器绘制的，通过修改窗口管理器的配置来修改窗口装饰的外观，如图 \ref{fig:kwinconfigstyle1} 和 \ref{fig:kwinconfigstyle2}所示。
+图中我使用了2个装饰风格。
+
+
+%\FloatBarrier
+
+\subsection{混合窗口管理器}
+
+混合窗口管理器——composited window manager——带合成功能的窗口管理器。
+即是一个窗口管理器又是一个合成器。窗口管理我们了解了，那么混合是什么呢？
+
+合成——composite——如名字所言，是用来混合的。那么混合的什么呢？
+在介绍混合器（Compositor）前我们来看一张绚丽的桌面截图\footnote{当然，老样子，还是我的桌面，避免被窥视隐私，将系统托盘图标和浏览器书签栏和谐了。}：
+
+\chatu[width=\textwidth]{3ddesktop}{三维桌面}
+
+从传统的X结构上，这是不可能实现的。窗口不可能脱离屏幕出现在一个立方体上。
+显然这绝对不是X Server能做到的事情。实现这个就需要窗口管理器做点小小的手脚了。
+
+通常，一个X程序的窗口位于屏幕，窗口直接连接到帧缓冲区，调用XDraw*绘制会直接修改窗口所覆盖的帧缓冲区的内容，也就是直接绘制到屏幕上。
+
+%TODO 图片
+
+在合成环境下，窗口管理器利用特权\footnote{窗口管理相对一般的X Client有特权，否则怎么做管理。}向X Server标记窗口为redirected状态。
+
+\subsection{渲染库和静态链接}
+
+
+
 \section{桌面环境}
+\subsection{KDE}
+地方根深蒂固
 \subsection{GNOME}
 GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
-\subsection{ KDE XFCE 和其他}
+\subsection{XFCE 和其他}
 
-\section{  办公和打印	}
-\subsection{  LibreOffice	}
-\subsection{使用CUPS 打印文档	}
-\section{ 声音的那些事	}
-\subsection{  声音的数字编码	}
-\subsection{  逐渐被遗忘的OSS	声音架构}
-\subsection{ ALSA 高级Linux声音架构}
-\subsection{  PulseAudio 优秀的声音服务器	}
-\subsection{  播放器	}
-\section{  让游戏放松自己	}
-\subsection{  OpenGL 和 Mesa	}
-\subsection{  硬件加速	}
-\section{  Wayland	}
-\subsection{ X 的错误	}
-\subsection{  直接渲染}
+\section{办公和打印}
+\subsection{LibreOffice}
+\subsection{使用CUPS打印文档}
+\section{声音的那些事}
+\subsection{声音的数字编码}
+\subsection{逐渐被遗忘的OSS声音架构}
+\subsection{ALSA高级Linux声音架构}
+\subsection{PulseAudio优秀的声音服务器}
+\subsection{播放器}
+\section{让游戏放松自己}
+\subsection{OpenGL和Mesa}
+\subsection{硬件加速}
+\section{Wayland}
+\subsection{X 的错误}
+\subsection{直接渲染}
 
 \chapter{网络}\label{chap:network}
-\section{  网络基础知识}
-\subsection{  通信基础}
-\subsection{  IP地址和TCP/IP协议}
-\subsection{  路由表和路由协议}
-\subsection{ 以太网和WIFI}
-\subsection*{  小插曲：永恒的以太网}
+\section{网络基础知识}
+\subsection{通信基础}
+\subsection{IP地址和TCP/IP协议}
+\subsection{路由表和路由协议}
+\subsection{以太网和WIFI}
+\subsection*{小插曲：永恒的以太网}
 
 \section{网络配置\label{sec:ifconfig}}
-\subsection{  图形环境下的工具	}
-\subsection{ 命令行配置工具}
-\subsection{ 网络自动配置和DHCP}
-\section{  网络攻击和防火墙	}
-\subsection{ 网络攻击类型和检测}
-\subsection{  iptables防火墙}
+\subsection{图形环境下的工具	}
+\subsection{命令行配置工具}
+\subsection{网络自动配置和DHCP}
+\section{网络攻击和防火墙	}
+\subsection{网络攻击类型和检测}
+\subsection{iptables防火墙}
 
 \chapter{文件系统}
-\section{  磁盘上的文件系统	}
-\subsection{  块设备和磁盘}
-\subsection{ 超级块和inode}
-\subsection{  典型磁盘文件系统举例}
-\section{  虚拟文件系统	}
-\subsection{  /proc内核信息窗口}
-\subsection{  /dev设备文件系统和udev}
-\subsection{  虚拟内存盘tmpfs}
-\section{  网络文件系统	}
-\subsection{  NFS	}
-\subsection{  Windows 网络邻居 CIFS	}
+\section{磁盘上的文件系统	}
+\subsection{块设备和磁盘}
+\subsection{超级块和inode}
+\subsection{典型磁盘文件系统举例}
+\section{虚拟文件系统}
+\subsection{/proc内核信息窗口}
+\subsection{/dev设备文件系统和udev}
+\subsection{虚拟内存盘tmpfs}
+\section{网络文件系统	}
+\subsection{NFS}
+\subsection{Windows 网络邻居 CIFS}
 \section{  其他的文件系统	}
 \subsection{  LiveCD的最爱——压缩文件系统squashfs}
 \subsection{  为Flash芯片设计的文件系统}
@@ -2731,7 +2885,7 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 
 使用Gentoo的时候，由于我们只是用户，并不是上游软件开发者，虽然无法在设计上改动上游的代码，但是我们手里能控制的还有编译优化和构建优化。将不需要的功能通过USE选项筛剪，并调节编译器的参数生成为本机的CPU优化的最优指令。这也是portage给我们的最强大的武器。
 
-\section{  最廉价的优化 – 编译优化	}
+\section{最廉价的优化 – 编译优化}
 
 %优化的理论依据是，
 现代程序通常由高级语言编写，使用编译器将其编译为机器可执行的二进制指令。在这个转换的过程中，事实上存在无穷多个可能的结果
@@ -2739,7 +2893,7 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 人们对编译器的期望是，它总能够选择其中执行速度最快的那个作为最终结果。所谓执行速度最快，通常是完成同样的功能使用最少的指令，或者指令序列总执行时间最短。
 这也是编译器能对程序进行优化的依据。
 
-\subsection{  编译期优化	}
+\subsection{编译期优化}
 前面提到过，生成最优结果对编译器来说是个NP完全问题\footnote{所谓NP完全问题，就是说在“有限”的时间内无法找到最优解的问题}。编译器必须能在有限的时间内给出编译结果。所以编译器提供了“优化级别”概念。
 
 所谓优化级别，就是给出编译器执行优化过程的时候所尽的“努力”程度。最高级别的优化就是尽最大的努力生成编译结果。通常生成的结果运行速度最快，但也意味着最费时的编译。
@@ -2749,12 +2903,123 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 对用户来说，只要知道使用“-Ox”参数开启指定级别的优化即可。
 
 emerge{}使用的编译优化参数由 make.conf(5) 文件中的{ }CFLAGS{ }和{ }CXXFLAGS{ }指定。通常指定\texttt{"-O2 -march -pipe"}，其中的-O2即指定优化级别为2。这是Gentoo推荐
-的设置。虽然说-O3有可能带来更好的性能。
+的设置。虽然说-O3有可能带来更好的性能。但是激进的优化措施有时候会带来意想不到的问题。为保守起见，Gentoo只推荐全局启用-O2级别的优化。
+
+GCC支持另一个特殊的优化级别：-Os。‘s’在这里的含义是size，也就是为大小进行优化。
+
+\begin{insertnote}
+\subsubsection{什么是为大小优化？}
+
+编译器进行优化的时候，有时候会碰到代码大小和执行速度的矛盾。有的代码可以优化为更少的指令，但是每条指令都更复杂，导致总执行时间更长；或者优化为更多的指令，但是每条指令更简单，而且在超标量处理器上能做到指令级的并行执行，总执行时间反而更短。
+虽然说大部分情况下，更少的代码总是意味着更快的执行速度，但是遇到某些特殊情况时，编译器就必须作出代码大小和执行速度的权衡。
+-Os{}优化级别就是告诉编译器，在遇到代码大小和执行速度两难的境地，优先考虑代码大小，使用让代码体积更小的优化措施。
+
+\end{insertnote}
+
+一些人认为，只有为内存受限的特定环境编写程序时才考虑-Os优化。但是Linus在一次邮件中鲜明的指出，至少在x86平台，-Os优化生成的结果总是最快的。下面列出邮件原文，也可以从内核邮件列表的网上归档上查看 \url{https://lkml.org/lkml/2003/2/6/182}。
+
+\begin{insertnote}
+
+\subsubsection*{Linus讨论-Os和-O2的邮件}
+
+\leftskip 2em
+\rightskip 2em
+\parindent 0pt
+
+\colorbox{gray}{\hbox to 5em {Date} Thu, 6 Feb 2003 15:16:16 -0800 (PST)}
+
+\colorbox{gray}{\hbox to 5em {From}	 Linus Torvalds <>   }
+
+\colorbox{gray}{\hbox to 5em {Subject}	Re: gcc -O2 vs gcc -Os performance }
+
+\footnotesize 
+
+\parskip 4ex
+
+\noindent{}On Thu, 6 Feb 2003, Martin J. Bligh wrote:\\
+> \\
+> The observation re low repeat rate is interesting ... might be amusing \\
+> to do some really basic profile-guided optimisation on this grounds,\\
+> take readprofile / oprofile output, and compile the files that don't\\
+> get hammered at all with -Os rather than -O2. Given their low frequency\\
+> (by definition), I'm not sure that improving their icache footprint will\\
+> have a measureable effect though.
+
+Icache footprint has nothing to do with repeat rates, which is exactly why 
+repeat rates are interesting for -Os.
+
+Icache footprint is directly proportional to the \_static\_ size of the code 
+(ie exactly the thing that -Os is supposed to optimize for), while 
+instruction-level performance measurement is only valid on the \_dynamic\_ 
+code.
+
+And with modern CPU's with big caches, a \_lot\_ of cache misses are the 
+forced kind - the startup costs, not the actual runtime cost. That's not 
+always true (if you touch big data sets, you'll have replacement misses 
+too, of course), but it's not really false either.
+
+So think of the I\$ (and TLB, and page load/map - all the same) cost as a 
+fixed cost that will always be there, but that -Os tries to minimize. 
+That's \_one\_ dimension in the total cost.
+
+The "traditional" -O2 kind of "try to make the code run fast" 
+optimizations tend to try to minimize a totally different dimension, 
+namely the dynamic code speed.
+And the time required for running the program is the sum of the static and 
+dynamic factors. In other words, a \_good\_ optimization should try to 
+minimize not one or the other, but the sum.
+
+And low repeat rates means that the dynamic component is smaller, which 
+clearly makes the static component more important.
+
+For example, if you are doing mp3 encoding, the repeat rates for the core 
+loop are huge, and the code is small, so clearly the static component is 
+largely insignificant. Use -O2.
+
+But if you're running a GUI program then just the loading time is often
+quite noticeable, and if you can improve that by, say, 10%, then that can
+\_more\_ than make up for almost any amount of stupidity in your code.  
+Especially since a lot of the code isn't even all that loopy and tends to
+have low repeat rates. You're almost guaranteed to be better off using -Os
+than -O2.
+
+If you've got performance counter data, check the I\$ and ITLB miss ratios, 
+and if they are at all noticeable, think about the fact that a I\$ miss 
+tends to cost a lot more than a few more dynamic instructions. 
+
+I suspect the kernel I\$ behaviour is generally pretty good, and the ITLB 
+behaviour is improved even further thanks to large pages etc. That said, a 
+user app that blows the I\$ will blow the kernel out of the I\$ too, so 
+small is always beautiful, even in the kernel.
+
+\qquad Linus
+
+--\\
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in \\
+the body of a message to majordomo@vger.kernel.org \\
+More majordomo info at  \url{http://vger.kernel.org/majordomo-info.html}\\
+Please read the FAQ at  \url{http://www.tux.org/lkml/}
+
+\end{insertnote}
+
+在邮件中，Linus指出，CPU的指令缓存是有限的，更小的代码意味着程序能将自身更多的部分放入指令缓存从而带来指令缓存命中率的提升。更大的代码导致CPU更多的发生 Icache miss（指令缓存不命中），指令缓冲一旦没有命中，CPU不得不暂停执行到内存读取指令并刷新指令缓存。众所周知，CPU之所以有缓存设计，就是因为内存无法和CPU同频运行。
+CPU的一级缓存是单周期访问的，但是容量有限。通常只有数十KB；而二级和三级缓存虽然大很多\footnote{在i7级别的CPU上三级缓存有8MB。但是入门级别的CPU可能就没有三级缓存}，但是访问时间却要好几个时钟周期；但是内存的访问是更慢的了，达到数十个周期。也就是说，如果一次Icache miss发生，CPU将会浪费几十个周期到二级和三级缓冲刷新，但是如果三级缓存中都没有，必须到主内存刷新，浪费的时钟周期将达数百个\footnote{缓存刷新的时候会执行预读取，所以浪费的是数个内存访问周期。}。随着CPU主频的提升，访问一次内存导致的CPU时钟周期浪费也会越来越高。更大的指令除了导致更容易出现Icache miss，也导致可执行文件变的更大，也将是初次加载的
+时候要花费更多的时间将代码从硬盘读取到内存。
+
+不论是从运行时的速度上考虑还是从加载速度上考虑，更小的代码总是意味着更快的速度。更何况将算没有将缓冲填满，更小的代码也给其他程序留下了更多的缓存空间。所以整个系统以-Os参数进行优化似乎能获得从整体而言最快的系统。
 
 
 
-\subsection{  链接时优化（LTO）	}
-\subsection{  PGO	}
+\subsection{链接时优化（LTO，Link Time Optimization）}
+
+Linux系统从内核到应用程序，几乎都是由C/C++语言写成的。C家族语言都需要经历“编译”$\Rightarrow$“链接”的过程才能最终转化为可执行文件。
+
+C家族语言的源代码是分开编译的。一个程序通常会包含多个源代码文件，每个源码文件分别编译，最好执行链接合并成一个可执行文件。
+
+大多数优化都是发生在编译的时候。
+
+
+\subsection{PGO}
 \section{  有目的的优化 – 查找性能瓶颈}
 \subsection{ 查找性能瓶颈}
 \subsection{  优化瓶颈}
@@ -2789,6 +3054,7 @@ emerge{}使用的编译优化参数由 make.conf(5) 文件中的{ }CFLAGS{ }和{
 %{ \include{wars} }
 
 { \include{manpage} }
+
 
 \chapter{名称缩写}
 
