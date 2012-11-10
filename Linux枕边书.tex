@@ -22,6 +22,7 @@
 
 \usepackage{needspace}
 \usepackage{wrapfig}
+\usepackage{float}
 \usepackage[below,section]{placeins}
 \usepackage{color}
 \usepackage{tabularx}
@@ -111,7 +112,7 @@ TODO:#1}
 }\makeatother
 
 \newcommand{\chatuNoStar}[3][scale=0.35]{%
-\begin{figure}[htb]%
+\begin{figure}[htbp]%
 \noindent\centering%
 \includegraphics[#1]{pics/#2}%
 \caption{#3\label{fig:#2}}%
@@ -120,7 +121,7 @@ TODO:#1}
 
 
 \newcommand{\chatuStar}[3][scale=0.35]{%
-\begin{figure*}[!h]%
+\begin{figure*}[H]%
 \noindent\centering%
 \includegraphics[#1]{pics/#2}%
 \label{fig:#2}%
@@ -2748,8 +2749,39 @@ X server（X Server使用recv(2)接收网络数据），一次是X Server拷贝�
 
 既然策略是一直非常众口难调的东西，MIT发明X的时候决定，X只提供实现窗口管理的机制，不实现窗口管理策略。窗口的管理策略连同窗口装饰，都由一个特殊的程序——窗口管理器——实现。
 
+窗口管理器和其他X程序一样，都是X Client。只不过这个Client比较特殊，一个X Server上有且仅有一个Client能是窗口管理器——在同一个X Server下不能启动两个窗口管理器。
+
+\chatu[width=0.8\textwidth]{kwinconfigfocuspolicy}{KWin配置焦点策略}
+
+窗口管理器定义了窗口管理的规则。比如大部分窗口管理器都使用“点击获得焦点”的策略。点击一个窗口后，能将键盘焦点移动到被点击的窗口上，并将窗口提升到最前端。许多窗口管理器（通过可配置选项）还支持由鼠标所在的窗口自动获得焦点。如图 \ref{fig:kwinconfigfocuspolicy}所示，KWin\footnote{KDE默认的窗口管理器}允许4中焦点策略。默认是“点击获得焦点”。
+
+\chatu[width=0.8\textwidth]{kwinconfigstyle1}{KWin配置装饰风格}
+\chatu[width=0.8\textwidth]{kwinconfigstyle2}{KWin配置装饰风格}
+
+窗口装饰是窗口管理器绘制的，通过修改窗口管理器的配置来修改窗口装饰的外观，如图 \ref{fig:kwinconfigstyle1} 和 \ref{fig:kwinconfigstyle2}所示。
+图中我使用了2个装饰风格。
+
+
+%\FloatBarrier
+
+\subsection{混合窗口管理器}
+
+混合窗口管理器——composited window manager——带合成功能的窗口管理器。
+即是一个窗口管理器又是一个合成器。窗口管理我们了解了，那么混合是什么呢？
+
+合成——composite——如名字所言，是用来混合的。那么混合的什么呢？
+在介绍混合器（Compositor）前我们来看一张绚丽的桌面截图\footnote{当然，老样子，还是我的桌面，避免被窥视隐私，将系统托盘图标和浏览器书签栏和谐了。}：
+
+\chatu[width=\textwidth]{3ddesktop}{三维桌面}
+
+从传统的X结构上，这是不可能实现的。窗口不可能脱离屏幕出现在一个立方体上。
+显然这绝对不是X Server能做到的事情。实现这个就需要窗口管理器做点小小的手脚了。
+
+
 
 \subsection{渲染库和静态链接}
+
+
 
 \section{桌面环境}
 \subsection{KDE}
