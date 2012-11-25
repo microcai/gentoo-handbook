@@ -1,0 +1,49 @@
+digraph dri {
+	node [shape=square];
+	edge [decorate=true];
+	subgraph cluster0 {
+		graph [color=lightgrey,
+			label="X server",
+			style=filled
+		];
+		node [color=white,
+			style=filled
+		];
+		"X video driver"		 [color=white,
+			style=filled];
+	}
+	subgraph cluster1 {
+		graph [color=green,
+			label=kernel,
+			shape=square,
+			style=filled
+		];
+		node [style=filled];
+		drm		 [style=filled];
+	}
+	subgraph cluster2 {
+		graph [label=显卡];
+		framebuffer;
+	}
+	subgraph cluster3 {
+		graph [label=App];
+		"Xlib draw";
+		OpenGL;
+	}
+	"X video driver" -> framebuffer:w;
+	drm:e -> framebuffer:e;
+	"Xlib draw" -> Xlib;
+	
+	"libGL\n(Mesa)" -> Xlib [label=间接渲染];
+	
+	
+	OpenGL:e -> "libGL\n(Mesa)";
+	Xlib -> "X video driver";
+	
+	"X video driver" -> "libGL\n(Mesa)" :s  [label="间接渲染"];
+	
+	"libGL\n(Mesa)" :s -> libdrm:w [label="间接渲染"];
+	
+	"libGL\n(Mesa)" :e -> libdrm:e [label="直接渲染"];
+	libdrm   -> drm  ;
+}

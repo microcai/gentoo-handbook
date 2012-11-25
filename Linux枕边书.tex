@@ -2812,18 +2812,171 @@ KWin检测到用户电脑显卡无法开启OpenGL的时候——不论是因为�
 
 \subsection{OpenGL和Mesa}\label{sec:OpenGL}
 
-前面在讲X结构的时候，都没有说到硬件加速。引入了硬件加速后，X的结构要发生重大的变化，前述的图例以及不能表达X的结构了。
+前面在讲X结构的时候，都没有说到硬件加速。引入了硬件加速后，X的结构要发生重大的变化，前述的图例已经不能表达X的结构了。
 
 说到硬件加速就不得不说OpenGL。OpenGL从其首页上的描述\footnote{ \url{http://www.khronos.org/opengl} }来说，是2D和3D图形硬件的编程接口。
+OpenGL是一个编程接口（API）的规范，应用程序只要使用这个通用的API编写就可以利用强大的GPU的处理能力。OpenGL的实现通常由GPU制造商提供，包含在显卡驱动里。
+使用OpenGL的程序链接到 libGL.so.1 库，libGL.so.1 库又由显卡驱动提供。硬件开发商在库中将OpenGL的调用转换为显卡GPU能执行的命令然后交又GPU执行。这样大量的绘图指令就交给GPU而不是CPU执行了。大大提升了图形程序的执行效率。
+通常需要如此执行效率的程序都需要绘制3D图形，如3D游戏和3D设计软件。
 
-%OpenGL严格来说是一个图形操作的规范。
+在Linux的世界，除了显卡厂家提供的闭源的libGL.so.1实现，还有开源的实现。实现开源OpenGL的程序就是Mesa。
+
+在初期，Mesa将OpenGL绘图指令转化为Xlib的绘图指令。中间的转换纯粹是由软件执行的。Mesa又被称为软件渲染。之后 Mesa 加入了针对特定显卡的“驱动”。OpenGL 指令由这些“驱动”翻译为对应显卡GPU的控制指令，然后再发送给显卡执行。我这里“驱动” 加了引号，是因为这个驱动是纯粹的Mesa针对不同显卡写的不同的“GPU指令生成器”。并不是通常意义上载入内核的驱动模块。
+由于向显卡发送指令需要root权限，所以这个时候Mesa需要由 X server调用，而 X client则需要将 OpenGL 调用包裹到 X11 协议中。
+
+不过，在加入了DRI\footnote{Direct Rendering Infrastructure}后，X client 就能直接使用显卡的OpenGL功能了。
+
+\begin{insertnote}
+
+\subsubsection{名词解释：DRI}
+
+DRI是Xorg提出的一种全新的渲染架构。结构如图 \ref{fig:dri} 表示。
+
+
+\chatu[scale=0.7]{dri}{dri结构简图}
+
+X Client 程序还是利用Xlib发出传统的绘图指令。如果使用了OpenGL，并使用直接渲染, 绘图指令将绕过X Server之间经过 libdrm 发送给内核一个叫 drm （Direct Rendering Manager） 的模块。
+drm再将指令直接发送给显卡。 因为中间的绘图过程绕过了X，直接向显卡发送绘图指令将图像写入帧缓冲，故而得名直接渲染。 这里请注意的是，直接渲染和间接渲染的差别就是渲染过程 有没有经过X server， 而和是不是利用了显卡加速是没有关系的。间接渲染一样可以使用显卡加速。 直接渲染的优势是中间没有经过X server， 减小了延迟，去除了X11协议的网络开销。
+极大的提升了 3D 渲染的效率。
+
+%因为在间接渲染模式下，OpenGL 也被包裹到了X11协议中发送给Xserver由 X server代为调用 OpenGL。
+
+闭源驱动并不使用DRI，闭源驱动有自己的直接渲染方式。因为drm模块是GPL协议的，闭源驱动若使用了drm岂不是要开源掉自己OpenGL实现。所以闭源驱动会自己带有libGL.so.1而覆盖掉Mesa提供的。Gentoo使用eselect机制，安装的时候将libGL.so.1安装到各自的目录，然后使用
+\begin{code}
+\#eselect opengl set [name] 
+\end{code}
+设定一个 OpenGL 实现。通常是 nvidia,xorg,fglrx三者中选一个。xorg 就是使用的Mesa提供的 OpenGL实现。可以用
+\begin{code}
+\# eselect opengl list
+\end{code}
+ 列出系统已经安装的 opengl 实现。没有安装的并不会列出。
+
+\end{insertnote}
 
 \section{安装基础X环境}
 
 %一个基础的X环境包括一个X Server和支持库。这些库包括 Xlib（以及一些扩展）和libGL。值得注意的是，X Server 依赖于libGL而不是反过来。
 
-在Linux世界，曾经有一个开源的X11实现名字叫做XFree86\footnote{x86上用的自由（Free）的X}。不过XFree86的幕后公司开始拿XFree86做商业盈利的时候伤害到了社区的感情。大量的开发者逃离XFree86项目，以最后一个公开的XFree86源码为基础重新组建了一个X.org组织。所以Gentoo曾一度提供两个X Server: XFree86 和X.org。不过UNIX世界有个经典名言：里开源越近越繁荣。被社区抛弃的XFree86很快销声匿迹了。所以现在的X11就以X.org发布的xorg-server为标准了\footnote{后来MIT将X11协议本身的维护也交由X.org了。这都是后话了。}。
+在Linux世界，曾经有一个开源的X11实现名字叫做XFree86\footnote{x86上用的自由（Free）的X}。不过XFree86的幕后公司开始拿XFree86做商业盈利的时候伤害到了社区的感情。大量的开发者逃离XFree86项目，以最后一个公开的XFree86源码为基础重新组建了一个X.org组织。所以Gentoo曾一度提供两个X Server: XFree86 和X.org。不过UNIX世界有个经典名言：里开源越近越繁荣。被社区抛弃的XFree86很快销声匿迹了。所以现在的X11就是用的X.org了\footnote{后来MIT将X11协议本身的维护也交由X.org了。这都是后话了。}。
 
+
+前面图片里可以看到，X Server分成两个部分：DIX（Device Independent X）和DDX（Device Dependent X）。 DIX实现X11协议，和X Client通讯，接受请求。
+DDX实现的是和硬件的交流。硬件分两个大总类：Video和input。
+之前在图 \ref{fig:Xstruct} 提到过，X对显卡的操作是不经过内核的。X有自己的显卡驱动。X必须运行在root权限的缘由也是基于此。X通过将显卡的IO映射到自己的内存空间来实现直接操作显卡。对内存映射IO可以参考 \faqref{FAQ:MMIO}。
+
+X Server即利用了这一点。X Server首先通过内核的帮助将显存映射到自己的内存里，之后就可以绕过内核直接对显存进行访问。除了显存外，显卡还有IO端口，用于向GPU发送命令。X Server也将显卡的IO端口映射到自己的内存里，之后就可以直接对显卡进行操作了。故而X需要显卡驱动。
+
+显卡驱动是DIX的重要组成部分。X.org 发布的X Server中自带有大量的显卡驱动（开源驱动）。还有一些驱动由硬件厂家提供（闭源的二进制驱动），需要自行下载安装。
+
+Gentoo portage有个重要的变量VIDEO\_CARDS\footnote{到 /etc/portage/make.conf 中设置} 指示emerge使用的显卡驱动，一来安装X的时候能正确的自动安装好驱动，二来能自动选择好Mesa使用的驱动，三来可以略过全部无关驱动的安装。
+
+VIDEO\_CARDS的取值如表 \ref{table:videocards} 所示。
+
+\begin{longtable}{|l|p{0.7\textwidth}|}
+\caption{VIDEO\_CARDS 驱动列表}\label{table:videocards}\\
+\hline
+apm & Alliance ProMotion显卡驱动。 \\\hline
+ark & ark 显卡驱动。 \\\hline
+ask & ask 显卡驱动。 \\\hline
+chips & Chips and Technologies 显卡驱动。 \\\hline
+cirrus & Cirrus Logic 显卡驱动。\\\hline
+%cyrix & Cyrix 显卡驱动。 \\\hline
+%displaylink & displaylink 显卡驱动。 \\\hline
+dummy & 伪显卡驱动。只用于Xvfb。 \\\hline
+fbdev & 通用帧缓存驱动 ， 使用 /dev/fb* 设备。 \\\hline
+fglrx & AMD/ATI 闭源驱动。  \\\hline
+%geode & AMD Geode GX 和 LX 显卡驱动。 \\\hline
+glint & GLINT/Permedia 显卡驱动。 \\\hline
+i128 & I128 显卡驱动。\\\hline
+%i740\footnote{服务器芯片。家用电脑没有使用过。} & Intel 740 系列显卡驱动。 \\\hline
+%impact & Impact 驱动 \\\hline
+intel & Intel 显卡驱动。如无例外，Intel显卡全部适用此驱动。\\\hline
+%ivtv & ivtvdev 显卡的 IV-out 功能驱动。 \\\hline
+mach64 & ATI Mach64 显卡驱动。 \\\hline
+mga & Matrox 显卡驱动。 \\\hline
+modesetting & 通用显卡驱动，适用于KMS\footnote{见 \secref{FAQ:KMS} } 帧缓存设备。\\\hline
+meomagic & Neomagic 显卡驱动。 \\\hline
+%nested & 伪显卡驱动，用于 Xnested。 \\\hline
+%newport & Newport 显卡驱动。 \\\hline
+nouveau & 开源的NVIDIA显卡驱动。带3D加速。 \\\hline
+nv & 开源的 NVIDIA 显卡驱动。无3D加速。可用于nouveau无法驱动的旧型号显卡。 \\\hline
+nvidia & 二进制NVIDIA显卡驱动，由 NVIDIA 官方提供。\\\hline
+%nsc & nsc显卡驱动\\\hline
+%omap & ARM 芯片供应商德州仪器制造的OMAP系列芯片的片上集成显卡的驱动。 \\\hline
+%omapfb & OMAP芯片提供的帧缓存的驱动。\\\hline
+%psb &  一些上网本使用的 GMA500 显卡驱动，intel贴牌，实际由poulsbo制造。\\\hline
+qxl & Qemu虚拟机 QXL paravirt 显卡驱动。\\\hline
+r128 & ATI Rage128 系列显卡驱动。\\\hline
+radeon & 开源 AMD/ATI 显卡的驱动。 \\\hline
+rendition & Rendition 显卡驱动。\\\hline
+s3 & S3 显卡驱动。\\\hline
+s3virge & S3 ViRGE 显卡驱动。\\\hline
+savage & S3 savage 显卡驱动。\\\hline
+siliconmotion & Silicon Motion 显卡驱动。\\\hline
+sis &  SiS 和 XGI 显卡驱动。\\\hline
+sisusb & SiS的USB显卡驱动。\\\hline
+tdfx & 3Dfx 显卡驱动。\\\hline
+tga & tga 显卡驱动。 \\\hline
+trident & Trident 显卡驱动。\\\hline
+tsend & Tsend Libs显卡驱动。\\\hline
+v4l & video4linux驱动。\\\hline
+vesa & 通用显卡驱动。最后的救命稻草哦！\\\hline
+via & VIA/S3G 集成显卡驱动。\\\hline
+virtualbox & VirtualBox 虚拟机里安装Gentoo的话使用这个驱动。\\\hline
+vmware & vmware虚拟机里使用Gentoo的话安装这驱动。\\\hline
+
+\caption{VIDEO\_CARDS 驱动列表}\label{table:videocards}
+\end{longtable}
+
+
+\begin{insertnote}
+注意：显卡驱动不看显卡板卡本身，而是看显卡所使用的GPU芯片。
+\end{insertnote}
+
+
+其实值得说明的是，虽然看上去驱动很多，其实现在显卡世界经过多年激烈的竞争后，已经只剩下 intel AMD NVIDIA三巨头了。
+intel自不用说，有且仅有开源驱动，VIDEO\_CARDS安心的写上intel即可。AMD和NVIDIA则是开源驱动和闭源驱动共存。使用开源还是闭源驱动，第一要务是：必须能跑起来！如果两种驱动都合适，就看各位自己抉择了，是使用厂家提供的驱动还是使用开源驱动。AMD 的闭源驱动叫 fglrx 支持的是 AMD自家显卡和收购 ATI 之前年开发的显卡， 开源驱动实际上安装的是 xf86-video-ati 不过，VIDEO\_CARDS的设置是 radeon，支持的显卡比fglrx稍微在旧的批次上多点——如果fglrx放弃支持你的老显卡了，你只能用radeon驱动了。 最早一批的ATI显卡使用的是r128驱动,没有闭源驱动支持，不过我很怀疑现在是否还能看得到这些显卡。
+
+NVIDIA显卡则有3种驱动可选 nv nouveau 和 nvidia。 在nouveau之前nv是nvidia唯一的开源驱动，nouveau出现后已经不建议使用了。nvidia的闭源驱动有多个版本，96.XX 版本 173.XX 版本和 3XX 版本。分别对应的支持最老旧的NVIDIA显卡，很老的NVIDIA显卡和现在还在使用的NVIDIA显卡。具体你的显卡适用哪个版本可以到官方网站的驱动下载页面查询。
+一帮来说，除了非常老的显卡，最新驱动都可以支持。
+
+接下来要设定的就是输入设备的驱动了。输入设备的驱动由 INPUT\_DEVICES\footnote{同样在 /etc/portage/make.conf 设置。} 选择。
+
+INPUT\_DEVICES可用的取值如表 \ref{table:inputdevice} 所示。
+
+
+\begin{longtable}{|l|p{0.7\textwidth}|}
+\caption{INPUT\_DEVICES 输入设备驱动列表}\label{table:inputdevice}\\\hline
+evdev & 标准Linux输入设备驱动。适用于键盘和鼠标。 \\\hline
+acecad & Acecad Flair input driver。  \\\hline
+aiptek & Aiptek  USB 数字平板输入仪驱动。 \\\hline
+elograhpics & Elographics 触屏驱动。\\\hline
+fpit & Fujitsu Stylistic平板的触屏驱动 \\\hline
+hyperpen & hyperpen 手写笔驱动 \\\hline
+joystick & 游戏手柄驱动 \\\hline
+mouse & 鼠标驱动（已被evdev替代） \\\hline
+keyborad & 键盘驱动（已经被evdev替代）\\\hline
+synaptics & 触摸板驱动，不安装则触摸板只是一个鼠标，不能使用触摸板的高级功能 \\\hline
+tslib & 利用 tslib 实现的触摸屏驱动。 \\\hline
+vmmouse & VMWARE 虚拟机鼠标，使用此驱动代替evdev可以获得VMWARE和宿主机的集成功能。\\\hline
+%evdev -acecad -aiptek -elographics -fpit -hyperpen -joystick -keyboard -mouse -mutouch -penmount -synaptics -tslib -vmmouse -void -wacom
+wacom & wacom手写板输入 \\\hline
+
+\caption{INPUT\_DEVICES 输入设备驱动列表}
+\end{longtable}
+
+
+evdev 是 Linux下的新设备驱动,代替之前分开的鼠标和键盘驱动。Linux内核提供统一的 /dev/input/event* 设备文件供用户空间的程序使用。
+
+如果不是使用BSD的话，一般只需要使用evdev即可。对于笔记本，还需要启用 
+
+设置好  INPUT\_DEVICES 和 VIDEO\_DEVICES 即可通过
+
+\begin{code}
+\#emerge xorg-server
+\end{code}
+
+安装 Xorg 的X Server了。
 
 \section{桌面环境}
 \subsection{KDE}
@@ -2843,7 +2996,8 @@ GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 \subsection{播放器}
 \section{让游戏放松自己}
 
-\subsection{硬件加速}
+\subsection{OpenGL硬件加速和DRI}
+
 \section{Wayland}
 \subsection{X 的错误}
 
