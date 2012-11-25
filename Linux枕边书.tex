@@ -2849,7 +2849,8 @@ drm再将指令直接发送给显卡。 因为中间的绘图过程绕过了X，
 \begin{code}
 \#eselect opengl set [name] 
 \end{code}
-设定一个 OpenGL 实现。通常是 nvidia,xorg,fglrx三者中选一个。xorg 就是使用的Mesa提供的 OpenGL实现。可以用
+设定一个 OpenGL 实现，系统目录下的/usr/lib/libGL.so.1将链接到被选择的OpenGL实现。
+通常是 nvidia,xorg,fglrx三者中选一个。xorg 就是使用的Mesa提供的 OpenGL实现。可以用
 \begin{code}
 \# eselect opengl list
 \end{code}
@@ -2980,11 +2981,138 @@ evdev 是 Linux下的新设备驱动,代替之前分开的鼠标和键盘驱动�
 \#emerge xorg-server
 \end{code}
 
-安装 Xorg 的X Server了。
+安装 Xorg 的X Server了。安装Xorg需要较长的时间，除了本身Xorg比较大之外，Xorg引入了大量的依赖也是重要的原因。而且很有可能会出现循环依赖。需要依据提示暂时禁止某个USE标记
+以打破循环依赖。
 
 \section{桌面环境}
+
+光有一个X什么也做不了，X是一套实现GUI的机制，我们需要一个“操作环境”。正如shell提供了文本模式的操作环境一样，在X下也需要一个“shell”来提供图形模式的操作环境。
+做到这样一个图形操作环境，需要：窗口管理器、桌面、文件管理器、任务栏（提供窗口切换）、系统托盘区域、各种小程序等等东西，整合一些提供这样功能的程序集合就构成了一个“桌面环境”。
+
+
 \subsection{KDE}
-地方根深蒂固
+
+传统的UNIX使用的桌面环境是CDE——Common Desktop Environment。但由于昂贵的授权费和对其他一些可选的替代方案的不满导致了德国人Matthias Ettrich\footnote{同时也是LyX的作者。}于1996年发起了KDE（Kool Desktop Environment）项目。也许看看他当时的宣言能更好的理解当时的状况。
+
+\begin{insertnote}
+
+
+\begin{center}
+KDE 项目宣告
+
+新项目: Kool Desktop Environment (KDE)
+
+{\scriptsize 急需程序员！}
+
+{\footnotesize 译：微蔡}
+\end{center}
+
+{\large  \noindent \bf 动机}
+
+自由UNIX衍生版特别是Linux的出现让UNIX变得更流行了。但是仍然缺乏一个外表好看，界面统一的自由桌面环境。便宜甚至免费的程序已不在少数，只要能提供一个真正的GUI环境，Linux+X11基本上就能满足所有人的需求了。
+
+这其中当然有这样的GUI环境，Commond Desktop Environment（太贵了）和Lookin Glas（相对便宜点），当然还有其他一些能算的上是“GUI环境”的免费程序：
+比如 Moxfm 工作的就很好。可惜他是基于Motif设计的。当然，更重要的问题是：啥是一个GUI环境？它应该是怎么样的？
+
+
+首先，我列出什么不是GUI环境：
+
+\begin{enumerate}
+\item [\textbullet] X窗口系统不是GUI环境。如名字所言，是一个窗口系统。
+\item [\textbullet] Motif 不是一个GUI环境。Motif创立者曾希望通过Motif创建一个GUI环境，不幸的是他们意见没能统一，只好将Motif作为一个控件库发布并附带了一个文件管理器。
+
+\item [\textbullet] 窗口管理器也不是GUI环境。他们只是一个管理窗口的小程序。把很多东西放进窗口管理器本身并不是个明智的做法。
+\end{enumerate}
+
+就我所知，一个GUI环境应该提供一个完整的图形环境。允许用户用它来做每天的工作，比如开启程序、阅读邮件、配置桌面、编辑文件、删除文件、看看图片等等。
+所有的这些部件都应该整合到一起协调工作。带一个编辑器图标的按钮如果启动了xterm这个终端仿真程序在里头执行个vi就不能算是一个真正的GUI。
+可能你很早就失望的发现，点击桌面上漂亮的帮助图标却等来的却只是一个终端仿真器，里面因为运行着man而正在显示man手册。
+
+{\large \noindent \bf 面向最终用户的GUI}
+
+我的主意并不是为一个完整的UNIX系统或者系统管理员创建GUI——这种情况下一个shell和上千个命令行工具可能是个更好的办法——而是面向最终用户。为那些希望上上网，写写文档，玩玩游戏的用户准备。
+
+直到我配置我女朋友电脑前，我真心觉得Linux更能做到这点\footnote{这句话为fcitx作者csslayer帮我翻译的，原文是“I really believed that is even yet possible with Linux until I configured my girlfriends' Box. ”}。
+就别提我要处理多少种形式和风格各易的菜单、滚动条和文本编辑框了。
+我已经知道一些控件必须在鼠标下才能进行输入，一些页面需要用鼠标中建拖动，一些编辑框甚至只能使用和emacs一样的快捷键——连“End”按键都不能支持。
+各个程序也都有不同的选择文字的办法。甚至连菜单和按钮都完全不具有一致的行为（比如Xaw, Fvwm, XForms, Motif）。
+
+一句话来形容这些雅典娜\footnote{智慧与技艺的女神，这里指的是每个程序作者都发挥自己的智慧和技艺创造出各种形式的界面，风格及其难以统一。}型的控件：
+尽管有很多使用这些雅典娜控件的程序，我们最好还是丢了他们吧。“雅典娜控件”和“X是GUI”应该是一样的错误想法。这种雅典娜式的控件应该视为如何使用Xlib和Xt构建一个控件库的反面例子。
+X应该有一个控件库作者的在线帮助，而无论如何不应该成为应用程序作者的文档\footnote{指的是应用程序作者应该使用一套统一的方便的UI库来创建程序而不是直接使用Xlib。}。 不信的是，应用程序作者就是靠的X手册编写的。
+
+所以，我提议一个GUI环境首先就应该为所有的程序提供一个一致的“外观”。这正是本项目所以和其他的项目最本质的不同点。
+
+就在几个星期前，一个对自由软件开发而言即免费又自由的UI控件库出现了，\url{http://www.troll.no}\footnote{光阴似剑啊！Qt最原始的网站早已不可访问了。} 去看看吧。
+
+这个库就是Qt，并且将是X界面编程的革命。它差不多已经非常完善了，完全的C++类库，提供了Motif相仿的外观，或者可以配置为类Windows95的外观。
+
+它由一家公司控制的事实反而是一个大大的好处：我们有代码和这么好的库，他们有测试人员。他们也全力的提高这个库的质量。他们还提供技术支持。这就意味着，Qt也能用于开发商业软件。
+它是Motif的真正替代品 ：）。  让我觉得Qt很专业的地方就是它的代码了。它真的是非常容易使用的C++库。
+
+Qt还是可移植的，是的，兼容Windows。当然这你不用当心。在你代码里稍微加点UNIX/X专有的东西就跨不到Windows平台了 :)。
+
+
+我强烈的建议大家看看这个库。它有能力成为自由软件开发的领军库。使用它就轻而易举的逃过了那个会吃掉所有内存和CPU的怪物级TCL/TK库$\cdots$
+
+是时候为桌面设立一个标准了。同时往内存里放10个不同的控件库是在是一点意义都没有。想象一下这些程序和使用的库：
+
+\begin{enumerate}
+\item[\textbullet]    fvwm （自己的控件）
+\item[\textbullet]    rxvt （自己的控件）
+\item[\textbullet]    tgif （自己的控件）
+\item[\textbullet]    xv （自己的控件）
+\item[\textbullet]    ghostview （雅典娜控件）
+\item[\textbullet]    lyx （xforms 空间库）
+\item[\textbullet]    xftp （Motif 控件库）
+\item[\textbullet]    textedit （xview控件库）
+\item[\textbullet]    arena （自己的控件）
+\end{enumerate}
+
+可能有人会狡辩说，UNIX机器内存很大，往内存里放那么多UI控件库不是问题。即便是这样，真正的问题是：所有这些控件（菜单，按钮，滚动条等）库统统都没有一致的外观和行为。
+这不是学院研究的例子，这是我真实见到过的 :-\}
+
+我知道不可能一下子就清除掉它们，我也希望Motif和Qt能共存。
+
+
+{\large \noindent \bf The Kool Desktop Environment (KDE)}
+
+我没有时间自己一个人全部做下来（也有LyX\footnote{LyX是一个基于\LaTeX的图形化编辑器。}是我的主要项目这个原因。）。
+像KDE那样的打项目能很容易的切成各种小部分。其中就有给你的部分！如果你要学一些X编程，那干嘛不开始给KDE写点小东西呢？
+要是你知道有人能写点程序，请千万不要让他们再写第1004\footnote{作者这里的意思是，别浪费才能和时间在克隆已经写过无数遍的游戏了，参加到KDE项目中来吧！}个俄罗斯方块或者地768个扫雷了。;-) 我们已经有很多了 ... 
+
+然后接下来就是我的KDE项目需要的程序的列表。也许还有更多，这是一个开发的项目，欢迎添加。
+
+
+\leftskip=2.2em
+
+{\noindent \tt 面板：}
+
+    基本程序。开始是Fvwm的一个模块运行。提供类型Windows 95那样的底部任务栏和CDE那样的顶部面板。The panel has graphical icon menus on the left (similar to GoodStuff) to launch applications, 4 buttons in the middle to switch to other virtual desktops and few icons for often needed applications on the right. There is for example a mail-icon that also indicates new mail, a wastebasket to open the delete-folder (that also indicates when it isn't empty and is capable of drag'n'drop). Maybe a analog clock with date at the very right. Also a nice special icon for exiting the environment or locking the screen. All the stuff is completly configurable via GUI. I'm also thinking about solutions, that only available applications can be installed on the desktop and that new applications appear on the desktop automatically.
+
+    I started to work on this panel, but would of course love some help. There are also lot of smaller things to do, like a tool to chose a background pixmap (for each virtual desktop) etc.
+
+    Also nice icons are needed!
+Filemanager
+    Another major application inside the KDE. The idea is not to create a powerful high-end graphical bash-replacement (like tkdesk tries to be), but a nice looking easy-to-use filemanager for simple tasks. Simple tasks are mainly deleting some files, copying some files, copying some files to floppy disk, starting applications by clicking on a file (for example ghostview for postscript files or xli for gifs, etc).
+
+    I'm thinking about nice windows, one for each directory, that shows icons for every file. It should be possible to drag files around (either copy or move), even between different windows. Another important point is the support of the floppy-disk, so that mounting/umounting is done user-transparent.
+
+    Dragging of icons should be done in a nice way, that means moving around a special window (see Qt's xshape example), NOT like xfm or xfilemanager by setting another monochrome bitmap for the cursor.
+
+    So it will also be possible to put files as icons on the desktop. This is IMO a very nice feature. Since applications are launched by the panel, it's even clear that icons are real data-objects. With fvwm-1 and the FvwmFileMgr it wasn't really clear wether an icon is yet a file or an iconified window.
+
+    Drag'n'drop inside a Qt application isn't really difficult. The filemanager is IMO a very nice and not too time consuming project. Who wants?
+mail client
+    A really comfortable mailclient. IMO the most comfortable mailclient for X is yet XF-Mail. And the author is willing to port it to Qt when the KDE-project will start! But he asks for some assitance (for example for coding the small popups, etc.) 
+easy texteditor
+    Very small but important project. An editor that fits the needs of those who have to edit a textfile once in a month and didn't find the time yet to learn vi (and don't have the time to wait for x-emacs to start, and don't have the memory to use a motif-static-nedit, and don't have the cpu-power and memory to use a tk-monster like tkedit,...)
+
+    Unfortunatly the Qt multiline-textwidget isn't available in Qt-1.0, but Troll-Tech already announced the beta-testing. So the texteditor can be started in a few weeks, too.
+
+
+\end{insertnote}
+
 \subsection{GNOME}
 GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
 \subsection{XFCE 和其他}
