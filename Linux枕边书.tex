@@ -67,6 +67,8 @@ TODO:#1}
 \newenvironment{insertnote}{ \ttfamily\CJKfamily{KaiTi} }{\vskip 0.5cm }
 \newenvironment{code}{\small\tt\begin{longtable}{p{0.8\textwidth}}}{\end{longtable}}
 
+\newcommand{\email}[1]{\href{mailto:#1}{#1}}
+
 \newcommand{\RTLpar}{% right-to-left paragraph alignment
   \leftskip=0pt plus .5fil%
   \rightskip=0pt plus -.5fil%
@@ -2675,7 +2677,7 @@ overlay可以有多个，亦即PORTDIR\_OVERLAY可以设定多个路径，以空
 \end{enumerate}
 
 我为什么没有在这里提到窗口绘制呢？严格来说，窗口内容的绘制并不是窗口系统本身的工作，尽管窗口绘制也是图形界面的基础功能之一。窗口内容的绘制，包括文字的渲染，都是被称作为图形渲染系统的工作。
-图形渲染系统并不是窗口系统的一部分，而是作为一个基础系统被窗口系统所依赖——窗口习题利用图形渲染系统提供的功能进行窗口绘制。
+图形渲染系统并不是窗口系统的一部分，而是作为一个基础系统被窗口系统所依赖——窗口系统利用图形渲染系统提供的功能进行窗口绘制。
 甚至为了安全，图形渲染系统只能透过窗口系统间接使用\footnote{Linux下可以绕过X直接在屏幕绘图的办法有
 /dev/fb*，DirectFB和KMS。}。
 
@@ -3083,35 +3085,186 @@ Qt还是可移植的，是的，兼容Windows。当然这你不用当心。在�
 
 然后接下来就是我的KDE项目需要的程序的列表。也许还有更多，这是一个开发的项目，欢迎添加。
 
-
+{
 \leftskip=2.2em
+\small 
 
 {\noindent \tt 面板：}
 
-    基本程序。开始是Fvwm的一个模块运行。提供类型Windows 95那样的底部任务栏和CDE那样的顶部面板。The panel has graphical icon menus on the left (similar to GoodStuff) to launch applications, 4 buttons in the middle to switch to other virtual desktops and few icons for often needed applications on the right. There is for example a mail-icon that also indicates new mail, a wastebasket to open the delete-folder (that also indicates when it isn't empty and is capable of drag'n'drop). Maybe a analog clock with date at the very right. Also a nice special icon for exiting the environment or locking the screen. All the stuff is completly configurable via GUI. I'm also thinking about solutions, that only available applications can be installed on the desktop and that new applications appear on the desktop automatically.
+    基本程序。开始是Fvwm的一个模块运行。提供类型Windows 95那样的底部任务栏和CDE那样的顶部面板。面板左边有菜单按钮用来开启程序，中间有4个用来切换虚拟桌面的按钮，然后右边有些快捷启动。
+    比如有个邮件图标并且能通知新邮件的到来，一个垃圾桶指示回收站是否为空并能快速打开。或许还可以有一些电子时钟放在最右边。
+    最好还有个漂亮的图标用来锁定屏幕、注销和关机。所有这些都是（在图形界面下）完全可配置的。
+    我还在想一个解决办法，只让可用的GUI程序出现在桌面上，并且新安装的程序能自动的出现在桌面上。
 
-    I started to work on this panel, but would of course love some help. There are also lot of smaller things to do, like a tool to chose a background pixmap (for each virtual desktop) etc.
+    我已经着手开始写面板了，非常希望能获得一些帮助。还有很多事情要做呢！比如一个工具用来设置一个壁纸。
+    
+    一个好看的图标也是很有帮助的！
 
-    Also nice icons are needed!
-Filemanager
-    Another major application inside the KDE. The idea is not to create a powerful high-end graphical bash-replacement (like tkdesk tries to be), but a nice looking easy-to-use filemanager for simple tasks. Simple tasks are mainly deleting some files, copying some files, copying some files to floppy disk, starting applications by clicking on a file (for example ghostview for postscript files or xli for gifs, etc).
+{ \noindent \tt 文件管理器：}
 
-    I'm thinking about nice windows, one for each directory, that shows icons for every file. It should be possible to drag files around (either copy or move), even between different windows. Another important point is the support of the floppy-disk, so that mounting/umounting is done user-transparent.
+    KDE的另一个重要软件。创建一个功能强大的bash图形替代品, 并对简单的任务有一个易用的界面。简单的任务就是上传文件，拷贝文件，双击打开文件啊之类的。
 
-    Dragging of icons should be done in a nice way, that means moving around a special window (see Qt's xshape example), NOT like xfm or xfilemanager by setting another monochrome bitmap for the cursor.
+    我还想到为每个目录打开一个漂亮的窗口，每个文件都是一个图标。图标可以拖动以复制或者移动文件——甚至可以在窗口直接拖动。
+    还有一个重要的功能就是支持移动设备的自动挂载，这样对用户就是透明的了，无需关心mount/umount命令。
 
-    So it will also be possible to put files as icons on the desktop. This is IMO a very nice feature. Since applications are launched by the panel, it's even clear that icons are real data-objects. With fvwm-1 and the FvwmFileMgr it wasn't really clear wether an icon is yet a file or an iconified window.
+    拖动应该使用比较优雅的方式实现。拖动的图标应该是一个特殊的从窗口（参照 Qt 的 xshape 例子）而不像xfm或是xfilemanager那样是通过设定鼠标的图标来进行。
 
-    Drag'n'drop inside a Qt application isn't really difficult. The filemanager is IMO a very nice and not too time consuming project. Who wants?
-mail client
-    A really comfortable mailclient. IMO the most comfortable mailclient for X is yet XF-Mail. And the author is willing to port it to Qt when the KDE-project will start! But he asks for some assitance (for example for coding the small popups, etc.) 
-easy texteditor
-    Very small but important project. An editor that fits the needs of those who have to edit a textfile once in a month and didn't find the time yet to learn vi (and don't have the time to wait for x-emacs to start, and don't have the memory to use a motif-static-nedit, and don't have the cpu-power and memory to use a tk-monster like tkedit,...)
+    所以把文件作为一个图标放到桌面上也是可行的了。这非常有意思，不是么？ 一些应用程序用面板启动，现在很清楚了，图标就是个数据对象，而fvwm1和 FvwmFileMgr都不能确定一个图标是文件还是最小化的窗口。    
 
-    Unfortunatly the Qt multiline-textwidget isn't available in Qt-1.0, but Troll-Tech already announced the beta-testing. So the texteditor can be started in a few weeks, too.
+    Qt程序之间实现拖动并不难。文件管理器实现起来并不难，并且也花不了多少时间，有谁能接手这个任务？
+    
+{ \noindent \tt 邮件客户端：}
 
+    真正舒心的邮件客户端。现在我发现最好的邮件客户端（X环境下的）是XF-Mail。作者表示一旦KDE项目启动会将其移植到Qt下。不过他表示需要一些协助（比如写个简单的弹出菜单）。 
+   
+{ \noindent \tt 简单的编辑器：}
+
+    很小但很重要的项目。一个月都编辑不了一次文件的人不可能乐意去学vi这样的软件或者等x-emacs\footnote{emacs的优良传统，启动非常慢。}启动甚至都不会掏钱去买个motif-static-nedit\footnote{一个基于Motif开发的文本编辑器}，更不可能乐意使用怪兽级别的 tkedit\footnote{作者说tk是怪兽，自然用tk开发的tkedit也是如此了。} ....
+
+	不幸的是，Qt-1.0 还没有提供多行编辑控件。但是Troll-Tech公司已经在测试版里提供了，所以几个星期后应该就可以着手编写文本编辑器了。
+	
+{ \noindent \tt 终端模拟器：}
+
+    和CDE的终端模拟器差不多。就是带菜单，能设置字体的 xterm。 很好的项目，拿xterm的代码修修，移植到Qt下就可以了。
+    
+{ \noindent \tt 图像查看器：}
+
+    这个程序在文件管理器里将会被默认用于查看gif，jpeg等图片文件。额，xv是不错，不过是个共享软件。启动速度也不快。有个没有菜单没有按钮的纯Xlib软件叫xli启动速度倒是飞快。把它的代码拿来移植
+    到Qt下作为起始点吧。 %. But there is a plain Xlib programm without any menues or buttons called "xli". Get the sources and make it userfriendly with Qt!
+    
+    
+{ \noindent \tt 其他一些有用的工具：}
+
+        xdvi 改成 Qt-Gui
+        ghostview 改成 Qt-Gui
+        xmag 改成 Qt-Gui
+        其他
+
+{ \noindent \tt 超文本格式的帮助系统：}
+
+    一个完整的桌面需要一个友好的帮助系统。我认为一个很好的选择就是 HTML （>=2.0） 。 需要一个基于Qt的HTML查看器。
+    可以借用 Arena 的代码，不过Arena 启动太慢了。最好还是从头写一个。Qt 提供了非常简便的接口处理字体。对于一个帮助系统来说， HTML 2.0 已经足够了。再添加一些搜索功能就可以了
+    因为传统的 troff 格式的man手册也能转换为HTML格式，我们还能集成man手册到帮助系统里。
+
+    顺便一提：Troll Tech公司开出了一个Qt竞赛（看看他们的首页）。最好的Qt程序（不仅仅是功能上，还包括设计上。仅仅将现有的程序移植到Qt下还不够的 :-( ）将赢得 2000美金和 Qt 的Windows版的授权（价值2000美金。）。他们还提到了一个浏览器作为例子。所以一个 Qt 的浏览器将值 4000 美金哦 （把用不到的 Windows版Qt授权卖掉） ;-)。
+
+
+{ \noindent \tt 窗口管理器：}
+
+    最开始，KDE面板将作为Fvwm的一个模块。等做好了，很多东西就可以从 fvwm 窗口管理器里剥离了。我们不需要fvwm的菜单、图标和难懂的配置文件。我们只需要一个很小的靠谱的窗口管理器。
+    所以从 fvwm里删除一切不需要的代码，应该很快就能完成。
+
+
+{ \noindent \tt 系统工具：}
+
+    不管你是什么类型的用户，都会需要的。一个图形化的密码设置对话框出现在我脑海里。还有更多的吧！可能会导致一个小型系统管理工具集合也说不定。
+    
+
+{ \noindent \tt 游戏：}
+
+    俄罗斯方块我们已经有了（作为Qt的一个示例）。我们还需要的是很多其他的小游戏，比如纸牌。有一些已经跑在X下的游戏，干嘛比从中汲取资源，然后自己写个真正的游戏呢？就像微软的纸牌那样。
+    有时候我就为了玩纸牌安装个Wine。还有很多很多的游戏，多多益善。要么从现有的修改，要么从头写，咋样都行：）
+    
+{ \noindent \tt 图标：}
+
+    一组漂亮的图标。可以从3D-pixmaps开始。（如果我们用的UI库有按钮的话干嘛还需要用图片模拟按钮呢？）
+    
+{ \noindent \tt 文档：}
+
+	文档总是好东西。在这之前，我们的超文本格式的帮助系统应该先设计出来。然后我们就能开始写HTML格式的帮助页面了。喏，在这之前我们还得有程序可文档啊！
+
+{ \noindent \tt 基础设施——页面/文件服务器/管理员：}
+
+    我们需要一个服务器来保存这么多文件和页面，通告大家项目的状态。特别是当前我们在做什么，还需要人做什么。稍后我会在
+    
+    	\begin{center}
+    	\url{http://www-pu.informatik.uni-tuebingen.de/users/ettrich}
+    	\end{center}
+
+设置一个首页。当然，只包含本文和一些链接。之后我会捣鼓出一个真正的首页——如果有人帮我做这个事情这样我只需呀关心编码我会非常高兴的。
+要是有谁想帮KDE设计和维护首页，我很乐意让他这么做哦。:)
+
+{ \noindent \tt 讨论：}
+
+	最后，也是最重要的事情 :-) , 如果你们有兴趣就请加入我们的邮件列表  \email{kde@kde.org} 讨论吧！
+	订阅邮件列表只需要发送一封如下内容的邮件到 \email{kde-request@kde.org} 就可以了。
+	
+\begin{center}
+	{\tt subscribe 你的邮箱}
+\end{center}
+
+
+{ \noindent \tt 应用程序：}
+
+	当KDE开始广泛使用的时候，新的程序有望基于Qt开发。获得和桌面环境协调一致的观感。
+
+    我们很可能会把 LyX 移植到Qt，这样一个舒适的字处理软件就有了。不过这还在和LyX组成员讨论中。
+
+    一个矢量绘图软件也很好。Xfig虽然丑了点，不过还是不错的。 tgif 也很强大。这些丑程序的作者并不喜欢添加 Qt 的界面，因为Qt是 C++ 的，而原作者只希望使用C——一些平台没有c++编译器。
+    当然，KDE才不关系连c++编译器都没有的平台。（而且我认为 g++ 已经到处都有了。） 也许 tgif 作者赞成让别人来添加Qt界面 （反正源码在那里，不知道是不是GPL的。）。
+    因为 tgif 没有使用第三方控件库而是全部自己实现，添加一个Qt界面应该不是什么难事。Qt里直接使用Xlib还是相当轻松的，所以并不需要重写很多代码。
+    C++也兼容C，这样保护原有的C代码和是相当的容易。
+
+    一个新闻阅读器怎么样？也能集成到KDE里。还有很多很多很多 ............
+
+}
+
+所以有趣的事情还是蛮多的。你要是感兴趣请加入我们吧！召集二三十人我们就可以开始了。可能平安夜前我们就能给自己一个礼物了。
+
+KDE将使用GPL许可发布。
+
+我承认这听起来有点疯狂。我可以告诉你，我是否非常认真的。每个和我讨论的人都说希望能有个简洁的桌面。Qt是实现这个目的的一个机遇。
+让我们把业余时间利用起来开始干吧！
+
+希望很有很多很多的回帖!
+此致,\\
+\qquad 敬礼！
+
+Matthias Ettrich
+(\email{ettrich@informatik.uni-tuebingen.de})
+
+顺便说一下：通常这样的帖子会遭到这样的回复：“你要喜欢GUI就去用苹果好了”；“我就喜欢桌面程序上有各种不同风格的控件，你要是蠢的学习就去用Windows好了” ； “内存不够啊，我只用Motif”；
+“你永远不会成功的，做点别的事情吧。”；“干嘛Qt? 我更喜欢用 schnurz-purz-widgets with xyz-lisp-shell, 还是 GPL 的！”； 等等。
+非常感谢这样的回复，让我知道我还是有梦想的人 ......
+
+好吧，又来了：你可能想问我干嘛那么讨厌 Tk。 恩，我不喜欢它的设计哲学： Tk 连个文本编辑控件都没有，却有一个缓慢的字处理程序。其他控件也差不多。
+再同TCL语言结合起来，这个 Tk 程序就慢到家了（当然也有例外）。我还没有看到哪个 C/C++ 程序是用Tk库的，尽管Tk也包含C接口。TCL/TK 做点原型还行，写点内核图形配置工具倒不错，用来写应用程序就算了。
+我压根就不想让哪个 Tk 程序待在桌面上。Qt就简单多了。试试看吧！
+
+我确定是最后一段废话了：我和Troll Tech公司没有任何联系。我只是单纯的喜欢他们的产品（看看他们的代码，质量非常高！）和市场策略：对自由软件免授权费。
 
 \end{insertnote}
+
+耐心的看完{}Matthias Ettrich{}关于开始KDE项目的声明后能发现一些有趣的事情：
+商业的桌面环境有，CDE , Looking Glas。 贵而且也不咋好用；多数程序都是直接使用Xlib开发，重复发明轮子。而且外观都无法统一；少数有几个帮助开发X程序的控件库，要么丑陋要么本身是个怪物；当时唯一可以扛担次重任的就只有一个Qt，虽然不是GPL授权的软件，好歹对开发自由软件是不收钱的。
+
+KDE就在这样的环境下起步了。到本文写作的时间为止，KDE已经发布到 4.10了。
+
+Gentoo下安装 KDE 环境非常简单。只要一条命令即可
+
+\begin{code}
+\#emerge kde-meta
+\end{code}
+
+这会将所有的KDE组件全部按照。依据提示可能需要开启一些 USE flag。将其添加到 make.conf 即可。更方便的莫过于直接启用 kde profile
+
+\begin{code}
+\#eselect profile  set default/linux/amd64/10.0/desktop/kde
+\end{code}
+
+这个 profile 会预先将 KDE 相关的 USE flags 全局启用。
+
+如果不想把全部的 KDE 都安装（那意味着要编译数百个软件包），可以只安装一个基础的KDE运行环境。 
+
+\begin{code}
+\#emerge kdebase-meta
+\end{code}
+
+这样将只安装运行KDE所需的最小环境。不过{}Matthias Ettrich{}在声明里提到的邮件客户端，各种小游戏，新闻阅读器等等东西可全都没了。有的只是一个窗口管理器（KWin）和一个面板而已。
+
+
+
+\vfill
 
 \subsection{GNOME}
 GNOME 是事实上的标准。各个主流发行版的默认桌面环境。
