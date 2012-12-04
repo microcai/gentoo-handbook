@@ -3464,9 +3464,30 @@ X剩下的唯一能做的事情,就是一个消息中转站：用来连接窗口
 
 \chatu[scale=0.7]{wayland-architecture}{Wayland结构}
 
-应用程序使用 OpenGL 或者它认为最合适的库进行直接渲染。然后将渲染好的窗口内容——可共享的缓冲区——通过wayland协议提交给compositor。传输的是一个共享缓冲区的引用\footnote{需要显卡驱动的支持。目前开源的显卡去的都支持，不过闭源的NVIDIA和ATI驱动没有提供支持，只能可以使用共享内存来共享这个缓冲区，有性能损失。}，而不是数据本身，所以非常快，无需当心性能问题。compositor直接使用这个缓冲区执行合成然后将最终结果直接绘制到屏幕上。
+在这个架构中，因为移除了X Server，同时也意味着移除了X Client通常使用的渲染方式。但是Wayland Client可以使用在X时代就存在的一直渲染方式：直接渲染。
+应用程序使用 OpenGL 或者它认为最合适的库进行直接渲染。
+然后将渲染好的窗口内容——可共享的缓冲区——通过wayland协议提交给compositor。传输的是一个共享缓冲区的引用\footnote{需要显卡驱动的支持。目前开源的显卡去的都支持，不过闭源的NVIDIA和ATI驱动没有提供支持，只能可以使用共享内存来共享这个缓冲区，有性能损失。}，而不是数据本身，所以非常快，无需当心性能问题。compositor直接使用这个缓冲区执行合成然后将最终结果直接绘制到屏幕上。
 
 Wayland是一个纯粹的窗口管理协议，没有渲染功能。应用程序需要使用其他的渲染库绘制窗口内容。然后将绘制好的窗口内容提交给Compositor。
+
+Wayland被誉为Linux桌面的未来。Wayland移除了X Server同时也移除了X的C/S结构带来的性能损失。Wayland结构下，窗口管理依然是C/S结构。由Wayland Compositor负责管理窗口。
+但是最影响性能的渲染部分，则完全使用了“直接渲染”技术，彻底摆脱X的性能禁锢。
+
+Wayland在桌面上还是一个非常试验性的项目，但是在嵌入式领域，已经开始应用了。影响Wayland在桌面环境应用的主要原因，就是驱动和旧的X程序。
+Wayland通过XWayland来兼容旧时代的X程序。而驱动问题则是任重道远。
+
+\begin{insertnote}
+\subsubsection*{XWayland}
+
+没有规定X Server必须以真实显卡硬件作为输出吧，如果X Server本身成为Wayland Client呢？由于Wayland使用的是直接渲染，意味着X实际上还是直接控制显卡执行渲染的，所以旧有的X驱动只需要稍微进行修改即可支持Wayland。而且不存在性能损失。
+对于驱动没有Wayland支持的情况，还有 “shmwl”这个伪X驱动。使用软件渲染然后使用共享内存提交给Wayland。
+
+\end{insertnote}
+
+Wayland需要驱动支持，因为旧时代X使用的是用户空间的驱动。而Wayland不能使用X的驱动。所以所有的X驱动都不能使用。幸好DRI将大部分驱动拆分成了DRM内核模块和Mesa两个部分，
+所以Wayland目前只能使用有DRI支持的显卡：也就是 intel 显卡。NVIDIA和AMD的显卡必须使用开源驱动才能使用Wayland。以为前文说过闭源驱动虽然也支持直接渲染，但是并不是DRI结构的。
+
+目前Qt 和 Gtk 的已经实现了Wayland支持。应用程序稍作修改甚至不做修改即可支持Wayland，只要驱动问题解决了，Wayland还是能够普及开来，替换掉过时的X的。
 
 \chapter{网络}\label{chap:network}
 \section{网络基础知识}
