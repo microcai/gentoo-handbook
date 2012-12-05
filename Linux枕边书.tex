@@ -28,6 +28,7 @@
 \usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{multirow}
+\usepackage{rotating}
 \usepackage{soul}
 \usepackage{amsmath}
 \usepackage{wasysym}
@@ -2645,22 +2646,84 @@ overlay可以有多个，亦即PORTDIR\_OVERLAY可以设定多个路径，以空
 I see little commercial potential for the Internet for at least 10 years
 \end{quotes}
 
-\section{网络基础知识}
-\subsection{通信基础}
+
+%\begin{quotes}[0.5]{microcai}
+%The protocol is the kernel of the net. The kernel is the protocol of the UNIX. The UNIX is the source of the net.The source is the kernnel of the UNIX.UNIX, the net , the protocol , you are one.
+%\end{quotes}
+
+若要问世纪末最伟大的发明是什么，一定有人说，是Internet。Internet让全世界的电脑连在了一起。
+
+\section{网络层级协议}
+
+说到网络不得不提到OSI的7层网络模型。
+
+\begin{table}[h]
+\begin{center}
+\caption{OSI模型}\label{tabel:ISOmodule}
+\begin{tabular}{|c|c|c|c|}
+\hline
+& 数据单元 & 层 & 功能  \\ \hline % \cline{2-4}
+\multirow{4}{*}{主机层}   &  \multirow{3}{*}{块数据} & 应用层  &  网络应用程序  \\ \cline{3-4}
+&						 & 表现层 & 数据表现，加密解密，数据格式转化  \\ \cline{3-4}
+&						 & 会话层 & 管理会话 \\ \cline{2-4}
+& 分片数据  & 传输层 & 点对点的可靠通讯，流控制 \\ \hline
+\multirow{3}{*}{媒介层}  & 数据包   & 网络层 & 网络寻址和路由 \\ \cline{2-4}
+& 帧 & 链路层 & 物理寻址和交换 \\ \cline{2-4}
+& 比特 & 物理层 & 物理信号传递：光电等 \\\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+OSI定义的7层模型是参考模型。实际上构成互联网基石的TCP/IP协议并没有完全按照7层实现。
+下面分析一个典型的使用本地局域网的网络。
+
+第一层，物理信号层。太网使用同轴双绞线传递差分信号，由以太网协议规范。网卡的接口电路负责实现。使用同轴双绞线传递差分信号，可以认为能传递 0 和1 。
+这一层使用以太网协议。
+%操作系统无法管理到。不属于TCP/IP管辖范围。
+
+第二层，链路层。在这个层，以太网发生的数据以以太网帧的形式进行。最大一次可以发送 1500Byte的有效数据。在链路层，以太网协议负责实现数据包的传递。每个数据包由“前导同步序列+太网帧头+负载数据+尾同步序列”构成。
+同步序列用来在01比特流中识别出以太网帧。并且网卡在发送同步序列的时候还负责检测“碰撞”——多个网卡同时向一条线路上发送以太网帧。
+遇到碰撞的时候，网卡负责重发。以太网帧头包含了负责数据的大小、发送方地址和接受方地址。
+每个网卡被分配了全球唯一的地址。这个地址被称为MAC地址。操作系统能控制的就是以太网头部中的“发送地址和目的地址”以及负载数据。
+这一层依旧使用以太网协议。
+
+第三层，网络层。在这个层，运行的就是IP协议了。IP协议发送的依然是数据包。每个数据包由 “IP协议头+负载数据”构成。一个IP数据包正好作为以太网的负载数据发送。IP协议为每一台主机分配了一个全球唯一的IP地址\footnote{实际上IP地址划分出了几个区段，不能用于因特网，只能用于自己组件的私有网络中。这类私有地址在全球范围内是可以重复的。但是在每个私有网络内部仍然是不能重复的。}。IP地址通常使用点分十进制表示法。
+
+第四层，传输层。自然就是TCP协议了。TCP在IP包的基础上提供了可靠的流式传输协议。TCP将数据打散为一个一个的包，然后利用IP协议传输每一个包。
+如果发生丢包，TCP协议还会重新传输丢弃的包。到目的地，TCP会将数据包重新组合为数据流。
+
+第五层，会话层。还是TCP协议。TCP包含了连接建立，数据收发和连接断开。建立一个连接就是一次TCP会话。TCP协议使用“三次握手”建立连接。断开连接则是四次握手。
+
+第六层，表现层。在TCP/IP中，这个层已经不是他们负责的啦。如果应用程序使用了SSL加密协议，比如使用 HTTPS 访问网站，则SSL可以认为是这一层的。
+直接传递数据而不加密的应用中，这一层是缺失的。
+
+第七层，应用层。这类协议众多。访问网站使用的HTTP协议，访问FTP使用的是FTP协议，等等。
+
+在每一层协议中，都有一个“负载”用来承担上一层协议的数据。而实际上，层之间甚至是可以交叉越级的。比如各种VPN\footnote{后面会介绍VPN是什么}协议就是利用的应用层来传输IP数据包。还有利用应用层传输以太网帧的。
+
 \subsection{IP地址和TCP/IP协议}
+
+IP协议从OSI的模型上看，属于网络层。使用IP协议的网络就是IP网络\footnote{除了IP网外，还有电话网，有线电视网。}。
+IP网络按照规模分为局域网，城域网和广域网。而当今世界上最大的广域网就是因特网。
+
 \subsection{路由表和路由协议}
 \subsection{以太网和WIFI}
 \subsection*{小插曲：永恒的以太网}
 
 \section{网络配置\label{sec:ifconfig}}
-\subsection{图形环境下的工具	}
+\subsection{图形环境下的工具}
 \subsection{命令行配置工具}
 \subsection{网络自动配置和DHCP}
-\section{网络攻击和防火墙	}
+\section{网络攻击和防火墙}
 \subsection{网络攻击类型和检测}
 \subsection{iptables防火墙}
 
 \chapter{文件系统}
+
+\begin{quotes}{Ken Thompson}
+We have persistant objects, they're called files.
+\end{quotes}
+
 \section{磁盘上的文件系统	}
 \subsection{块设备和磁盘}
 \subsection{超级块和inode}
