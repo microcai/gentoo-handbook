@@ -1,0 +1,1241 @@
+\chapter{安装 Linux}
+
+\begin{quotes}[0.5]{insomnia}
+It only takes three commands to install Gentoo!
+\end{quotes}
+
+\begin{quotes}{Anonymous}
+“Where there is a shell，there is a way!”
+\end{quotes}
+
+Linux介绍了那么多，是时候将它安装到我们的电脑上了。接下来要边安装边学习哦。要安装一个Linux系统，我们总是选择一个发行版来安装。那么到底选择什么样的发行版呢? 理想的发行版通常是这样的一个发行版：它非常第容易安装，非常的容易适用；软件仓库里的软件非常丰富，我可以用包管理安装一切软件而不需要自己手动安装；对于一些软件我希望能容易的进行定制；快，非常快。在对各个发行版做里权衡后，我选择Gentoo作为本书中介绍Linux知识所使用的平台。
+
+
+\begin{notice}
+ 注意：Gentoo只是我们选择的众多发行版中的一个，我并不打算把本书变成一个Gentoo入门教程。如果这样，读者还不如选择阅读Gentoo官网上的手册。我尽量将所涉及到第知识通用化。如果这样的知识点只适用于Gentoo, 我会进行说明并辅之以其他发行版的等位操作\footnote{不同发行版达到同样的目的采取的不同操作。}。
+\end{notice}
+
+本书并不打算引起发行版之争\footnote{指不同的人使用不同的发行版，并常常在网上争论自己使用的发行版要比别人的优秀}，
+但是又必须解释为什么使用了Gentoo这个非常罕见的发行版而不是同其他书本那样采用最流行的发行版，比如Ubuntu或者Red Hat系。
+
+最直接的原因也许就是作者本身使用的就是Gentoo，以自己最熟悉的发行版写作，可以避免不熟悉系统进行错误的讲解\footnote{这确实是一个理由，但是Gentoo必定有比其他的发行版更值得作为本书的平台。}。
+当然，如果仅仅这一个理由未免太牵强。
+{ \it Gentoo可以让读者将精力放到学习Linux本身，而不需要关注发行版的细节，这就是我采用Gentoo的原因。}
+另一个能做到这种效果的发行版为LFS\footnote{严格来说，LFS 算不上发行版，只是一个教你如何手工编译出一个能用的系统的手册。}（Linux From Scratch）。
+但是LFS太繁琐，恐怕还没有学习到Linux的知识就已经中途放弃了。
+
+
+\section{安装准备}
+
+当然是准备一台电脑啦！Gentoo虽然号称为本机编译优化，但是编译本身非常耗费系统资源，所以一台主流配置的电脑是必不可少的！
+\footnote{Gentoo支持的硬件架构非常多，不是一定要用个人电脑的。
+但是作为初学者，我们就用最常见的个人电脑，不折腾各种稀奇古怪的电脑，最重要的是，Gentoo对x86体系也是支持的最好的（这不废话么，用户量摆那里么）。}
+
+
+除了一台电脑，还要准备个Fedora或者Ubuntu的LiveCD\footnote{参考附录A. FAQ 的“什么是LiveCD”。
+}，这里不推荐Gentoo自己的LiveDVD\footnote{同LiveCD。}，因为前者更容易获取和使用。
+
+当然，还有网络。Gentoo虽然可以脱离网络进行安装，但是需要将所可能需要用到的源码提前下载，这是非常麻烦的。所以最好准备一个安装的时候可以访问的网络，也就是说LiveCD 环境里必须能使用网络。Fedora 或者Ubuntu那样的LiveCD 通常提供了完整的桌面环境，使用这些桌面环境的网络设置，让LiveCD 能访问互联网就可以了。你可能需要使用 NetworkManager 提供的图形客户端进行配置，通常是在桌面右上角的系统通知区域。要使用 NetworkManager 配置网络，请参考第6章的内容。
+
+嗯嗯，不过就算是x86还分为x86\_32（ 没有特殊指明的情况下x86特指x86\_32） 和x86\_64\footnote{因为历史原因，AMD率先推出支持64位运算的x86CPU，所以Gentoo管x86\_64叫amd64，这和x86又被称呼为 i386 是一样的原因。}呢。
+由于x86\_64是在x86的基础上发展起来的，所以x86\_64向下兼容x86。 也就是说，64位的CPU可以运行32位的软件。但是反过来就不行了。
+
+既然存在两种x86，选择起来就费脑筋了。怎么知道自己的CPU是x86\_64的还是x86\_32 的呢？答案是，现在生产的CPU都是x86\_64了。当然如果你想准确的知道CPU到底支持不支持64位指令，在Window下你可以选择执行CPU-Z 软件获得CPU信息，如果是Linux就简单的多，在终端下执行lscpu命令就可以了。
+
+（1）  Linux下使用lscpu：
+
+在终端下执行lscpu，该命令的第一行输出就是CPU的体系结构。在我的电脑上，其输出为：
+
+\begin{code}%
+Architecture:        x86\_64\\
+CPUop-mode(s):        32-bit, 64-bit\\
+Byte Order:            Little Endian\\
+CPU(s):                8\\
+On-lineCPU(s) list:   0-7\\
+Thread(s) per core:    2\\
+Core(s) per socket:    4\\
+Socket(s):             1\\
+Vendor ID:             GenuineIntel\\
+CPUfamily:            6\\
+Model:                 42\\
+Stepping:              7\\
+CPUMHz:               1600.000\footnote{如果CPU支持动态降频，这里显示的是当前频率而不是CPU的标称频率。}\\
+BogoMIPS:              6420.96\\
+Virtualization:        VT-x\\
+L1d cache:             32K\\
+L1i cache:             32K\\
+L2 cache:              256K\\
+L3 cache:              8192K\\
+\end{code}
+
+第一行的Architecture:        x86\_64就表明此CPU的结构是x86\_64。
+
+
+\vskip 1em
+（2）  Windows 下使用CPU-Z：
+
+\chatu{cpuz}{cpuz截图}
+如图\thefigure所示。我红圈标注的EM64T表示CPU支持64位指令。对于AMD系的CPU，您大可放心，全部支持64位指令。
+
+
+\begin{insertnote}
+\subsection*{小插曲  64位 vs 32位}
+
+如果是x86\_64的CPU，应该选择amd64\footnote{AMD64 就是x86\_64。}
+的Gentoo还是x86的呢？既然现在的CPU都支持 64位指令的，为何还有那么多人使用 32 位的系统？
+
+x86\_64虽然能执行x86代码，但并不是没有代价的。Windows下大部分现有的程序都是32位的，如果安装的64位Windows，32位软件并不能100\%兼容。而且所有的64位软件同时有32位的版本，所以Windows用户非但没有迫切的升级到64位系统的意愿，放而有为了兼容性考虑不得不安装32位系统的处境。
+
+64位系统如果不执行64的程序，那性能还不如直接使用32位的系统和32位的程序。所以在 Windows 统治的世界里，64 位CPU的地位非常尴尬。32位CPU通过PAE\footnote{Physical Address Extension，物理地址扩展。允许32位CPU使用36位地址从而突破4G内存限制。}同样能获得 >4G 内存的支持（非服务器版Windows人为阉割32位版本的PAE支持，故而32位桌面版Windows不能支持超过4G内存。）。
+
+大概也就是因为这个原因，所以不明真相的群众就以为64位除了支持大内存外一无是处。继续固守32位。64Bit vs 32bit的战斗因此打响。
+
+x86\_64对x86的提升不仅仅是更大的内存，同时增加的有
+
+(1)  更大的寄存器 64位CPU自然拥有64位宽度的寄存器。
+
+(2)  更多的寄存器x86\_64相比x86增加了8个通用寄存器,增加8个MMX寄存器。
+
+(3)  默认支持SSE\footnote{SSE指令是Intel为x86添加的扩展，加快了浮点运算的速度。}指令集。
+
+(4)  更有效的指令编码。
+
+这些都无形中增加了x86\_64指令编译的软件的运行速度。所以，如果你的CPU支持x86\_64，请必定选择x86\_64。
+Linux上没有Windows上遇到的问题。
+Gentoo下几乎所有软件都是本机编译的，自然不存在兼容性问题。
+而个别非开源软件也多数拥有 64位版本，更不需要操心兼容性问题。
+\end{insertnote}
+
+好，我们列一个清单：
+
+
+\begin{itemize}
+\item[ \checked] 一台电脑
+\item[ \checked] 一张LiveCD
+\item[ \checked] Internet
+\item[ \checked] 本书或者Gentoo 安装手册。
+\item[ \checked] 耐心，很多很多的耐心
+\end{itemize}
+
+你准备好了么？
+
+准备好的话，将LiveCD塞入光驱，开始一步步安装属于你的Gentoo吧。有关如何使用LiveCD请参考\faqref{FAQ:UseLiveCD}。
+启动LiveCD，首先配置好网络环境，有关网络环境的配置请参考 \secref{sec:ifconfig}。
+
+
+\section{shell 快速入门}\label{sec:quickbash}
+
+由于安装Gentoo需要执行shell命令，所以我需要讲解一下最基本的shell命令。高级的shell操作讲解要到
+
+机器只能接受二进制指令，可是人需要工作在更高一层。人希望直接提供文本形式的指令由机器执行。shell 是操作系统提供给用户的解释器。shell把来自用户的命令转化为机器指令并执行。
+
+命令虽然是文本，但也不是自由格式的。计算机是死的，自然不能接受人类的语言，只能是比较固定的几个格式。
+
+一条shell命令的最常用格式为:
+
+\begin{code}
+命令 [选项] [目标]
+\end{code}
+
+选项是可选的，可以有一个或多个；多个选项间用空格隔开；有些命令没有选项；目标通常是一个文件的文件名，或者目录名。
+一行可以写多个命令，多个命令用“;”隔开。一个命令也可以跨行，在最后行尾使用  “\textbackslash”  即可在下一行继续写。
+
+
+请看一个命令做为例子： 
+
+\begin{code}
+root@gentoo \textasciitilde \# ls -l --all /  
+\end{code}
+在这里：
+
+\begin{itemize}
+\item root@gentoo \textasciitilde \# 是shell提示符。\#是root账户，普通账户是\$。root@gentoo 表示当前登录用户为root,当前登录机器是gentoo,后面的 \textasciitilde{}　表示当前目录为　\textasciitilde{}，　\textasciitilde{}　在shell中表示用户主目录，也就是　\$HOME。root的主目录为 /root,　普通用户为/home/用户名。
+\item -l 是一个短选项。短选项 “-”开头，后面跟单个字母。在这里 -l 表示以“长格式”列出。所谓“长格式”就是相对与一般格式，除了要列出文件名，好要列出文件所有者，权限模式，文件大小
+\item -{}-all 是一个长选项。长选项使用两个“-” 开头，后面跟一个单词。在这里 -{}-all 表示列出所有 文件，包括隐藏文件。
+\item / 在这里为操作对象参数，在这里是一个目录。表示要列出 / 下的文件。
+\item ls 的所有参数都是可选的，如果不使用任何参数，ls 列出当前目录下的文件。
+
+\end{itemize}
+
+shell命令分两种，一种是内部命令，另一直是外部命令。内部命令是由shell直接执行的\footnote{最常用的内部命令是cd。}。
+外部命令则是独立的程序。比如ls就是独立程序，它的路径为/bin/ls。shell使用一个PATH环境变量\footnote{参考附录A FAQ“什么是环境变量”。}来查找外部命令。
+
+现在我们只需要知道shell最常用的命令形式就可以了。在以后的学习过程中，我会像大家介绍 shell 的其他命令格式，包括各种循环和函数使用。现在还要一个比知道更多的shell命令更重要的知识需要知道：
+\begin{center}\em
+shell字符串扩展
+\end{center}
+
+还是 ls 这个命令作为例子，假设当前目录下有“a.txt”“ab.txt”两个文件。执行下面的命令：
+
+\begin{code}
+root@gentoo \textasciitilde \# ls *.txt
+\end{code}
+
+结果就是列出 a.txt ab.txt 两个文件。
+
+在这里：
+\begin{itemize}
+\item *.txt 会被扩展成 a.txt ab.txt
+\item a.txt 和 ab.txt 被作为2个参数传递给ls。
+\item “*”是通配符，表示匹配任意多个字符；“?”表示匹配任意的一个字符。
+
+\begin{insertnote}
+注意：shell的字符串扩展不仅仅支持*和?这样的通配符，更高级的用法将在后续章节将到。
+\end{insertnote}
+
+
+\end{itemize}
+
+
+比如你执行的是下面这个指令：
+
+\begin{code}
+root@gentoo \textasciitilde \# ls ?.txt
+\end{code}
+
+结果就只显示a.txt文件。要取消shell字符串扩展，加引号即可，如下面这条命令：
+
+\begin{code}
+root@gentoo \textasciitilde \# ls "*.txt"
+\end{code}
+
+执行结果为：
+
+\begin{code}
+ls: 无法访问*.txt: 没有那个文件或目录
+\end{code}
+
+
+我们知道，ls *.txt 相当于 ls a.txt ab.txt，可是如果执行下面的命令
+
+\begin{code}
+root@gentoo \textasciitilde \# ls "a.txt ab.txt" 
+
+ls: 无法访问a.txt ab.txt: 没有那个文件或目录 
+
+root@gentoo \textasciitilde \# 
+\end{code}
+
+shell将“a.txt ab.txt”整体（不包含引号）作为了一个参数传递给ls了。
+
+要理解shell的这种行为，首先要明白shell是如何传递参数给程序的。
+
+\begin{insertnote}
+\subsection*{shell如何传递参数给命令}
+
+编写过C程序的同学都知道，C程序的入口点在main，main的原型为
+
+\begin{code}
+int main(int argc, char * argv[]);
+\end{code}
+
+argc为参数列表中参数的个数，argv是个参数列表。argv[0]是程序自己，argv[1]为第一个参数，依次类推。
+参数是直接由启动该程序的操作系统传递进来的，不需要还调用什么函数来获得参数列表
+\footnote{Windows下确实是调用GetCommandLine()获得参数列表的，由C语言启动函数（真正的入口点）负责获得参数列表然后调用main()。}。
+操作系统知道调用该程序的参数列表是因为程序是由execv()系统调用加载的。原型：
+\begin{code}
+int execv(const char *path, char *const argv[]);
+\end{code}
+path就是要执行的程序。
+argv的最后一个由NULL结尾，故而内核会知道有几个参数，转化为main里的argc。
+
+\end{insertnote}
+
+在本例中，
+shell
+启动ls程序的参数应该是这样的
+\begin{code}
+argv[0]="ls";\\
+argv[1]="a.txt ab.txt";\\
+argv[2]=NULL;
+
+execv("/bin/ls",argv);
+\end{code}
+
+所以ls会把"a.txt ab.txt"（不包含引号）作为一个参数。也就是说，参数和参数之间的分隔是由shell完成的\footnote{Windows下的程序，参数和参数之间的分隔是C库的启动函数完成的。GetCommandLine()后分割命令行参数再调用main()}。
+
+
+那么，shell进行字符串扩展和命令行参数分割的时候遵循的规则是这样的：
+
+\begin{itemize}
+\item shell进行字符串扩展的时候，只对游离的*和?进行扩展。如果*和？处于引号之内则不进行扩展。
+\item shell以空格为参数分割的界限。但是对于使用*和?扩展出来的字符串，以文件名为界限。比如文件名内的空格不会成为分割的界限。
+\end{itemize}
+
+
+如果执行的是下面的命令
+\begin{code}
+root@gentoo \textasciitilde \#ls　*.txt c.txt
+\end{code}
+
+shell对命令解析的步骤是：
+
+首先进行命令行字符串扩展，*.txt 扩展为　a.txt ab.txt；接着进行参数分割，这样就是3个参数: a.txt ab.txt c.txt；最后将这3个参数传递给ls。也就是执行下面的操作
+
+\begin{code}
+argv[0]="ls";\\
+argv[1]="a.txt";
+argv[2]="ab.txt";\\
+argv[3]=NULL;
+
+execv("/bin/ls",argv);
+\end{code}
+
+\subsection*{转义序列}
+
+既然说过，空格作为参数分格符。如果用引号将带有空格的字符串引起来，则两个引号之间的所有内容都作为一个字符串。也就是说，那之间的空格就失去了分割参数的功能。
+引号还可以用于避免字符串展开。功能如此强大，结果就是字符串本身如果就打算使用引号怎么办？shell将搞不清楚引号到底是代表这是一个字符串还是引号本身是字符串的一部分。
+
+shell引入了转义操作。使用在字符串内部使用{\textbackslash\tt{}"}就可以表示这是一个引号。
+
+\begin{example}{显示带 引号的字符串}
+\begin{code}
+root@gentoo \textasciitilde \# echo "你好引号{\textbackslash\tt{}"}"
+
+你好引号"
+
+root@gentoo \textasciitilde \#
+\end{code}
+\end{example}
+
+\subsection*{本节回顾}
+
+目前shell知识讲解仅限于能让读者小小入门，并顺利完成Gentoo的安装。现在小结一下shell的简单用法。
+
+\begin{itemize}
+\item shell以文本模式命令行作为用户界面。
+\item 命令行的规则是　命令+参数，以回车键代表输入完成，请立即执行命令。
+\item 参数之间以空格隔开。
+\item 文件名参数可以用通配符，shell会自动扩展后作为参数传递给要执行的命令。扩展后的文件名是每个文件名一个参数而不管文件名本身是不是包含空格。
+\item 如果需要避免shell对通配符进行shell扩展，加引号。
+\item 避免空格成为参数之间的分割的办法也是将带有空格的参数用引号引起来。
+\end{itemize}
+
+掌握这些shell知识应该用于完成安装Gentoo足够了。
+
+
+\section{引导管理器}\label{sec:grub}
+Linux的启动过程是一个令人着迷的过程，首先是硬件的初始化——也就是固件初始化——接着是固件加载并执行引导程序。
+引导程序负责将内核启动起来。然后内核执行第一个程序/sbin/init，后续的启动就交给init完成了。
+
+引导程序自身是如何实现的我们不必关心，倒是引导程序如何被固件找到载，以及引导程序如何找到内核是个重点话题。
+
+IBM创造PC的时候给PC开发了一个名字叫BIOS（Basic Input Output System）的固件。该固件被存储在一个ROM\footnote{只读存储器，断电后内容不会消失，存储内容生产的时候固化，无法修改}上。 BIOS提供了基本的输入输出功能，负责机器的上电自检（POST，Power On Self Test）和操作系统加载（其实是加载MBR。MBR再加载DOS。）。操作系统运行后BIOS作为基本输入输出设备的驱动程序存在\footnote{Windows、Linux这样的操作系统使用自己的驱动，并不依赖BIOS提供的驱动。}。
+
+也就是说，固件初始化完成后，就读取硬盘的第一个扇区（MBR）并执行这一小段程序。那么，固件并不关心你用的是什么操作系统，用的是什么引导程序，它只是遵照约定，执行MBR而已。
+
+微软的操作系统，不管是DOS还是Windows，其MBR都是一样的。就是查找活动分区\footnote{分区的一个额外属性。活动或者非活动。值得一提的是DOS无法访问非活动主分区。}并执行分区的第一个扇区（PBR）。所以微软操作系统的真正引导程序在系统安装分区（C：）的第一个扇区里，也称呼为分区引导扇区，Partition Boot Record。这是GRUB所以能支持引导Windows的关键原因哦。我们下文马上会介绍到。
+
+Linux下普遍使用的引导程序——或者说是事实标准——是GRUB（GRand Unified Bootloader）。其大名是如醍醐灌顶，如雷贯耳，谁人不知，谁人不晓啊。
+
+BIOS这种固件使用简单的伎俩查找引导程序。不过MBR只有区区512个字节，还要留64个字节给分区表，用于引导程序就只有448个字节了。想要做功能多点的引导程序都不行啊！空间问题。
+
+GRUB使用的办法就是接力加载。存在MBR上的那份代码只是完整GRUB的加载器。因为完成的GRUB需要支持ext2/ext3/ext4/fat/iso9660等等各种文件系统，以便读取存储在磁盘上的内核，还要支持配置文件，还要有命令行模式，故而GRUB的代码不可能少于448个字节。
+
+GRUB完整启动后，读取配置 /grub/grub.conf\footnote{注意，此/非Linux启动后的/，而是安装了GRUB的那个分区。如果没有/grub.conf 会查找 /boot/grub/grub.conf。所以在Linux环境下配置文件路径就是/boot/grub/grub.conf而不管/boot分区是不是独立的。}，显示操作系统选择列表。
+
+Linux下第一个硬盘的第一个分区是/dev/sda1，但是GRUB下却是从0开始的，(hd0,0)。这点需要注意。grub.conf的引导项配置以title开始，例如
+
+\begin{code}
+title Gentoo\\
+kernel /vmlinuz ro root=LABEL=GENTOO\\
+initrd /initrd.img
+\end{code}
+
+这里的 /　指的是GRUB安装分区。如果GRUB被安装到/boot分区，那么grub下的/对应的Linux下的路径就是/boot。
+kernel　命令指示后面加载一个Linux内核，内核文件后面跟随的字符串将成为内核参数。好多参数可以控制内核的行为。参数的介绍参考　\faqref{FAQ：kernelparamter}
+
+如果 vmlinuz不在 /boot分区，比如想在命令行模式启动其他内核的时候，可以用　root (hdX,Y) 的格式指定一个GRUB根。如下面的
+
+\begin{code}
+title Test-kernel\\
+root (hd0,1)\\
+kernel /usr/src/linux/arch/x86/boot/bzImage ro root=/dev/sda2
+\end{code}
+
+kernel用来加载一个内核，initrd 用来加载initramfs。对启动Linux来说，initrd并不是必须的。initrd的详细解释可以参考　\faqref{FAQ:initramfs}。
+
+不过，这样的GRUB可是对UEFI无效的哦~。
+
+\subsubsection{UEFI}
+
+IBM发明PC的时候远见不足，BIOS的历史局限性逐渐显现。BIOS最大的禁锢就是运行于16位模式。在连32位都要过时的年代，BIOS却还是16位的。
+
+彻底的革新，就是要从固件开始就让CPU处于64位模式运行，固件的代码再也不用遇到16位模式下的限制了。固件能集成更多的功能，甚至能直接访问文件系统，集成功能强大的引导程序。
+
+UEFI就是Intel提出的新的BIOS。和BIOS相比，UEFI对于操作系统来说区别就是：
+\begin{itemize}
+\item 纯64位启动。从UEFI到GRUB（并不是必须的存在，UEFI可以直接启动Linux）到Linux，中间没有16位代码。
+\item UEFI使用GPT分区表，支持访问FAT文件系统。
+\item 引导程序是EFI系统分区（标记EFI系统分区属性，文件系统为FAT）里的文件，扩展名为.efi。
+\item Linux可以由　grub.efi　引导，也可以将自身直接作为　vmlinuz.efi 被UEFI直接引导。
+\item 在操作系统环境下可以直接控制UEFI的引导选项。BIOS下必须进入BIOS设置程序才能设置。
+\end{itemize}
+
+要使用UEFI启动，需要两个要素：
+\begin{itemize}
+\item 一个UEFI能识别的分区，里面存放引导程序。UEFI使用GPT分区表，支持访问FAT文件系统。需要将一个FAT分区的分区类型设置为EF00。
+\item 告诉UEFI从哪个引导程序\footnote{扩展名.efi，也就是EFI可执行程序。}引导。可以在UEFI的设置界面设置，也可以使用efibootmgr命令行实用工具设置。
+\end{itemize}
+
+能用于UEFI的引导程序并是上文所提到的grub。您有三个选择：一是使用打了EFI补丁的GRUB；二是去使用GRUB2；三是使用内核自己\footnote{没错，编译好后的内核文件本身也是一个合法的EFI可执行文件！当然，前提是打开EFU stub选项。}。GRUB2的语法比较晦涩难懂，暂时没什么必要的话还是继续使用GRUB比较好。我会在后面的章节再次详解GRUB和GRUB2的配置文件语法，如果将来想换到GRUB2进行引导的话还是可以修炼的哦。
+
+打过补丁的GRUB可以从Fedora\footnote{Fedora从18开始BOOTX64.EFI不再是GRUB了。默哀。追Fedora还真难。没准等读者买到我的书的时候，Fedora 18已经成了落后的过去式了。}的LiveCD上提取。光盘根目录下的 /EFI/Boot/BOOTX64.EFI 就是EFI版的GRUB。如果没有Fedora光盘，其他的支持EFI启动的LiveCD上也有。通常在光盘根目录的EFI子目录里。
+
+也可以上网找grub的rpm包
+\footnote{%\begin{longtable}{p{\textwidth}}  
+http://mirrors.163.com/fedora/releases/17/Everything/x86\_64/os/Packages/g/grub-efi-0.97-93.fc17.x86\_64.rpm
+%\end{longtable}
+}
+然后提取 grub.efi。
+
+获得grub.efi（BOOTX64.EFI）后，将grub.efi拷贝到EFI分区。\footnote{其实我比较推荐直接将EFI系统分区挂载为/boot，但是有的人更喜欢的做法是将EFI系统分区挂载到/boot/efi/。}
+
+拷贝完成后执行efibootmgr将其添加到UEFI的引导程序列表中。
+
+\section{init 系统选择}
+
+Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启动就完全交给了init程序。由于init是第一个启动的程序，所以他的PID\footnote{Linux用一个数字代表一个进程。需要对进程操作的地方可以使用该数字。比如向进程发送信号，就是用PID标识发送的目标的。}是1。\footnote{PID 0是个特殊进程（或者是根本就不是进程吧），每当系统空闲下来的时候PID　0才会执行，PID 0只做一个事情，就是让CPU进入节能模式。而且PID　0的个数就是CPU的个数。每个CPU都有一个属于自己的PID 0。所以系统真正的进程号是从1开始的。}
+
+\begin{insertnote}
+\subsection*{Linux启动过程}
+计算机的启动步骤为 固件初始化 \textrightarrow 引导程序　\textrightarrow　内核加载并初始化　\textrightarrow　执行首个程序负责剩余的初始化　\textrightarrow　检查并挂载文件系统　\textrightarrow　启动后台服务　\textrightarrow　开启登录　\textrightarrow　（用户登录或者自动登录）　\textrightarrow　执行shell\footnote{Linux下命令行的shell就是bash。但是图形界面也可以算是一个shell哦，Desktop Shell是也。}。
+
+PID 1 的任务就是操作系统启动过程中的{\em 最后一英里（last mile）}。
+
+其实PID本身也不做什么操作，它只是依次启动其他服务：
+
+启动磁盘检查服务，启动文件系统挂载服务（这些都死一次性服务，系统启动过程中一次性执行）；
+
+启动udev服务，启动Dbus服务，启动电源管理服务等等（持续性服务，系统运行过程中一直执行的）；
+
+最后启动登录服务。
+
+命令行登录服务为 agetty 。在文本终端上显示登录提示接受用户登录。通常开启六个。tty1-tty6。使用组合键Ctrl+Alt+(F1-F6)访问。
+图形登录服务（显示管理器，Display Manager）为　GDM或者KDM或者XDM .... 好多，就看用户的选择了。通常发行版有一个默认的。一般和使用的默认桌面有关。
+默认使用Gnome桌面的发行版默认的显示管理器是GDM，默认使用KDE桌面的发行版默认使用的显示管理器就是KDM。也可以使用简洁的XDM。各有特点，但是功能都是一样的，可以随意互换。GDM一样能启动KDE桌面，KDM启动GNOME也没问题。
+
+\end{insertnote}
+
+简单的来说，启动操作系统过程中PID　1的任务就是bring up userspace。此外，PID 1还减负者收养孤儿的重任。
+
+\begin{insertnote}
+UNIX进程有父子关系。比如说你在shell下执行了一个程序，执行这个程序的进程就成为shell的子进程。子进程还可以有子进程的子进程。形成一个树形的进程关系。
+\end{insertnote}
+
+如果已经进程在子进程退出前就退出，那这个子进程就会成为没有父进程的“孤儿”。UNIX同时又规定一个进程必须有父进程，所以孤儿就被 PID 1收养成为PID 1 的子进程。
+
+
+\subsubsection{sysvinit+openrc}
+
+多数Linux发行版使用传统的sysvinit作为PID　1。　
+sysvinit有一个运行级别概念。每个级别用一个数字表示。预定义的运行级别如下：
+
+\begin{longtable}{|l|p{0.7\textwidth}|}\hline
+0　& 关机\\\hline
+1 & 单用户（救援）模式　\\\hline
+2 & 无网络模式　\\\hline
+3 & 多用户模式　\\\hline
+5 & 图形模式　\\\hline
+6 & 重启　\\\hline
+\end{longtable}
+
+不同的运行级别对sysvinit本身并没有特殊含义。只是人为这样的运行级别设定而已。
+sysvinit使用配置文件/etc/inittab决定启动过程。其中有一行
+\begin{code}
+id:3:initdefault:
+\end{code}
+决定默认进入运行级别3。3替换改为5就可以默认进入运行级别5。
+
+/etc/inittab告诉了sysvinit每个运行级别下应该执行什么程序。例如inittab通常包含这么6行：
+\begin{code}
+c1:12345:respawn:/sbin/agetty 38400 tty1 linux\\
+c2:2345:respawn:/sbin/agetty 38400 tty2 linux\\
+c3:2345:respawn:/sbin/agetty 38400 tty3 linux\\
+c4:2345:respawn:/sbin/agetty 38400 tty4 linux\\
+c5:2345:respawn:/sbin/agetty 38400 tty5 linux\\
+c6:2345:respawn:/sbin/agetty 38400 tty6 linux
+\end{code}
+
+表示：在运行级别1 2 3 4 5下，启动c1，启动c1所需要执行的命令为/sbin/agetty 38400 tty1 linux, respawn表示服务退出后立即重新开启。
+c2 c3 c4 c5 c6 在运行级别 2 3 4 5下启动，　1 下不启动。因为1是单用户模式嘛。
+
+图形登录界面是由下面的设置控制的（以早期Fedora为例，现在的Fedora不使用Sysvinit）
+\begin{code}
+x:5:once:/etc/X11/prefdm 
+\end{code}
+/etc/X11/prefdm 查找用户偏好的DM\footnote{一般是GDM或者KDM。}并启动之。
+可以看出图形管理器是在运行级别5开启的。
+
+
+{\tt c1:12345:respawn:/sbin/agetty 38400 tty1 linux} 这一行的上面还包含了一些配置用于启动　/etc/init.d/ 下的服务程序。各个发行版的做法都不一样。没有借鉴意义。
+
+总之最后的结果是是\textbf{按循序}启动 /etc/init.d/　下的脚本
+（因为运行级别的关系不是每个脚本都会被执行。通常如果运行于级别5的话，所有服务都开启，也就是都会被执行。）。
+
+我在这里强调了一个次序。因为服务和服务之间是有明显的依赖关系的。举些例子吧：提供HTTP服务的服务apache必须于mysql之后启动。因为php页面需要和mysql数据库交互；NetworkManager依赖DBus,因为它需要和DBus提供通信功能；NetworkManger同时也依赖wpa\_suplicant，因为它需要wpa\_suplicant实现wifi加密认证；等等等等。
+
+维护各种服务之间的依赖关系保证正确的启动次序是一个系统管理员非常非常重要的工作。
+但是也不必过于担心，发行版通常已经将这种重要的工作做的相当好了。
+
+对于Gentoo，/etc/init.d/　下的脚本并非bash脚本，而是openrc脚本。openrc主要的作用是“解析和缓存依赖关系”。
+每个脚本都包含　depend() 函数，openrc执行该函数获得依赖关系以决定脚本的执行次序。
+
+而对于Fedora/RHEL这样的系统（老Fedora，Fedora 从版本16开始不再使用sysvinit）， /etc/rc?.d/ （?为运行级别数字）下面有　S??XX K??XX 这样的符号链接到　/etc/init.d/XX 脚本。 %话说这也是Gentoo的启动脚本名为openrc的由来。
+S表示　Start，?? 是一个两位数的数字，代表启动的次序。
+S表示　Kill，?? 是一个两位数的数字，代表停止的次序（停止的次序和启动次序一样重要）。\footnote{
+我表示我已经被Fedora这种模式弄晕了，Gentoo的openrc好歹是设置依赖关系自动决定启动次序的。这也是Fedora后来果断废除sysvinit的原因吧。}Fedora的 /etc/init.d/下是实实在在的shell脚本。没有依赖关系。引入Gentoo的openrc不如彻底革新到自动确定依靠关系或者是根本不需要依赖关系的新服务管理系统。
+
+\subsubsection{SystemD}
+sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本的一大特点就是慢。
+另一个诟病的地方就是服务之间的关系复杂，很难搞懂。而且各个发行版并没有统一这些脚本。有的发行版为脚本加入了依赖关系，有的要依靠手工设置（是发行版打包的时候确定的）启动次序。管理上非常复杂。
+
+那么，针对sysvinit的问题：慢、管理复杂，Redhat的一个牛人开发了SystemD做为PID 1以克服sysvinit的缺陷。
+
+那么SystemD到底有哪些好处呢？
+
+\begin{itemize}
+\item 极度并行化启动。
+		SystemD开发者说过，要系统启动更快的，第一条需要做到的是单位时间内启动更多服务。不像sysvinit那样串行启动，SystemD是高度并行的。SystemD同时启动多个服务。
+
+\item 无脚本启动。SystemD开发者说过，要系统启动更快，你还需要做到的是整个系统启动过程启动更少的程序。SystemD实现不依靠一行shell脚本启动完整的系统。
+
+\item	按需启动。SystemD开发者说过，要系统启动更快，按需启动是必不可少的。按需启动功能更进一步的使整个系统启动过程启动更少的程序。
+
+\item	无需配置依赖性。
+		按需启动还使得服务之间的依赖关系成了过去式。你不需要直接指定服务之间的依赖关系——只要一个服务用到了另一个服务，另一个服务会被按需启动，\em 就好像它本来就已经被启动了一样。
+
+\end{itemize}
+
+SystemD能实现按需启动和避开依赖性配置，原因就是实现了socket activation。
+
+\begin{insertnote}
+\subsection*{Socket Activation解释}
+如果所有的服务可以同时启动而不考虑依赖性，服务就可以最大化的并行启动了。如果不考虑依赖性，管理员也可以大大的轻松。
+那么服务和服务之间为何会相互依赖呢？答案是依赖它创建的Socket。{ \it Apache要在mysql之后启动，是因为网页需要数据库，需要mysql提供的数据库服务。它只所以需要这个服务，是因为它需要连接到mysql创建的socket。NetworkManager需要DBus服务，是因为NetworkManager需要连接到DBus，其实是连接到DBus创建的那个socket。}
+
+如果，如果所有的Socket一开始就已经全部创建完成，所有的服务就可以同时启动了。因为他们连接到对方的时候不会再遇到“连接拒绝：地址不存在”错误。
+
+如果没有Socket Activation, 同时启动NetworkManager和DBus的后果是，如果NetworkManager试图连接到DBus的时候，DBus还为创建它的socket,NetworkManager将出现连接错误而是服务启动失败。
+
+有了Socket Activation, NetworkManager和DBus不再需要串行化启动，同时启动即可。NetworkManager总能连接上需要的Socket，因为它已经在那里了。
+甚至DBus自身都不用启动，NetworkManager也能正常开启直到NetworkManager向这个socket发送了一些数据——这个时候DBus必须开起以便处理这个数据。这就是“安需启动”的实现方式。
+
+Socket Activation 将创建socket的任务交给了SystemD——利用了UNIX父进程可以向子进程遗传文件描述符\footnote{socket也是文件。也是使用的文件描述符标识的。}的特性——由SystemD创建后再由其启动的服务继承。
+\end{insertnote}
+
+除了Socket Activation，还有类似的Path Activation，DBus Activation。 
+
+DBus Activation好理解，有的服务提供的并不是Socket，而是在DBus下的一个名称接口。服务使用者并不连接到该服务，而是直接连接到DBus，然后向DBus发送请求，由DBus转发给对应的服务。这是一种RPC\footnote{远程过程调用。}实现的说。如果该服务不存在（比如还未启动），DBus会返回错误。DBus Activation将未启动的服务的接口提前标记为“可用”，等该服务真的被用到的时候再将对应的服务启动。
+
+Path　Activation原理类似。比如邮件投递服务，只要在 /var/spool/mail 下有文件，该服务就应该进行邮件投递，将成功投递的邮件删除。Path Activation将监视该文件夹的任务交给了SystemD，文件存在后SystemD激活邮件投递服务。
+
+那么，决定使用sysvinit还是SystemD了么？话说Gentoo给的不就是选择么？
+%如果决定使用sysvinit什么都不用做，stage3里已经带上sysvinit了。如果决定用SystemD就继续哦，话说现在还不着急安装，内核代码下好了么？下好的话可以回到上面编译内核去了的说哦。
+
+
+\section{分区规划}
+任何系统都是安装到硬盘使用的
+\footnote{好吧，先忽略掉LiveCD 和  WinPE 这类不需要安装的系统，咱讨论的是一般用途的桌面操作系统。}，
+安装到硬盘之前，必须先划好家。在介绍如何分区前，首先得知道什么是分区，然后参考
+FHS\footnote{FHS 是文件系统目录结构的一个标准。规定了根分区下各个子目录的名称和用途。}
+指示结合自己的实际情况规划好分区。
+
+\subsection{分区基础知识}
+最初，计算机使用软盘，软盘是没有分区的。后来蓝色巨人IBM发明了硬盘。硬盘的容量一下子比软盘大出好多倍。当时的MS-DOS所使用的FAT12文件系统无法管理那么大的硬盘。于是西雅图的巨人和蓝色巨人想出来把硬盘划成逻辑上的几个区域，每个区域大小都在MS-DOS能管理的范围之内——这样的逻辑区域就是分区。人们发现将硬盘划分为逻辑上的几个区域后，更容易组织硬盘上的数据了；而且一个文件系统错误只会影响到一个分区的数据，其他分区不受影响，数据的安全性也得到的提升。因而后来的DOS虽然将FAT12进化到了FAT16，能管理当时的大容量硬盘了，但是分区这个功能却保留了下来\footnote{虽然是MS-DOS的发明，但是Linux可不会拒绝这样的发明。Linux还支持 BSD 发明的分区格式，总之，Linux决定支持越多的分区表格式越好，这极大的方便了用户，不是么？}。
+
+既然用户划了分区，操作系统总得知道用户到底怎么划分的，描述分区的数据被称作分区表。既有分区表，必须有个地方存储，也必须知道到哪里去读取分区表。MS-DOS的把分区表和引导程序放入硬盘的第一个扇区\footnote{扇区是硬盘最小寻址单位。参考附录A. FAQ里的条目“什么是扇区”。}。
+
+硬盘的第一个扇区又被称呼为MBR\footnote{MBR是硬盘的第一个扇区，具体解释请参考附录A. FAQ 里的条目“什么是 MBR”。}。
+MBR既要存储引导程序，又要储存分区表，是个寸土寸金的地方，分区表大小受限，只有4个表项。也就是说，一个 MBR分区表最多只能有4个分区。要是只有四个，似乎并不够用。
+
+MS-DOS将其中一个分区作为扩展分区，然后再扩展分区里再建分区表。扩展分区里面的分区就是逻辑分区，MBR 上的分区表就是主分区表。主分区表里划分的分区自然就是主分区了。所以一个MBR格式分区表最多允许3个主分区和1个扩展分区，或者4个主分区。扩展分区里再创建逻辑分区，没有数量限制。
+\chatu{logicalpart}{链式逻辑分区表}
+
+\begin{notice}
+注意：扩展分区里的逻辑分区并不是表格形式存储的，而是“链式”存储。如图\thefigure所示。每个逻辑分区包含查找下一个逻辑分区的信息。因而一个逻辑分区的破坏有可能造成链式效应，将所有的逻辑分区全部摧毁。
+\end{notice}
+
+由于近来UEFI\footnote{参考附录A “UEFI 和 BIOS”。}  的兴起，
+UEFI指定的分区表格式GPT也流行开来了。
+和MBR不同的是UEFI不需要专门的引导扇区，引导程序由UEFI直接从文件系统上加载。所以GPT只是分区表，不需要和引导程序共存。
+
+MBR 的分区表只有64个字节大小，只能包含最多4个分区的信息。
+GPT包含128个分区表项，最多允许一个硬盘划分成128个分区，足够了。
+能表示更多的分区并不是GPT唯一的优点，MBR分区表只能管理2.2TB
+\footnote{MBR使用4个字节表示分区起始位置的偏移量。
+偏移量以扇区为单位，一个扇区为512字节，那么MBR分区表能管理的最大硬盘大小为$2^{31}*512Byte = 2TB$。
+又因为硬盘厂家以1000为进制而不是1024，故而大约为2.2TB。}%
+以下大小的硬盘，GPT却可以管理容量超过9ZB\footnote{1ZB=1024PB 1PB=1024TB. 硬盘厂家的计算是 1ZB=1000PB 1PB=1000TB。}的硬盘。
+在大容量硬盘越来越普遍的今天，MBR显得越来越力不从心。GPT正好接替MBR成为今后PC硬盘的主流分区表格式。
+
+如果你电脑的固件是UEFI，不管硬盘实际是否大于2TB，建议最好使用GPT分区表。
+
+在UNIX操作系统下，一个文件系统是要挂载到某个目录下才能访问其中的文件的。Windows和DOS下，操作系统会分配一个“盘符”，但在UNIX下，使用挂载命令将文件系统挂到一个目录下。被挂载的目录就成了那个挂载的文件系统的根目录，也称为挂载点。实现这个挂载操作的命令就是\textbf{mount}。mount将一个分区“挂载”到一个目录下，命令格式为
+
+\begin{code}
+mount 磁盘设备  挂载目录 [-t 文件系统] [选项]
+\end{code}
+
+选项是可选的，文件系统类型没有给出的话，mount会进行自动探测，所以一般也不需要给出。
+
+\begin{notice}
+注意：mount只有root用户才能运行。
+\end{notice}
+
+\begin{example}{挂载U盘}
+\it 通常大家只有一个硬盘。按照第一个硬盘为/dev/sda，第二个硬盘为/dev/sdb这样的编号，通常U盘就是/dev/sdb（U盘也是硬盘的一种）。所以我这里假设用户插入的U盘被识别为/dev/sdb。U盘一般只有一个分区，所以正确的表示U盘的设备文件就是 /dev/sdb1了。
+
+\normalfont
+
+建立一个/media/usbdisk目录用于挂载，然后执行mount将U盘挂载到/media/usbdisk。
+
+\begin{code}
+mkdir -p /media/usbdisk
+
+mount /dev/sdb1 /media/usbdisk
+\end{code}
+
+执行成功后，跑到（cd命令进去） /media/usbdisk目录下看看（ls命令列出），是不是U盘上的文件都跑到这个目录下了呢！
+
+\end{example}
+
+
+有mount操作自然也有撤销的操作。撤销mount的操作由命令unmount完成。试试看执行unmount /media/usbdisk，等等！命令未找到？
+
+是的，UNIX就是这么矫情。看似应该使用unmount的地方，UNIX使用的却是umount命令。umount命令的语法不用说都猜到了：
+\begin{code}
+umount 磁盘设备
+\end{code}
+或者
+\begin{code}
+umount 挂载目录
+\end{code}
+
+用哪个形式都可以。要卸载一个文件系统，必须那个文件系统里所有的文件都被关闭。如果还有程序在使用上面的文件就无法卸载。可以使用 lsof 命令查看打开的文件。比如
+\begin{code}
+lsof /media/usbdisk
+\end{code}
+就可以查看/media/usbdisk目录下所有被打开的文件以及是哪个程序打开的。确保lsof的输出为空即可安全卸载了。
+
+\begin{example}{卸载U盘}
+U盘用完后直接拔出是不正确的\footnote{尽管这是个美好的传说。}。操作系统可能还有未来得及写入U盘的数据，直接拔出会导致数据丢失。所以在拔出U盘前必须先卸载U盘。
+执行：
+\begin{code}
+umount /media/usbdisk
+\end{code}
+
+然后就可以拔出U盘了。如果卸载失败，可以用lsof查看是否还有正在使用的文件。
+
+\end{example}
+
+\subsection{为磁盘分区}
+
+\chatu{gparted-gui}{gparted界面}
+
+\normalfont
+
+有很多种工具可以对硬盘进行分区。今天的主角是 gparted , 这个是一个非常简单易用的分区管理软件，带图形界面的哦~~
+
+要打开gparted，在终端执行sudo gparted。如果 Fedora 的LiveCD提示没有这个命令，则用命令sudo yum install gparted或者apt-get install gparted进行安装。gparted界面如图\thefigure所示。
+
+在gparted里所做的一切操作都不是立即执行的，只有应用操作后才被一次性执行。所以未应用前撤销操作是来得及的。
+下面我把为硬盘分区所需要的几个主要操作图解一下。请读者根据此处的图示熟悉操作流程，并在学习下一个小节后自行分区。
+
+\chatu{gparted-apply}{gparted应用操作}
+\noindent要应用操作：\\\indent
+1. 单击“编辑”|“应用全部操作”菜单。如图\thefigure所示。\\\indent
+2. 在弹出的警告对话框中选择“是”。
+
+\chatu{gparted-newpart-boot}{gparted新建分区}
+
+\noindent建立一个分区：\\\indent
+1. 选择磁盘的空白区域，右击后在菜单里选择“新建”。\\\indent
+2. 在弹出的对话框里指定一个大小、分区类型和文件系统，如图\thefigure所示。\\\indent
+\hskip 4em %
+\begin{notice} %
+  注意：分区表为GPT格式的只能选择主分区。
+\end{notice} \\\indent
+3. 单击“添加”按钮，新建的分区就编排在了任务列队里了\\\indent
+
+\chatu{gparted-delpart}{gparted删除分区}
+\noindent删除一个分区:\\\indent
+1. 右击要删除的分区在菜单里选择“删除”。如图\thefigure所示。 %\\\indent
+
+\chatu[scale=0.2]{gparted-newpt1.png}{新建分区表}
+
+\noindent新建一个分区表：\\\indent
+1. 单击“设备”｜“创建分区表”菜单，如图\thefigure所示。
+
+\chatu[scale=0.2]{gparted-newpt2.png}{新建分区表}
+
+\indent2.在打开的对话框里点“高级”前面的箭头，选择一个分区表类型。默认为MS-DOS分区表，也就是MBR分区表。
+我需要在这里我选择gpt分区表。如图\thefigure所示。
+
+好了，gparted的基本操作就完成了，接下来学习一下文件系统的结构后按照自己的意愿为自己的系统分区吧。
+
+\FloatBarrier
+
+\subsubsection*{UEFI模式注意}
+
+值得注意的是，如果使用GPT分区表，必须有一个200M左右大小的FAT分区并设置为EFI系统分区，如图\ref{fig:EFI-part}所示，为该分区打上boot 标记即可（操作：右击分区选择“管理标志(A)”）。
+
+EFI系统分区一般挂载到 /boot/efi下，但是个人喜欢EFI系统分区和/boot共用。自由选择的说。为了日后少麻烦，请务必让EFI系统分区为第一个分区。虽然说不一定非得是第一个分区，但是第一个分区是eifbootmgr的默认假定，嫌麻烦的研究手册的话，还是以第一个分区作为EFI系统分区为佳。
+
+\chatu{EFI-part}{为分区设置EFI启动属性}
+
+\FloatBarrier
+
+\subsection{文件系统结构标准（FHS）}
+
+Linux继承自UNIX树形目录。每个目录各司其职，并被FHS（Filesystem Hierarchy Standard）标准化。表3.1所列是一个不怎么完整的FHS标准，但是对于读者决定如何为他自己的电脑分区已经足够了。
+
+\begin{longtable}{|l|p{0.7\textwidth}|}\hline
+\caption{FHS标准参考}\\
+\hline
+/ & 根目录 \\\hline
+/bin & 基本系统程序。如 ls cat grep \\\hline
+/sbin & 只供管理员使用的基本系统程序 \\\hline
+/boot & 内核和引导程序，通常为独立分区\\\hline
+/dev & 设备文件目录 \\\hline
+/etc & 存放系统配置文件。不允许存放为独立分区\\\hline
+/home & 存放非root用户的家目录。 
+比如foo用户的家目录就是/home/foo
+一般用来存在个人文件和个人设置。
+通常强烈建议独立为一个分区。\\\hline
+/lib & 系统基本库，被 /bin /sbin 里的程序依赖的库 \\\hline
+/media & 可移动媒体的挂载目录。比如cdrom和u盘。被/run/media代替\\\hline
+/mnt & 临时挂载目录\\\hline
+/opt & 通常用于安装非开源软件，如Adobe Reader \\\hline
+/proc & 虚拟的文件系统，用来获得内核和运行中的程序的信息\\\hline
+/root & root用户的家目录\\\hline
+/srv & 做服务器使用的时候 ，用来存储服务的数据。如一个git服务器通常将仓库存放于/srv/git\\\hline
+/tmp & 临时目录。其中文件关机丢失。建议挂载为tmpfs虚拟文件系统，对于tmpfs的介绍可以参考第7章。 \\\hline
+/usr & 非基本系统程序根目录，下面的结构和 / 差不多 \\\hline
+/usr/bin & 同 /bin。只是非基本程序。如xeye  elinks . \\\hline
+/usr/sbin & 同 /sbin。只是非基本程序。如system-config-firewall \\\hline
+/usr/include & 头文件目录。\\\hline
+/usr/lib & 同 /lib。只是其包含的库是不被/sbin、/bin使用的。\\\hline
+/usr/share &  保存架构无关的共享数据。如图标\\\hline
+/var & 系统运行中会不停变化的文件。比如各种log，包管理器的数据库，等等。通常在服务器上是独立分区，个人电脑可以不独立划分。\\\hline
+/var/cache & 缓存。该目录下的文件可以安全删除，要求使用它的程序必须能重建它。比如fontconfig的缓存。\\\hline
+/run 和 /var/run & 临时目录。包含本次系统运行时的信息。\\\hline
+/var/log & 存放各种日志文件。\\\hline
+/var/tmp & 临时文件，可能重启后还在。注意和/tmp的区别。\\\hline
+\end{longtable}
+
+
+知道了系统各个目录的作用，就好为目录进行分区了。通常我们使用4个分区 /boot、/、/home 和一个交换分区。
+
+\begin{notice}
+注意：我在使用“/home分区”这个术语的时候，我指的是为“/home”分一个单独的分区，并且将这个分区挂载到“/home”目录下。我通常不使用“挂载到/home目录的分区”而直接简述为“/home分区”。同样的，“/分区”（或者根分区）指的就是挂载到根目录的分区。
+\end{notice}
+
+/boot独立为一个分区的好处是防止根文件系统的错误蔓延导致/boot/*文件破坏无法正常启动。另一个好处是 /分区可以使用引导程序（如GRUB）不支持的文件系统格式。例如GRUB不支持XFS文件系统格式，但是你可以让/boot分区使用ext2格式从而使 /分区可以使用XFS格式。如果/boot没有独立出一个分区。那 /分区就只能使用引导程序所支持的文件系统了。
+
+/home独立一个分区的好处就是将用户数据彻底和系统数据分离。由于/home目录通常频繁读取写入，和 /分区隔离可以避免 /分区被碎片化。
+
+提示：其他目录，比如“/var”，可以独立一个分区也可以不独立。就看你系统的用处了。作为桌面用途，完全没必要。如果是服务器，“/var/log”可能会很大。邮件服务器的“/var/mail”就可能会非常大，所以非常有必要使用独立分区。
+
+\subsection{文件系统选择}
+
+
+Linux支持的文件系统非常多，有自家系列 ext2/ext3/ext4、甲骨文公司开发的btrfs，来自硅谷图像的XFS等等等等。
+
+不过选一个文件系统没那么纠结的。对于根分区\footnote{根目录所在分区}，既然大部分发行版默认使用ext4，那就ext4吧。
+
+为了引导程序的兼容性，/boot分区仍旧使用ext2或者ext3。
+
+对于/tmp这样的目录，强烈建议使用tmpfs\footnote{参考第7章“文件系统”。}。tmpfs是一种内存文件系统，所有tmpfs上创建的文件都是在内存里的，关机后就会消失。非常适合用作/tmp的文件系统。既能加快系统速度，又能保护硬盘。
+
+对于/home目录，如果是个BT爱好者，会有很多大文件，我推荐使用XFS文件系统。其他情况下还是ext4各方面性能比较平衡。
+
+如果希望为自己选择最佳的分区格式，请参考第7章“文件系统”的内容。
+
+\section{开始安装}
+
+废话了那么多，介绍了一些安装前需要知道的基础知识，现在终于要进入正题了，安装Gentoo。
+Gentoo的安装非常简单，首先是分区。这个前面已经介绍过了。我现在假定读者已经在LiveCD 环境中完成分区了。下面开始真正的安装。
+
+
+\subsection{正式开始安装过程}
+
+现在，Gentoo的安装可以正式开始了！现在再检查一下
+
+\begin{itemize}
+\item	使用LiveCD启动，处于LiveCD环境中。
+\item	LiveCD里已经配置好网络，能访问Internet。
+\item	完成分区规划。已经为将要安装的Gentoo规划并划分好分区。
+\item	现在处于LiveCD的命令提示符下。
+\end{itemize}
+
+一切准备就绪，可以开始安装了。
+
+首先要做的事情就是创建一个　gentoo　目录。这个将要用来安装Gentoo的分区就暂时挂载到这个目录下。如不特殊说明，我使用 \#　代表命令提示符， \#后的命令表示需要手工输入并敲回车执行。
+
+\begin{code}
+\#mkdir　/gentoo\\
+\#mount /dev/sdXX /gentoo
+\end{code}
+
+这里　/dev/sdXX　是读者为Gentoo划分的根目录。
+
+系统目录准备好了，接下来下载Gentoo的stage3。打开　\url{http://mirrors.163.com/gentoo/releases/amd64/current-stage3/} 或者如果打算使用x86就打开\url{http://mirrors.163.com/gentoo/releases/x86/current-stage3/}下载以最近的日期结尾的 stage3 压缩包。
+
+然后解压到 /gentoo
+\begin{code}
+\#tar stage3-*.tar.bz2 -C /gentoo 
+\end{code}
+
+接着下载　portage 快照
+\begin{code}
+\#wget http://mirrors.163.com/gentoo/snapshots/portage-latest.tar.bz2\\
+\#tar portage-latest.tar.bz2 -C /gentoo/usr/portage
+\end{code}
+
+解压完成后，复制dns配置　
+\begin{code}
+\#cp /etc/resolv.conf /gentoo/etc/resolv.conf
+\end{code}
+
+如果还有划分了其他目录，也要一并挂载进来
+
+挂载home分区，boot分区等（如果有划分独立分区的话）
+\begin{code}
+\#mount /dev/sdXX /gentoo/boot\\
+\#mount /dev/sdXX /gentoo/home
+\end{code}
+
+各使用读者划分好的分区代替命令中的　/dev/sdXX。
+
+下面是挂载/dev/ /proc /sys的。这里使用宿主系统的/dev /proc 和 /sys　目录。
+\begin{code}
+\#mount --rbind /dev/ /gentoo/dev\\
+\#mount --rbind /sys /gentoo/sys\\
+\#mount --rbind /proc /gentoo/proc
+\end{code}
+
+好了，最好这些操作，Gentoo最小环境（能用但是不能启动）的基本环境就搭建完毕了。
+执行
+
+\begin{code}
+\#chroot /gentoo　/bin/bash
+\end{code}
+或者如果你喜欢简洁的操作
+\begin{code}
+\#chroot /gentoo
+\end{code}
+
+\begin{insertnote}
+\subsection*{chroot命令解释}
+
+chroot 命令能将某个目录变成根目录并在新的根目录里执行shell或者命令行第二个参数指定的程序。
+
+执行 chroot /gentoo 后，chroot 将自己的根目录（不影响系统其他进程的根目录）切换到新的目录，然后执行新的根目录里的 \$SHELL（通常是/bin/bash）。
+这样获得的新shell就继承了chroot的根目录设定，也就是 /gentoo。 试试在里面执行　mkdir /test。然后开个新的终端检查看看　/gentoo/test 目录是不是在了。
+\end{insertnote}
+
+
+好了，现在就已经进入Gentoo的环境了。正如我在本章开头提出的一个引用那样，“Where there is a shell, there is a way.” 安装Gentoo的第一步事实上就是获得一个shell，不管这个shell是用LiveCD获得的，还是使用一个已经安装的系统。只要有了shell，就有办法安装Gentoo。
+
+\subsection{emerge用法}
+
+说到Gentoo不得不提portage和emerge。portage是Gentoo的软件包管理器，emerge是portage的命令行工具。能使用portage的不止emerge一个，这个是有官方背景的工具，所谓正统是也。
+
+emerge的用法非常简单，假设你要安装pidgin，执行下面的命令就可以了:
+\begin{code}
+emerge pidgin
+\end{code}
+
+很简单，是不是？emerge会自动的下载pidgin然后编译安装，全程不需要人工干预。如果pidgin依赖的一些包没有安装，emerge会先下载这些包然后安装。再一次，全程自动化。不需要手工干预。
+
+如果认为emerge只是自动下载编译脚本你就大错特错了。执行
+\begin{code}
+\# -p参数表示不实际执行安装操作，只显示需要执行的操作
+
+\#-v表示输出详细信息。
+
+emerge -pv pidgin
+\end{code}
+
+看到什么了？
+
+\begin{code}
+[ebuild   N    ] net-im/pidgin-2.10.6 USE="dbus gnutls gstreamer gtk ncurses networkmanager nls xscreensaver (-aqua) -debug -doc -eds -gadu -groupwise -idn -meanwhile -perl -prediction -python -sasl -silc -spell -tcl -tk -zephyr -zeroconf"
+\end{code}
+
+注意看输出，ebuild 后面有个 N 代表新安装，如果是 R 表示重新安装，U表示升级。D表示降级（不常发生，但是出现新版本有重大错误，Gentoo会紧急撤销新版本，这样已经按照的人会降级）
+之后为包名，带版本号。有时候会出现NS，表示安装新版本和老版本共存。然后就是USE=$\cdots$ 了。USE=表示该包所有可选的USE参数。-xx 的表示关闭对应的功能， xx表示打开对应的功能。这些功能都是编译期选项。编译的时候就确定下来的。没有被编译进的功能软件运行时就好像这个功能本来就不存在一样。从源头上禁用了。
+有的功能会在外围打上括号，表示该功能对于本平台是强制启用或者禁用的。
+
+那怎么调节USE参数呢？ 3个办法。
+
+\begin{itemize}
+\item 使用USE环境变量。比如{ \tt  USE="-networkmanager -dbus sasl" emerge -v pidgin} 。 这个设置只影响本次编译的pidgin。
+\item 到 make.conf 设置 USE=。 比如在 /etc/portage/make.conf 文件中加入 {\tt USE="gtk networkmanager -dbus"}（USE变量要用引号。）。这里的设置会是全局设置，影响到所有后续编译的软件。
+\item 到 /etc/portage/package.use 文件中写一行“ { \tt  net-im/pidgin dbus gtk -ncurses -nls } ”（不包括引号）。 这个设置只影响pidgin，但是所有后续安装pidgin都会使用这个设置。
+\end{itemize}
+
+\subsection{配置make.conf}
+
+话说emerge虽然很智能，编译下载全自动，但不代表就不需要配置了。portage的主配置文件就是 /etc/portage/make.conf。
+
+make.conf 里最重要的设置莫过于CFLAGS和CXXFLAGS了。 
+CFLAGS 和 CXXFLAGS 设置 C 和 C++ 的编译参数。
+emerge所编译的所有程序都会使用这里的编译参数设置。
+
+要配置make.conf需要编辑器，请参考\secref{sec:nano}和\secref{sec:editors}
+的内容。
+
+CFLAGS是C编译器参数。在这里设置的参数会被所有软件作为C编译器参数。CXXFLAGS是c++编译器参数。通常两者设置为相同即可。
+
+推荐的设置是 CFLAGS="-O2 -march=native -pipe"。
+（CXXFLAGS 同 CFLAGS。）
+
+\begin{itemize}
+\item -pipe 表示使用管道代替临时文件把编译后的汇编文件交给汇编器。
+\item -O2 表示优化级别为2。gcc 有5个优化级别， -O0 -O1 -Os -O2 -O3。-O0 表示不优化。-O1 到 -O3，数字越大，优化级别越高，生成的代码也越快。之所以不推荐使用 -O3 乃是保守。-O3 优化太激进，可能会导致一些软件错误。-Os是一个特殊的优化级别，表示按照大小优化而不是速度。
+\item -march=native 指示编译器按照本地CPU的指令集优化。编译生成的二进制程序将不能在和本机CPU型号（比仅仅是CPU牌子比一致，代数比一致也不行。比如在i7上编译的到奔腾上将无法执行。）不一致的机器上使用。这不正是使用Gentoo的一个原因么？
+\end{itemize}
+
+
+GENTOO\_MIRRORS 指示emerge下载源代码的时候使用的镜像。ebuild里虽然给出了软件的原始下载链接，但通常只作为后备资源。emerge会优先从Gentoo镜像服务器下载同名文件。
+Gentoo全球镜像站点非常多，所以需要设置离自己最近的镜像以加快下载速度。目前速度不错的两个国内镜像站点分别是搜狐和网易。\url{http://mirrors.sohu.com/gentoo/} \url{http://mirrors.163.com/gentoo/}。可以到 \url{http://www.gentoo.org/main/en/mirrors2.xml} 查看全部的镜像站点。
+
+SYNC %="rsync://mirrors.163.com/gentoo-portage"
+设置的是 portage 目录的更新源。emerge 依赖 /usr/portage 目录下的 ebuild 文件获得编译和依赖信息。所以及时的更新这个目录是很重要的。使用 emerge --sync 
+即可更新此目录。同样的，更新这样的目录也要选择一个快点的镜像。到Gentoo的网站查询镜像列表后选择一个填入。\footnote{网易提供的 \url{rsync://mirrors.163.com/gentoo-portage} 在大陆有不错的速度。}~ 由于 portage 树是用 rsync 进行增量更新的，所以将算不设置一个镜像也可以。因为如果每天更新的话，rsync的传输量并不大。所以可以不设置，使用默认的。
+
+ACCEPT\_KEYWORDS%="~amd64 amd64"
+指示emerge接受指定关键字的ebuild。关键字为 ARCH 和 \textasciitilde{}ARCH , ARCH为处理器架构名，如x86、amd64。设置了{\tt ACCEPT\_KEYWORDS="amd64"} （当然，这在amd64平台是默认设置）后，emerge只接受标记了amd64关键字的ebuild。
+这样就把没有标记此关键字的ebuild过滤掉了。这样的做法是因为有的软件只有某个平台可以用。而 \textasciitilde{}ARCH 则表示“不稳定的包”。
+比如一个ebuild如果标记为 \textasciitilde{}amd64 就表示在 amd64平台可用，但是不稳定。如果标记为 \textasciitilde{}x86就表示在32位x86平台可用，但不稳定。
+其实这个稳定是从服务器的角度说的。如果做桌面使用，\textasciitilde{}ARCH都是太稳定了的说。
+通常桌面使用会设置{\tt ACCEPT\_KEYWORDS="\textasciitilde{}amd64 amd64"} ， 如果是32位的则使用ACCEPT\_KEYWORDS="\textasciitilde{}x86 x86"。 这样标记为不稳定的包也能使用。通常一个软件发布新版本后，portage中出现的都是 \textasciitilde{}ARCH 版的ebuild，被测试充分稳定后才会进入 ARCH 。
+使用 \textasciitilde{}ARCH 是推荐设置。想尝新的朋友其实Gentoo有更不稳定的包，就是 masked 包。
+\url{/usr/portage/profiles/package.mask} 文件描述了portage树中所有被 masked 的包，被 masked 的包不论 KEYWORDS设置成什么，都会被过滤无法安装。除非手工解除屏蔽状态，具体的办法参考 \secref{sec:emerge}
+
+MAKEOPTS%="-j8"
+通常的设置为 -jN，其中 N 为cpu的数目。\begin{notice}
+注意，超线程被认为是2个CPU。比如双核超线程的i3，逻辑CPU数目就是4个。
+\end{notice} 这个设置被 make 使用，表示同时开启的编译数目。比如 make -j8，则 make 会尽可能的同时开启8个编译器进行编译。
+
+
+\subsection*{处理循环依赖}
+软件之间相互依赖并不是很罕见的事情。既然要从头进行编译安装，过程中必然会出现“A依赖B，B依赖A”这样的循环依赖。
+有时候循环依赖还是间接的：“A依赖B，B依赖C，C依赖A”。可以把C想象成多个软件。
+最典型的循环依赖就是工具链了：要编译任何软件都需要GCC和GLIBC，但是编译GLIBC自己也需要GCC，编译GCC自己也需要GCC和GLIBC。正因为这样会发生循环依赖，
+所以完全从头编译一个Linux环境是非常麻烦的。如果非要这么做，参考LFS。
+
+我们下载的是Gentoo提供的stage3。这里必要提一下何为stage3，有stage3必然有stage2、stage1咯。所谓stage1就是只包含一个bootstrap.sh脚本和配置文件的压缩包。
+如果从stage1开始安装，就是执行bootstrap脚本。这个脚本的做法就是和LFS一样，从0开始构筑stage2。stage2则意味着包含了一个最小的“工具链”环境。
+这个环境有编译器，链接器，bash，必要的命令行工具。也就是stage2就是个能编译自己的“最小”环境。从stage2开始继续bootstrap就能获得stage3。stage3包含了一个能编译自己的最小“Gentoo”环境——包含了emerge程序。因为emerge是python编写的，故而不能放入stage2。
+
+也就是说，stage1/2/3 就是处理循环依赖，每次将基础扩大。到stage3开始，基本就可以避免循环依赖了。但是并没有绝对避免。是否会遇到循环依赖取决于用户的配置和需要安装的软件。
+这也就是Gentoo已经很久不再提倡从stage1开始安装Gentoo的原因：解决循环依赖是噩梦。
+
+stage3开始，已经没有硬循环依赖了。这个时候的循环依赖通常是这样的“A依赖B，但是B有个可选的选项导致会依赖A”。这样只要将那个可选的选项关闭，编译好B，然后再编译A，如果那个功能用户需要的话，重新打开后再次编译B。
+
+\begin{example}{Dbus和SystemD相互依赖}
+
+直接使用 emerge systemd 的时候，系统会提示dbus开了[systemd]选项后依赖systemd，而systemd也依赖dbus。同时systemd编译的时候并不依赖开启systemd选项的dbus，但是运行的时候却依赖。
+
+直接的后果就是emerge出现错误提示后退出。emerge的关键提示信息为 systemd depends on by dbus, dbus depends on systemd, systemd depends on dbus.
+随后提示Note that circular dependencies can often be avoided by temporarily disabling USE flags that trigger optional dependencies.
+
+较高版本的portage还会提示关闭可能避开循环依赖需要关闭的USE选项。而低版本做法则为进一布提示：systemd依赖dbus, dbus[systemd]依赖systemd。注意dbus后面加了个[systemd]，说明USE包含systemd后dbus才依赖systemd。
+
+\end{example}
+
+
+接下来要做的就是编译一个可启动的内核，编译一些引导必备软件，安装一个引导程序Gentoo就能启动了。
+
+
+\subsection{内核编译}
+编译内核，对初学者来说是个艰巨的任务。不过这是通往资深用户和熟练管理员的必经之路。该做的迟早要做，不如现在就做个了断吧。
+
+首先获取一个内核代码。推荐使用git获得内核的代码而不是下载tar压缩包。因为更新到下一个版本的时候git只会下载差异部分而不会重新下载。
+git的具体用法请参考　\secref{sec:git}。
+
+必须把内核代码放到　/usr/src/linux　哦，这样依赖内核头文件的软件才能找到所需的内核代码（仅限Gentoo设定）。
+
+{
+\bf\noindent 提示：
+}{
+\em shell　下一行太长可以在后面输入$\backslash$并在下一行输入剩余的命令。shell会在下一行自动出现提示符 $>$　。
+}
+
+
+\begin{code}
+\#cd /usr/src\\
+\#git clone \textbackslash \\
+>~ git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+\end{code}
+
+内核代码非常大，这一步操作会比较费时。可以先放一边，重新打开个新的终端然后chroot /gentoo，进行下一节的操作。等内核的代码克隆完成了再回到这里继续。
+
+Mark一下。
+
+\subsubsection{initrd}\label{sec:initrd}
+
+\subsubsection{新手使用 genkernel}
+
+编译内核最难的地方就是配置内核了。 make menuconfig|xconfig|gconfig 最终的目的就是获得一个.config文件。其实后面的编译步骤都不难，难的就是一个能正常工作的 .config 配置文件。
+似乎某些重要配置不能随意回答Yes或No，对于没有多少经验的人来说，还是有不小的难度么。
+
+Gentoo开发者似乎注意到了不会自行编译内核的しんまい%ざこ%ばか
+\footnote{内核对你来说和这个词是一样的。}%
+，所以特意开发了しんまい的内核编译助手：genkernel。虽然genkernel能直接编译出一个工作内核，
+但是以genkernel获得一个能工作的.config文件并在此基础上修改定制才是修炼之道。
+
+这里就教大家用genkernel获得一个能启动的内核的.config配置文件好了。
+
+
+\subsection{系统初步配置—重启前配置}
+在chroot环境中我们需要做的就是进行必备系统的安装，配置好基本系统然后重启进入Gentoo环境中进行后续的安装。所以这里基础系统的配置非常关键，他关系到你第一次能否成功地进入Gentoo系统。
+
+
+\subsubsection{nano 编辑器快速入门}\label{sec:nano}
+现在才讲nano我都觉得有点罪过。由于Gentoo的stage3里并没有包含vim，所以一开始必须使用nano进行系统配置，直到portage配置好后emerge了vim才能使用vim。
+在此之前还是得用nano。
+
+nano 编辑器的使用非常简单，打开一个文件用“ nano 要编辑的文件” 这种简单的指令就可以了。编辑也非常简单，支持
+\textuparrow \textdownarrow \textleftarrow \textrightarrow 上下左右移动。退出按Ctrl-X，提示是否保存，回答yes就可以了。
+
+
+\subsubsection{时区设置}
+
+类UNIX系统下，系统内核并不使用本地时间。内核使用的是被称为UTC\footnote{英文Coordinated Universal Time, 法文Temps Universel Coordonné。为了协调英文和法文用户，缩写为 UTC。}的时钟：文件系统上保存的文件最后修改时间即UTC时间而不是本地时间。
+需要设置时区才能正确从UTC转换到本地时间。
+
+同时，系统硬件存储的通常是本地时间——为了和Windows兼容，以及发挥定时开机等功能——内核启动的时候也需要将本地时间转化为UTC。
+所以时区信息分2个，第一，硬件时间是UTC还是本地时间，第二，本地时区。
+系统在启动过程中会使用 /etc/adjtime 的信息确定是否为本地时间。
+
+\begin{filecontent}{/etc/adjtime}
+0.0 0.0 0.0\\
+0\\
+LOCAL
+\end{filecontent}
+
+前两行忽略，后最后一行 LOCAL 即向系统传达硬件时钟为本地时间这个信息。如果不存在这个文件，就默认为UTC时间。赶快拿起编辑器生成这个文件吧。呵呵。
+
+时区信息保存在/etc/localtime，但是这个文件不要手工编辑。在系统的 /usr/share/zoneinfo/ 下保存有各个时区的 localtime 文件。拷贝为 /etc/localtime 就可以了。
+比如大陆使用东八区，城市为上海\footnote{居然不是北京的说}，所以拷贝 /usr/share/zoneinfo/Asia/Shanghai 为 /etc/localtime 就完成时区设置了。
+
+系统启动的时候，会读取硬件时间，然后转化为 UTC 时间设置为内核时间，该操作由hwclock程序完成。systemd的做法是由内核直接读取硬件时间（配置内核的时候选上 “Set system time from RTC on startup and resume”）， 到systemd启动的时候，按照本地时间和UTC的差拨快或拨慢内核时间即可。
+
+使用 date 命令打印的时间是从内核获得的 UTC 时间然后依据时区设置转化为本地时间再显示。
+
+\subsubsection{fstab配置}
+安装Gentoo，可以说，最重要的配置莫过于fstab了。fstab配置文件是Linux文件系统树的根基。正是fstab指明了文件系统的建筑结构。
+
+fstab 每行配置一个文件系统。语法是:
+\begin{small}
+\tt 
+\begin{longtable}{cccccc}
+文件系统设备	& 挂载点 & 文件系统类型 & 挂载选项 & dump & pass
+\end{longtable}
+\end{small}
+
+文件系统设备可以直接使用 /dev/sdXX 这样的设备，也可以使用 UUID= LABEL= 这样的形式。
+挂载选项每个文件系统都有特定的选项。如果没有特殊的需要使用 defaults 即可。dump 位如果设置为 1 表示如果检查失败就不能继续启动系统。通常设置为 1。
+pass 对于 / 设置为 1, 其他都设置为 2 。
+
+下面给出的是挂载 / 的例子。
+\begin{small}
+\tt 
+\begin{longtable}{cccccc}
+/dev/sda2	& /	 & ext4	& defaults & 1 & 1
+\end{longtable}
+\end{small}
+
+使用 LABEL也可以，假设 / 分区的 LABEL 是 Gentoo
+
+\begin{small}
+\tt 
+\begin{longtable}{cccccc}
+LABEL=Gentoo	& /	 & ext4	& defaults & 1 & 1
+\end{longtable}
+\end{small}
+
+值得注意的是，swap分区也是在这里设置的。只不过， 挂载点设置为 none，文件系统类型为 swap , dump 和 pass 设置为 0 
+
+\begin{small}
+\tt 
+\begin{longtable}{cccccc}
+LABEL=SWAP	& none	 & swap	& defaults & 0 & 0
+\end{longtable}
+\end{small}
+
+实际上Gentoo带的stage3已经提供了一个 fstab的模板，只要将自己的/boot分区、/分区、/home分区对应的设备写进去，调节一下文件系统类型就可以了。呵呵。
+
+
+\subsubsection{配置帐号，设置密码}
+
+我安装Gentoo的时候常常忘记为Gentoo设置root密码，结果重启后发现无法使用root登录。无密码和空密码不是一回事。Linux不允许登录无密码帐号。所以这个时候要做的事情就是设置一个root密码。
+
+\begin{code}
+\#passwd\\
+New UNIX password: *输入密码，注意这里不回显*\\
+Retype new UNIX password: *再次输入密码*\\
+passwd: password updated successfully
+\end{code}
+
+这样就设置好root帐号的密码了。
+
+\subsubsection{语言设置}\label{sec:lang}
+%TODO
+很多程序都有本地化语言支持。支持本地化的程序，通过检查环境变量LANG的内容决定使用何种语言。
+
+\subsection{安装基础系统}
+
+除了内核，引导程序，和init程序，还有一些必须的基础程序需要安装。主要是：开机fsck需要用到的各种文件系统的辅助工具和网络工具。
+
+\subsubsection{安装网络工具}
+
+网络工具的具体用法请参考\chapref{chap:network}。
+
+这里作为一个快速安装的指南，算是一个占位符吧。告诉你，现在就得把网络工具安装了，否则待会重启进的了系统却用不了网络，无法继续安装哦！
+
+安装何种工具就看你使用的是何种网络环境了。
+一般如果是静态网络，安装 net-tools 即可。它提供了ifconfig。
+但是强烈的推荐使用 NetworkManager 这样的成熟的动态配置工具，尤其是还有好用的GUI可用。NetworkManager依赖较多，如果你的网络可以用 ifconfig 配置下来，可以等重启后再安装。
+
+不过如果使用了无线网络，最好还是现在就把NetworkManager装了，免得重启后无法继续安装系统。
+
+如果使用 PPPoE 进行拨号的（ADSL接入，在电脑上进行拨号。），除了安装NetworkManager还得安装 rp-pppoe。这样 NetworkManager就可以进行拨号了。
+具体用法请参考 \chapref{chap:network}
+
+因为 networkmanager会引入 bluetooth 依赖，现在还用不到，可以关闭。之后可以重新编译。
+
+\begin{code}
+\#emerge rp-pppoe\\
+\#USE=-bluetooth emerge networkmanager
+\end{code}
+
+\subsubsection{文件系统工具}
+
+众所周知，不正常的关机会导致磁盘数据丢失。所以每次linux开机都会进行一次磁盘检查。如果上次是正常关机，通常检查会很快结束，网络词语叫秒杀。
+如果上次经历了非正常关机，就需要花比较长的时间进行检查。至于检查嘛，自然是使用各种文件系统检查工具了。init系统会统一调用 /sbin/fsck 来检查文件系统，不过 fsck 只做一件事情（UNIX哲学嘛）：检查文件系统类型，调用 fsck.??? 进行检查。而fsck.??? 自然就是属于各个文件系统专用工具集合里的了。
+
+\begin{code}
+\#emerge e2fsprogs	\#安装 ext2/ext3/ext4 系列的文件系统工具\\
+\#emerge xfsprogs	\#安装 xfs 文件系统工具\\
+\#emerge reiserfsprogs	\#安装 reiserfs 文件系统工具\\
+\#emerge btrfs-progs	\#安装 btrfs 文件系统工具\\
+\end{code}
+
+\subsubsection{安装内核}
+
+去去去，查看一下内核编译完成了没。内核编译完成后，就剩下安装了。
+
+\begin{code}
+\#cd /usr/src/linux\\
+\#make install modules\_install
+\end{code}
+
+\subsubsection{安装引导程序}
+
+引导程序前面已经介绍过了，现在我们要做的就是安装一个。对于BIOS机器，执行下面的命令安装的老版本的grub:
+
+\begin{code}
+\#emerge grub-static
+\end{code}
+
+这个时候　grub　会被安装到 /sbin/grub，　16位模式的GRUB模块会被安装到/usr/lib/grub。拷贝/usr/lib/grub/一份到 /boot/grub。
+
+\begin{code}
+\#cp -a /usr/lib/grub /boot/
+\end{code}
+
+/sbin/grub 这个命令可以在Linux环境下执行，除了不能启动Linux内核，GRUB能用的其他命令可以在这个命令行下使用。
+执行：
+\begin{code}
+\#grub
+\end{code}
+
+会出现grub的交互式命令行模式，这个和BIOS启动GRUB，按C进入的命令行模式是一样的。唯一的区别就是这个模式不能真正的启动Linux。
+现在我们要做的就是执行　root (hdX,Y)命令定位到 /boot　分区（如果/boot分区列位有划分独立的分区的话，否则就是定位到/分区。），然后执行{\tt setup (hd0)} (或者 hd1,看你要安装到哪个硬盘的MBR上。)。
+这么做的意思就是将 grub 的“接头人”装到MBR上，由这份接头人性质的代码加载 /boot/grub/stage2实现GRUB的启动。
+
+也可以不进入grub命令行模式，直接使用 grub-install 命令进行安装。但是熟悉grub交互式命令行模式对以后使用grub修复受损的MBR也是非常有用的。所以推荐使用grub的交互式命令行模式。
+
+如果是UEFI的机器，则需要安装 EFI 版本的grub。不过linux内核本身也是可以直接被UEFI启动的。但是使用引导程序提供了一些灵活性，还是值得的。
+grub-efi 在 gentoo-zh overlay里。介绍和使用overlay请参考 \secref{sec:overlay}
+
+\begin{code}
+\#emerge grub-efi
+\end{code}
+
+如果还没添加 gentoo-zh overlay 将找不到对应的包，可以使用下面的命令添加 gentoo-zh overlay。具体请务必查阅\secref{sec:overlay}。
+
+\begin{code}
+\#USE=git emerge layman \#管理 overlay 的工具\\
+
+\#layman -a gentoo-zh \# 添加 gentoo-zh overlay，如果还没添加的话 
+
+\#echo~source~/var/lib/layman/make.conf~>>~/etc/portage/make.conf
+\end{code}
+
+按照提示，拷贝 /usr/lib/grub/grub.efi 到 EFI 分区。
+
+\subsubsection*{使用efibootmgr将grub.efi加入引导}
+
+上文提到过UEFI支持在操作系统环境下管理启动选项。这个管理操作由efibootmgr工具实现。当然，前提是系统是由EFI模式启动的。目前大部分EFI主板都提供了BIOS模拟，所以很有可能您的LiveCD是用BIOS模拟模式启动的，这样就会失去EFI管理能力。所以确保您是用EFI模式启动的LiveCD，可以参考　\faqref{FAQ:UseLiveCD}。
+
+当然第一件事情是安装它。
+\begin{code}
+\#emerge efibootmgr
+\end{code}
+
+首先显示出现有的引导选项
+\begin{code}
+\#efibootmgr
+\end{code}
+
+添加GRUB引导选项，将　\textbackslash{}grub.efi 添加到引导选项中去。
+\begin{code}
+\#efibootmgr　-c -L GRUB -l '\textbackslash{}grub.efi'
+\end{code}
+
+确认结果
+\begin{code}
+\#efibootmgr
+\end{code}
+
+记住　Boot????*GRUB　那4个问号代表的数字，表示新添加的GRUB处于何种次序。将GRUB设为第一引导次序，也就是默认引导项，如下文的命令。????就是刚刚找到的新添加的GRUB引导项的数字。
+
+\begin{code}
+\#efibootmgr　-o ????
+\end{code}
+
+这样就可以了。重启后系统会自动运行 grub.efi　进入grub模式，grub就可以将内核加载了。
+
+\subsection{配置引导程序}
+
+grub 的配置文件就是 grub.conf。 UEFI 模式下，是和 grub.efi 在同一个目录下。 BIOS模式下，是在 /boot/grub/grub.conf。（果把grub安装到boot分区的话）
+
+在 \secref{sec:grub} 我们已经大概熟悉了一下grub.conf文件的语法。
+这里要做的就是将内核加入 grub 的引导选项了。
+
+\begin{code}
+title Gentoo\\
+kernel /vmlinuz ro root=LABEL=GENTOO\\
+\end{code}
+
+主要，这里的 /vmlinuz 是按照 grub 的路径来算的。比如 grub 安装到/boot分区，而内核文件（通过 make install 安装）通常为 /boot/vmlinuz-内核版本。相对 grub 的路径就是 /vmlinuz-内核版本。如果 grub 安装到 /boot/efi/ (/boot/efi 为独立的 EFI 分区) ，则必须使用 root (hdX,Y) 这样的语句选择 /boot 分区或者 / 分区（如果/boot不是独立分区的话）。
+然后再使用 /vmlinuz-内核版本 或者 /boot/vmlinuz-内核版本 （/boot不是独立分区的时候） 这样的路径。
+
+如果使用了 initrd 的话（强烈的不推荐Gentoo系统使用initrd），还需要加上 initrd 命令加载 initrd文件。initrd文件可以由dracut程序生成。参考 \secref{sec:initrd}
+
+\section{重启后安装}
+
+前面的安装都是在liveCD环境下进行的。现在要进行重启并进入Gentoo自己的环境中进行后续安装。这次重启万一失败就得重新进入liveCD进行修缮。
+通常失败无外忽 grub 没有正确安装，或者内核没有配置正确。
+
+好了，退出 liveCD 下的那么多 shell , 重启电脑吧。
+
+运气好的话，大概你的电脑已经出现登录提示了。以 root 登录进行安装。既然一个基本的Gentoo已经能自我启动了（不一定进入可用状态），Gentoo的自我救赎式的安装就已经完成了。
+剩下的无非就是按照自己的需求将一些用到的软件进行安装以让系统进入可用状态。让我们随着使用Linux的过程中随着安装缺失软件吧！
+

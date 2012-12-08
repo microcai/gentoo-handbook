@@ -1,0 +1,919 @@
+
+\chapter{Linux的日常}
+
+\begin{quotes}[0.52]{Jef Raskin}
+A computer shall not waste your time or require you to do more work than is strictly necessary.
+\end{quotes}
+
+其实很重要的一个问题：我们为什么要学习Linux？须要意识到操作系统只是一个工具，而要使用工具是必须经过学习的。越是强大的工具越是需要学习后方能使用。
+得心应手的工具，必定经历常年累月的使用。Linux不仅仅是一个用来学习的系统，还是一个可以经年累月的使用的系统。否则，一个不能使用的系统，也没有存在的价值。
+
+我们需要一个称心如意的系统，必定是需要悉心调教和了解的系统。
+
+\section{某日常的man-pages}
+
+UNIX命令繁多，载籍浩瀚。一个一个介绍纯属不可能之任务。所以一个随时可以借用的手册（manual）是比不可少的。
+不过且不论manual是怎么被缩写成man的，man已经成了UNIX管理员的必备工具了。正所谓有问题，man 一下。
+
+要使用man手册请首先按照它：
+\begin{code}
+\#emerge man man-pages man-pages-zh\_CN
+\end{code}
+
+man-pages-zh\_CN带来了部分man手册的中文汉化，按照后有部分手册会使用中文页面。当然，前提是安装支持UTF-8编码的groff-utf8并配置man程序使用groff-utf8替代groff。具体做法请参阅 \faqref{FAQ:zhman}。
+
+上千条命令和系统API的帮助页面被收集起来，形成了man pages，需要查阅的时候只需要使用 ~man + 命令名/API名称~即可方便调阅。
+
+
+实战演练：
+\begin{code}
+\$man man
+\end{code}
+
+进入阅读模式后，可以使用上下方向键翻动。按“Q”键退出。按“/”键，终端底行会由行数显示改为显示一个/,然后键入字符串，按回车即可查找该字符串。
+man本质上是调用的less进行最终的显示。所以其实这里使用的就是less的命令。使用参数 -P 还可以制定其他的分页器。
+
+man pages将系统手册分成8个类别。
+\begin{enumerate}
+       \item      命令行命令
+       \item      系统调用
+       \item      标准C库和POSIX定义的API
+       \item      设备文件
+       \item      文件格式
+       \item      游戏
+       \item      杂项
+       \item      系统管理工具和后台服务
+\end{enumerate}
+
+遇到有重名的时候就可以指定一个数字表示显示指定类别的手册。否则显示序号最小的那个类别的手册。
+
+\begin{example}{printf}
+shell提供了printf命令用于打印格式化的字符串，同时printf()也是标准C库的组成部分。
+
+直接使用 \texttt{\$man printf} 得到的就是printf命令的手册。要显示 printf() 函数的手册， 必须使用 \texttt{\$man 3 printf}。
+\end{example}
+
+%由于man手册为手册划分了类别，所以我们提到参阅某某某的时候，后面都会打上括号，指出是哪个类别。比如会有“参考man手册 printf(3)”这样的说法，指的就是参考第3类目的手册，也就是说，使用 \texttt{ \$man 3 printf } 查看。有时也会省略“man手册”，直接使用“参考printf(3)”这样的用法。
+
+{
+\bf 
+由于man手册为手册划分了类别，所以我们提到参阅某某某的时候，后面都会打上括号，指出是哪个类别。比如会有“参考man手册 printf(3)”这样的说法，指的就是参考第3类目的手册，也就是说，使用 \texttt{ \$man 3 printf } 查看。有时也会省略“man手册”，直接使用“参考printf(3)”这样的用法。
+也就是说，“参考XXX(1-8之间的数字) ” 已经成为“让读者使用man命令参考相应内容，并指出该内容隶属于哪个类别”的固定句式。英文里，通常是 “see printf(3)” 这样的用法。
+
+\it 
+%由于man手册为手册划分了类别，所以我们提到参阅某某某的时候，后面都会打上括号，指出是哪个类别。比如会有“参考man手册 printf(3)”这样的说法，指的就是参考第3类目的手册，也就是说，使用 \texttt{ \$man 3 printf } 查看。有时也会省略“man手册”，直接使用“参考printf(3)”这样的用法。
+
+}
+
+
+\section{UNIX权限基础}
+
+UNIX是一个多用户系统，意味着UNIX支持同时登录多个帐号互不干扰的操作。要实现这一点就需要对帐号进行权限隔离。良好的权限设计也是杜绝恶意软件的基石。
+
+什么是权限呢？说到底，权限就是一种信任。权限越高的程序，必然也是越受用户信任的程序。受用户信任的程序能从用户获得越多的权限。同时用户本身相互直接也有信任度问题，其中，管理员权限最大，因为他是系统的“拥有者”。管理员觉得用户（的程序）有“夺权”倾向，所以要对普通帐号进行限制。用户觉得自己执行的程序也有可能作出意想不到的行为，除非程序是自己编写的，他不太容易信任第三方程序。所以用户也会想到限制已经帐号下执行的程序的权限。权限是一种谨慎的信任。
+
+最高一级的权限自然是系统所有者，也就是管理员。其次才是内核，然后是系统程序，应用程序，权限依次递减。
+很多从非UNIX系统上过来的人都不能理解管理员的权限为何比系统本身要高。对于Windows这样的系统，最高权限是System，其次才是Administrator，有些操作连管理员都是被禁止的。
+可是UNIX系统下，管理员的权限凌驾于系统之上。
+
+为什么管理员的权限要凌驾于系统之上呢？ 因为操作系统是“被管理员授权来管理计算机”的。所以，UNIX系统本身严格遵循“不做管理员没有授权的事情”，和“不阻止管理员做任何事情”。
+哪怕管理员要 \texttt{"rm -rf /"} UNIX都不会阻止管理员做这件事情。如果哪个系统阻止管理员做危险的事情，已经是“仆人成了主人”——本末倒置了。
+
+\subsection{用户和组}\label{sec:usersandgroups}
+
+UNIX权限是按照用户和组进行组织的。权限最高的是root用户，也称特权帐号，非root用户被称为普通用户。
+在内核中，每个用户都对应一个UID，每个组也对应一个GID。root用户即UID=0,GID=0。
+每个程序都会继承父进程的UID和GID。也就是说，登录哪个用户，执行的程序就是以哪个用户的权限执行的。登录程序通过改变自己的UID从而影响它启动的shell的UID，不过
+只有UID=0的进程才有权更改自己的UID\footnote{使用setuid()系统调用}，这就避免了非特权进程将自己改为特权进程。
+
+只有以root用户执行的进程才能进行的操作有
+\begin{enumerate}
+\item TCP/IP网络程序，允许绑定 < 1024 的端口。非特权进程无法绑定<1024的端口。
+\item 修改ip地址。
+\item 加载内核模块。
+\item 挂载文件系统。
+\item 使用chroot。
+\item 执行关机、挂起操作。
+\item 更改iptables。
+\item 向任意进程发送信号。非特权进程只能向相同用户的进程发送信号。
+\item 创建原始套接字。用于网络抓包和发送原始数据包。
+
+等等。
+\end{enumerate}
+
+这些都是在系统调用层面进行UID检查保证的。内核对 UID=0 和 UID>0 做了区别对待。
+
+\subsubsection{su和sudo}
+
+有时候我们需要临时的切换到root帐号，而不用退出当前shell并重新登录。这个时候你就需要祭出sudo/su了。
+
+在任何命令前加sudo即可让命令以root账户执行。
+
+\begin{example}{普通用户显示/root目录内容}
+\$ls /root 
+
+ls: 无法打开目录/root: 权限不够
+
+\$sudo ls /root
+
+密码： (输入当前用户的密码，不显示星号)
+
+ab.txt  a.txt  Desktop
+\end{example}
+
+当然，使用 sudo 的前提是将自己加入到 /etc/sudoers 。 通常 /etc/sudoers 会包含 \texttt{\%wheel ALL=(ALL) ALL} 这一行\footnote{如果被注释了，就解除注释状态。什么？不会，删除前面的 \# 就好了}。意味着将用户加入wheel组即可使用sudo命令。
+
+su 命令用户开启一个新的shell，默认运行于 root 账户下。注：需要输入 root 密码。
+
+su 命令也可用于切换到非root账户。比如 \texttt{su - smith} 就可以切换到 smith 账户。加 - 参数让 su 不要继承当前shell的一些环境变量，并且新开的shell切换到家目录而不是保持在当前目录。
+
+
+记住：sudo 输入当前帐号的密码，su 输入目标帐号的密码。
+
+\subsection{文件操作权限}
+
+虽然在系统调用这一层面，由UID是不是0而确定不同的权限\footnote{Linux引入了新的机制，被称呼为capabilities。将原先root拥有全部特权和非root没有任何特权的二值判定改为细分的多个capabilities判断。比如进程拥有 CAP\_NET 权限就可以绑定<1024的端口而不必要求root权限。}。看上去似乎UID不为0就是普通权限了，那样还不如用个 bool 标记呢。用户和用户组的概念自然有其存在的必要。
+那就是对文件的权限控制。
+
+UNIX下，所有的文件（包括设备文件）都有所有者。文件被一个用户和组所拥有。
+文件的所有者模式通常以 “用户名：组名” 的形式表示。
+然后定义了文件的3种操作模式：读、写和执行\footnote{UNIX下一个文件是否可执行并不是看它的扩展名，而是看对要执行的用户来说是不是有可执行权限。}。对于目录，执行权限意味者可以切换到该目录作为工作目录\footnote{简单的说，就是可以 cd 进去}。
+文件的权限很好理解，这里着重介绍一下目录的权限。
+只读的目录意味着不能在目录下创建和删除文件——但是可以修改该目录下所存储的文件——只要拥有对改文件的写权限即可。没有读取权限的目录意味着无法列出目录内容。但是目录的权限并不会递归传递给子目录。子目录需要为自己设置权限。
+\begin{example}{~}
+所以虽然john对于/home目录是只读的，但是对/home/john是可写的。因为/home目录对john的权限并不能传递到子目录/home/john。
+\end{example}
+
+权限的设置是对3类用户设置的：
+\begin{enumerate}
+\item 拥有者。文件的所有者的权限。读、写和执行。
+\item 所属组。文件的所属组的权限。也就是同组的其他用户的权限。因为UNIX下一个用户可以里加入多个组。读、写和执行。
+\item 其他。即不是文件所有者，也不是同组的用户的权限。读、写和执行。
+\end{enumerate}
+
+系统其他方面的权限都是以组来奠定的。比如声音设备，设备的所有者是root,组是audio。对其他的权限是无。对audio组的权限是读写。那么只要将用户加入到audio组，就获得了声卡的访问权限。
+因而系统并不需要在声卡方面添加新的系统调用进行权限验证。
+
+通常一个桌面用户至少要加入的组有：users,video,audio,cdrom,cdrw,usb,plugdev。加入video组获得显卡的直接渲染支持，加入cdrom组以便访问光驱，如果有刻录机的话，加入cdrw组以便使用刻录机，等等。这些权限都是在文件权限上实施的。原理就是让对应的设备文件所有者设置为相应的用户和组
+\footnote{内核自然没有UID,GID和账户对照表，默认创建的设备文件都是属于root:root的，文件所属权是由udev负责修改的。}。
+
+文件权限的表示采用的是八进制表示法。
+
+\begin{example}{一个 0664 权限模式的文件解析}
+
+\end{example}
+
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline \multicolumn{3}{|c}{所有者}&\multicolumn{3}{|c|}{组所有者}&\multicolumn{3}{c|}{其他}\\ 
+\hline 读 & 写 & 执行 & 读 & 写 & 执行 & 读 & 写 & 执行 \\ 
+\hline 1 & 1 & 0 & 1 & 1 & 0 & 1 & 0 & 0 \\ 
+\hline 
+\end{tabular} 
+
+将 $ (110110100)_2 $ 使用八进制表示就是 $(0667)_8$。
+
+\section{Shell 日常应用}
+
+平常说学习shell神码的，其实是一个统称，实际上包括了一个shell和若干个shell能调用的工具。这些工具主要集中在 coreutils 和 linux-utils 包中。也就是说，学习shell不光是学个shell命令的语法格式，还包括一些常用工具的用法。没有这些工具的存在，shell能做到的事情是非常有限的。
+
+shell是操纵电脑的接口。一切对电脑下达的指令都是shell代为执行的。要浏览网页？需要浏览器吧？可是浏览器不会自己动起来。需要下达执行浏览器的指令。shell理解了，然后执行了。
+需要删除文件？可是文件不会自己消失。需要下达删除文件的指令。shell理解了，然后执行了。$\cdots$
+
+shell的地位如此重要，以至于有人说，shell就是UNIX\footnote{Cygwin 提供了完整的UNIX命令，但并没有全部实现POSIX。尽管如此，cygwin虽然是一套Windows程序，还是被称呼为UNIX环境。}。
+
+\subsection{bash名称的道听途说}
+
+
+Bash是多数Linux发行版默认的shell。当然Gentoo也是不落俗套的默认为Bash了。Bash这个名字来源于\textbf{Bourne-Again SHell}。为什么说“又”（Again）呢？因为贝尔实验室发布的第七版UNIX——Unix Version 7搭载的正是\textbf{ Bourne SHell}， 这个shell由\textit{Stephen Bourne}编写。
+FSF发扬自己借用UNIX名称的传统美德，给自己的shell起名为Bourne-Again SHell。
+
+名字是借用的Bourne SHell，不过，如果认为它开发出来是为了替代Bourne SHell那就错了，bash诞生最初是为了替代 \textbf{Mashey shell 或者说 PWB shell} —— 这也是 Bourne SHell 所要替代的 。
+
+\subsection{shell的字符串展开}
+
+虽然已经在前面的 \secref{sec:quickbash} 介绍过，
+不得不再次在这里重申，shell对字符串会进行分割后将其作为参数字符串数组传递给被调用者。而对于特殊的字符串会执行展开操作，更重要的是，展开操作是发生在字符串切分\textbf{之前}的。避免字符串展开的办法是加引号。同时引号也可以用于避免引号所包含的空格被用于字符串切割开。
+
+会被执行字符串展开的除了带 * 和 ? 的通配符，还有 [] 和 \{\} 。 提醒一下，如果展开的时候没有匹配到适合的文件名，会自动取消展开而保留原字符串。
+
+\subsubsection*{[ ] 的展开}
+
+[~] 的用法是：[字母列表]。字母列表还可以使用a-z这样的简写形式表示连续的a-z而避免写全26个字母。
+
+[~] 只展开为一个字符。
+
+\begin{example}{~}
+
+假设当前目录下有如下的文件:\\
+a1 a2 a3 a4 a5 a6 a7 a8 a9 b1 b2 b3 b4 b5 b6 b7 b8 c1 c2 e1 e2
+
+现在使用 ls [ab]1 这样的命令。[abef]1 会被扩展为 a1 b1 e1 三个文件名。
+
+也就是说，传给 ls 的文件名参数有3个， a1 b1 e1。至于 f1 , 因为文件名不存在，也就不会扩展到。
+
+如果使用的是 ls [gh]1 则会提示没有 [gh]1 这个文件。因为没有符合的文件名，所以表达式也就无从展开，以原样传给ls。
+
+\end{example}
+
+总而言之，可以认为 [~] 是一个过滤器，将符合表达式的文件过滤出来。如果没有一个文件名符合表达式的要求，则传递表达式本身。
+
+\subsubsection*{ \{\}  的展开}
+
+\{~ \} 的用法是：{字符串1,字符串2,字符串3,...} 空字符串也是可以接受的。但是连空字符串在内至少要包含两个字符串，否则不展开。
+
+\begin{example}{~}
+
+假设当前目录下有如下的文件:\\
+
+m.c m.cpp m.o m.s m.h
+
+现在使用 ls m.{c,cpp,h,lll} 这样的命令。m.{c,cpp,h,lll} 会被扩展为 m.c m.cpp m.h m.lll 四个文件名。
+
+也就是说，即使文件名不存在，也会扩展到。因此除了显示m.c m.cpp m.h这3个文件信息外，还会提示 m.lll 没有这个文件。
+
+如果使用的是 ls [gh]1 则会提示没有 [gh]1 这个文件。因为没有符合的文件名，所以表达式也就无从展开，以原样传给ls。
+
+\end{example}
+
+\subsection{shell变量和环境变量}
+环境变量和shell变量都是字符串变量。使用的时候都通过 \$变量名 引用。shell会使用变量具体的值替换掉引用对象。
+环境变量和shell变量在使用的时候没有区别。唯一的区别是环境变量会被子进程继承，而一般的shell变量只限在该shell中使用。
+变量的赋值使用=号，不能两边有空格。
+
+\begin{example}{变量展示}
+
+下面的命令，将字符串“linuxbook”赋值给变量mybook,然后通过 \$mybook引用。shell会将\$mybook替换为“linuxbook”。
+
+\begin{code}
+mybook="linuxbook"
+xelatex \$mybook.tex
+xpdf	\$mybook.pdf
+\end{code}
+\end{example}
+
+可是如果我已经有一个变量叫 my ， 则 my 和 mybook 两个变量会发生混淆：我实际想使用的是  \$my然后在后面接上book。但是shell会按照mybook变量来替换。
+
+ 取消这种混淆的办法是使用 \$\{变量名\} 进行引用。
+
+\begin{example}{变量展示 -ver 2}
+
+下面的命令，将字符串“linuxbook”赋值给变量texfile,然后通过 \$texfile引用。
+将字符串"xelatex"赋值给变量tex,然后用 \$\{tex\}引用。
+
+\begin{code}
+\$~tex="xelatex" \\
+\$~texfile="linuxbook" \\
+\$~\$\{tex\} \$\{tex\}book.tex \\
+\$~\$tex	\$texbook.tex
+\end{code}
+
+
+这里，“\$\{tex\} \$\{tex\}book.tex”时间上被替换后是执行的“xelatex xelatexbook.tex”。
+
+可以把变量理解为一个宏，shell处理的时候会将\$和变量名本身 替换成变量的内容。
+
+\end{example}
+
+shell的变量不需要声明，给一个新变量赋值就是声明了。
+一个变量使用 export 导出后就变成环境变量了，会被子进程继承。
+
+比如这样设置环境变量USE给emerge：
+
+\begin{code}
+\$~ export USE=go  \\
+\$~ emerge gcc
+\end{code}
+
+后续启动的任何子进程都将继承到USE环境变量。如果只想让本次的emerge继承到这个变量，可以用下面的形式。
+
+\begin{code}
+\$~ USE=go emerge gcc
+\end{code}
+
+这种情况下，USE会变成子进程 emerge 的环境变量，emerge结束后，USE变量就撤销了。
+
+有关变量的另一个注意事项是，变量是在字符串展开之前替换的，也就是说，变量展开后，会继续对展开后的字符串再次进行字符串展开功能。使用单引号会禁止变量替换。
+
+\begin{example}{字符串展开和shell变量}
+
+\begin{code}
+\$~ anyfile='*' \\
+\$~ echo '\$anyfile'\\
+\$~ echo "\$anyfile"\\
+\$~ ls "\$anyfile"\\
+\$~ echo \$anyfile\\
+\$~ ls -d \$anyfile\\
+\$~ ls \$anyfile\\
+\end{code}
+
+解释：
+\begin{enumerate}
+\item echo '\$anyfile' 变量没进行替换，所以显示结果为 \$anyfile
+
+\item  echo "\$anyfile" , 变量被替换为 * , 所以显示的结果就是 * 
+\item ls "\$anyfile" , 由上一条命令证实，变量被替换为 * ,显示结果却是 “ls: 无法访问*: 没有那个文件或目录”，表明引号禁止了字符串展开。
+\item echo \$anyfile ，变量首先被替换为 * , 然后执行字符串展开，所以显示了当前文件夹的内容。
+\item ls -d \$anyfile ， 变量首先被替换为 * , 然后执行字符串展开，所以执行结果和 ls -d * 一致。所以显示了当前文件夹的内容。不显示子文件夹内容，由 -d 参数保证\footnote{参考ls(1)}。
+\item ls \$anyfile ， 变量首先被替换为 * , 然后执行字符串展开，所以执行结果和 ls * 一致。显示当前文件夹的文件和当前文件夹的子文件夹的文件。
+\end{enumerate}
+
+
+\end{example}
+
+
+
+\subsection{shell和文件管理}
+
+在任何系统下，用户都免不了要和“文件”打交到。印象中不需要和文件打交道的操作系统除了“Jarvis\footnote{Tony Stock的AI管家。也是钢铁侠衣服的辅助系统}”就不存在了。
+以至于，有个操作系统认为操作系统的任务就是文件管理，把自己称之为磁盘操作系统（Disk Operating System）。
+
+文件管理包括文件和文件夹的创建、重命名、删除和移动。多数情况下文件夹和文件是使用同样的命令进行操作，除了创建。
+
+创建一个文件夹使用 mkdir 命令。
+
+\subsubsection*{mkdir}
+
+mkdir 是 make directiroy 的缩写。DOS/Windows 下的缩写为MD。
+
+mkdir 接受一个或多个目录名作为参数。如果目录已经存在，mkdir会失败。加 -p 参数可以忽略已经存在的文件夹。
+
+如果要想一次创建多个层次的目录，可以加 -p 参数。如 \texttt{mkdir -p a/b/c/d/e/f/g}。
+文件夹创建后的访问模式默认为 0775。
+
+mkdir的具体用法请参考mkdir(1)。
+
+
+~ \newline
+
+相比之下，创建文件的方法就多了去了。通常用户文件是由编辑器\footnote{不要光理解为文本编辑器啊，绘图软件也是图像文件的编辑器不是么。}创建。
+另外创建空白文件的办法是使用touch命令。
+
+\subsubsection*{touch}
+
+touch 可不光是用来创建文件，还可以修改文件的最后修改时间——如果文件已经存在的话。
+
+touch 的用法很简单，以文件名作为参数即可新建空白文件或者更新文件的最后修改时间。如果指定了 -d 或者 -t 还可以使用指定的时间作为文件的最后修改时间，默认使用当前时间。
+-d 参数使用的格式同 date 命令的输出， -t 参数使用的格式为 [[CC]YY]MMDDhhmm[.ss]\footnote{[~] 表示可选。}。 
+如:
+
+\begin{code}
+\noindent touch linuxbook.tex -d "2012-10-29 13:37:20"\\
+\indent \quad 或者 \\
+\noindent touch linuxbook.tex -t "201210291337.20"
+\end{code}
+touch的具体用法请参考touch(1)。
+
+
+重命名文件和移动文件（夹）是同样的操作。使用的都是 mv 命令。
+
+mv乃move的缩写，命令很简单：\texttt{mv OLDNAME NEWNAME}。具体用法请参考mv(1)。
+
+复制的英文单词是copy，考虑到UNIX的神缩写传统，你一定不指望UNIX会使用copy作为复制文件的命令名称。没错，复制文件的命令名称也被缩写了，非常精简的cp。
+
+直接使用cp的话并不能进行文件夹的复制。文件夹有子文件夹，子又有子，子又有孙，子子孙孙无穷尽。要拷贝一个文件夹，必然是一个递归的操作。所以拷贝文件夹需要添加 -R 参数。
+至于符号链接\footnote{见 \faqref{faq:symlink}}，一般拷贝文件夹希望拷贝的是符号链接本身而不是符号链接指向的文件，所以加 -d 参数表示保留符号链接。这样拷贝文件夹通常使用法为“cp -dR 源文件夹 目标文件夹\footnote{-d -R 可以使用 -dR 这样的形式。对多数GNU软件适用。}”, 可以用 -a 代替 -dR 。
+
+拷贝文件的时候提到了递归，提一下，删除文件也得递归。因为删除目录的系统调用rmdir(2)必须用在空目录上。所以对于一个非空的目录是不能删除的。
+要删除一个非空文件夹，首先删除其下的所有文件和文件夹。对于非空的子文件夹，先删除子文件夹下的文件和文件夹。这就是一个递归操作了。
+删除文件和文件夹使用rm(1)命令，rm默认不进行递归，所以对非空文件夹执行rm会失败。使用-r参数能让rm执行递归操作。
+
+
+\subsection{管道和重定向}
+
+UNIX管道在进程间架起了看不见的桥梁，联通了二者之间的输入和输出。而使用进程间的管道简单到只需要用“|”隔开两条命令。前一条命令的输出自动的就成为后一条命令的输入。
+
+\begin{example}{统计portage拥有的软件包数目 - ver 1}
+%ls /usr/portage/*-*/* -d | while read f ; do [ -d $f ] &&  ls -d $f  ; done | wc -l
+\begin{code}
+\$ls /usr/portage/*-*/* -d -1 | wc -l
+\end{code}
+
+通过前面的portage介绍可以知道，portage树的结构是  “分类名/包名/包名-版本.ebuild” 这样的2层目录。而“分类名”也是 “大类别-小类别” 这样的结构。
+所以 “*-*”就可以匹配到类名而将 profiles eclass  licenses metadata scripts 这样的目录和 “header.txt skel.ChangeLog” 这样的文件排除掉了。连 virtual 目录都排除了。这样获得的文件夹的数目就是portage包含的包的数目。
+
+等等，好像分类目录下，并不只是软件包名命名的目录。有的分类目录下有一个顶层的metadata.xml。描述一个分类里所有软件的公共信息。比如 \url{/usr/portage/games-fps/metadata.xml}。 这条命令似乎会把这样的 metadata.xml 算成一个目录而进入统计。
+\end{example}
+
+
+\begin{example}{统计portage拥有的软件包数目 - ver 2}
+
+让我们进行改进，将第一次 ls 输出的文件名中，把非目录过滤掉：
+
+\begin{code}
+\$ls /usr/portage/*-*/* -d -1 | while read filename ;  \textbackslash \\
+	\qquad do [ -d \$filename ] \&\&  ls -d -1 \$filename  ; done | wc -l
+\end{code}
+
+通过中间引入一层过滤层，把非目录过滤，这样 wc 获得的行数才是真正的包的数目。while这样的用法是shell循环语句，在下一个小节会详细介绍。
+
+\end{example}
+
+通过这2个例子相信已经能体会到管道的魅力了。
+
+其实一个程序的输出何止是可以作为另一个程序的输入，本身也可以直接打印到文件中的嘛。在UNIX“一切都是文件”的哲学下，控制台对程序来说也是文件。既然都是文件，那么程序的输出除了可以输出到控制台或者通过管道输出给其他程序，自然也可以直接输出到文件中去。
+
+不需要对程序进行任何修改，只要在shell里使用简单的技巧就能做到了。越是强大的功能用起来越是简单直接。重定向输出居然只是简单的使用 “>”就能做到了。
+
+\begin{code}
+\$ls /usr/portage/*-*/* -d -1 > portage\_ls
+\end{code}
+
+打开 portage\_ls 文件，看是不是输出被直接写入这个文件了？
+多执行几次，你会发现文件并没有变大。因为shell在使用重定向的时候，会将原来的文件内容清空。使用 “>>” 即告诉shell使用追加模式。不清空原有文件内容，向文件末端追加。
+
+既然输出可以重定向，那么输入也可以。否则怎么体现UNIX的灵活强大呢！
+
+\begin{code}
+\$ ( while read filename ; \textbackslash \\
+	\qquad do [ -d \$filename ] \&\&  ls -d -1 \$filename  ; \textbackslash \\
+	\qquad done ) <  portage\_ls > portage\_lsdironly
+\end{code}
+
+打开 portage\_lsdironly 文件，非目录是不是已经被过滤了？
+
+最后一条命令：
+
+\begin{code}
+wc -l portage\_lsdironly
+\end{code}
+
+就获得了统计结果了。
+
+这就不使用管道，完全使用重定向完成了同样的功能。不过多了一些中间文件，对吧？
+
+
+\subsection{bash是门编程语言}
+
+Bash作为一个shell是尽职的。有了各种实用小工具\footnote{已经在system集合里，默认安装，自行安装使用\#emerge coreutils）} 和管道的配合，shell能发挥出非常强大的作用。
+
+不过，要想完全发挥shell的作用，就需要将shell作为一门编程语言，使用shell提供的判断和循环语句。
+
+\subsubsection{条件判断}
+
+shell之条件判断分两种，一种基于 if-then-else-fi ， 另一种是 cmd1 \&\& cmd2 和 cmd1 || cmd2。
+
+我们首先介绍 cmd1 \&\& cmd2 这种形式的命令。
+
+写过 "hello world" 程序的人都知道，main() 函数的最后都要有一个 “return 0;”。 这个返回值到底放回给了谁？答案是调用它的父进程。如果是shell调用的，就是返回给shell咯。
+执行过一条命令后，通过 \$? 变量就能获得刚刚执行过的命令的返回值。
+
+做个测试吧：
+
+\begin{code}
+\$ ls \\
+\$ echo \$?
+\$ ls /root \\
+\$ echo \$? \\
+\end{code}
+
+第一次调用 ls 显示当前目录的内容，返回值很明显是 0 。第二次显示 /root ，很明显没有权限，返回值是 2 。
+
+shell有时候必须知道一条命令执行成功还是执行失败，shell就是通过查看命令退出的时候的返回值判断命令是否成功执行的。像“ls /root”这样的命令如果不是以root权限执行的话，一定会因为没有权限而失败。 shell规定了，一条命令执行后返回0表示成功，非0表示失败。
+
+这个成功和失败就用在了 cmd1 \&\& cmd2 和 cmd1 || cmd2 语法上。
+简单的说，“cmd1 \&\& cmd2” 表示cmd1命令执行成功就执行cmd2。而“cmd1 || cmd2”表示cmd1命令执行失败就执行cmd2。
+
+拿先前的例子来说，我在while循环里使用了一个判断 
+\begin{code}
+  [ -d \$filename ] \&\&  ls -d -1 \$filename
+\end{code}
+
+意思是，如果“ [ -d \$filename ]” 成功，执行“ls -d -1 \$filename”。
+
+在shell中， “ [~] ” 的意思就是执行条件判断。
+如“\texttt{ [ "a" = "b" ] }” 就表示判断字符串 "a" 和 "b" 是否相等。
+ [] 对于表达式成立会退出码0,不成立为1。再依据shell对退出码所采取的行为，就能使用 [] 编写表达式是否成立的条件而执行的命令了。
+ 
+在本利中， [ -d \$filename ] 的意思是判断 \$filename 是否为存在且为目录。
+事实上。 [] 是 test 的别名。“test -d \$filename” 等价于 “ [ -d \$filename ]” 。 所以想知道 [] 的详细用法可以查看man手册 test(1) 。
+
+\subsubsection{while循环}
+
+例子中还有一个用到的shell功能就是循环。 bash shell支持while循环和for循环。
+
+while循环的语法为 
+\begin{code}
+
+while cmd of condition ; do \\
+	cmd1\\
+	cmd2\\
+	...\\
+done\\
+
+\end{code}
+
+命令可以和 do 写在一行上也可以不写在一行上。
+do如果不和while写在同一行，while后面的那个命令的“ ;” 就可以不写。
+
+如果“cmd of condition”执行成功就执行 do 和 done 之间的命令。重复执行直到命令执行失败。也就是返回值不为0。
+
+
+\subsubsection{until循环}
+
+until循环和while循环语法一致，不过是用until替换while。
+
+
+\begin{code}
+
+until cmd of condition ; do \\
+	cmd1\\
+	cmd2\\
+	...\\
+done\\
+
+\end{code}
+
+不一样的是，until循环是条件不成立才执行的循环。而while循环是条件成立时执行。
+
+
+\subsubsection{for循环}
+
+while循环用户知道循环条件的地方，for循环用于知道循环的内容的地方。
+
+for的语法为：
+
+\begin{code}
+
+for var in array ; do \\
+cmd1 \\
+cmd2 \\
+... \\
+done 
+
+\end{code}
+
+
+array 是一个字符串的集合。比如 “/usr/portage/*-*/*” 会导致 shell 将其扩展为数万个文件名的集合。for为集合中的每个元素运行一次循环。
+每次循环，都可以用“\$var”引用集合中的一个元素。
+
+
+例中命令使用 for 循环可以修改成这样，于是出现版本3：
+
+\begin{example}{统计portage拥有的软件包数目 - ver 3}
+
+\begin{code}
+for f in /usr/portage/*-*/* ; do  \textbackslash \\
+	\qquad [ -d \$f ] \&\&  ls -d \$f ; done | wc -l
+\end{code}
+\end{example}
+
+除了用通配符制造的文件名，for 循环还可以使用数组。数组将在下面的章节中节介绍。
+
+
+\subsubsection{字符串}
+
+字符串是shell的基本数据类型。有多种方式可以进行字符串的操作。所以到现在才介绍，是因为日常使用很少需要用到字符串操作。
+
+\begin{enumerate}
+\item 合并字符串	
+
+合并两个字符串的办法很简单，就是将连个变量“贴”到一起，如变量 A 和 B ， 获得 A 和 B 连接在一起的字符串的办法就是 {\tt "\$A\$B"}。
+
+\item 字符串替换
+
+\$\{var/查找字符/替换字符\}
+
+	这个操作中除了第一个参数是变量外其它两个都是字符;还有一点就是这个操作并不是把变量“var”中的字符替换了，而是返回一个替换后的字符串。原字符串并没有被替换。
+这个查找是正向查找，就是从左到右执行查找，把找到的第一个字符串替换到。执行反向查找使用的是这个语句：
+
+
+\$\{var/\%查找字符/替换字符\}
+
+上面两个查找替换都是找到第一个匹配的字符串进行替换，而下面这个可以执行全部替换。
+
+\$\{var//查找字符/替换字符\}
+
+以上所有的操作都不会修改原始变量var而是返回一个新的字符串。如果要修改原始变量可以把新的字符串重新赋值给var嘛！
+
+\item 取子字符串
+
+从一个字符串变量获取子字符串的语法
+
+\$\{var:位置\}
+
+从“位置”开始取子串到最后。默认是从左边开始，如果“位置”为负数，则是从右边的第“位置”个字符开始，并且第一个位置为0。 %
+如果不取到结尾而是限定一个长度，可以使用下面的语法：
+%例：
+%str1=abcABCabc123ABC
+%echo ${str1:(-3)}#会输出ABC
+
+\$\{var:开始位置:结束位置\}
+
+
+%\$\{字串\#匹配字串\}
+
+%（说明一下，这个是从左边第一个开始匹配，剥去最短“匹配字串”） %
+%例：
+%str1=abcABCabc123
+%echo ${str1#a*c}#输出ABCabc123
+%(2)${字串##匹配字串}
+%（说明一下，这个是从左边第一个开始匹配，剥去最长“匹配字串”）
+%str1=abcABCabc123
+%echo ${str1#a*c}#输出123
+%echo ${str1#b*c}#输出abcABCabc123，因为没有从第一个开始匹配
+%(3)${字串%匹配字串}
+%(4)${字串%%匹配字串}
+%（说明一下，这与上面的（1）（2）是正好相反的，是从最后一个开始匹配的）
+
+\item  字符串长度
+
+\$\{\#字串\} %
+
+例： str=abcdefg
+
+echo \$\{\#str\} 输出7
+
+\end{enumerate}
+
+
+
+
+
+
+\subsubsection{数组}
+
+shell支持字符串数组。 %不过好像日常使用没什么大的用处。在编写shell程序的时候会用到。所以还是有必要知道一下。
+数组的语法有三种
+
+\begin{code}
+
+(1) array=(var1 var2 var3 ... varN) \\
+(2) array=([0]=var1 [1]=var2 [2]=var3 ... [n]=varN) \\
+(3) array[0]=var1 \\
+\leftskip=2em
+    arrya[1]=var2 
+    
+    ... 
+    
+    array[n]=varN 
+\end{code}
+
+计算数组元素个数：
+\begin{code}
+\$\{array[@]\}  或者  \$\{array[*]\}
+\end{code}
+
+引用数组的语法是 （n为下标）：
+\begin{code}
+ \$\{array[n]\}
+\end{code}
+
+可以使用 for 循环来遍历数组。
+
+\begin{example}{统计portage拥有的软件包数目 - ver 4}
+
+\begin{code}
+dirlist=/usr/portage/*-*/*
+
+for f in \$dirlis  ; do  \textbackslash \\
+	\qquad [ -d \$f ] \&\&  ls -d \$f ; done | wc -l
+\end{code}
+
+顺便一提，其实shell进行字符串扩展的时候生成的就是数组，数组再就地展开为命令参数。所以{}“dirlist=/usr/portage/*-*/*”{}这样的用法即让dirlist变量变成数组。
+
+
+\end{example}
+
+\subsubsection{读取输入}
+在 \textbf{统计portage拥有的软件包数目} 例子中看到过 \texttt{while read f} 这样的用法。读者猜想这是读取输入到变量f的意思。
+没错，正是这个意思。
+准确的说， read 的与否是这样的：
+
+\begin{code}
+read var1 var2 var3 ...
+\end{code}
+
+read 从标准输入读取一行，并将一行中的字符串分别赋值给 var1 var2 var3 等等变量。字符串的拆分规则和命令行一样，使用空格分隔。如果拆分出来的字符串个数比命令行提供的变量多，最后一个变量将包含余下的所有字符串。
+
+如果读取输入的时候遇到文件结束（在例子中，管道的输出方结束输出），退出状态就是非0，导致例子中while循环终止。
+
+要读取文件可以使用重定向，比如
+\begin{code}
+
+读一行
+
+read line < sometextfile.txt
+
+或者读整个文件
+
+while read line ; do
+
+...
+
+done < somefile.txt
+\end{code}
+
+
+\section{文件编辑器}\label{sec:editors}
+
+日常使用Linux的过程中，无法避免的一件事就是要编辑文本。可以说，计算机除了“计算”之外的一大用途就是“编辑\footnote{不论是编辑文本还是编辑视频，通通都是编辑的说。}”。
+Linux世界有好多非常优秀的文本编辑器。由于现在还未安装X服务，所以只能使用命令行模式的编辑器。在开源界，有两大编辑器派系。一个是vi和之后的改进版vim，被称为编辑器之神；
+另一个是被称作神之编辑器的emacs。
+
+
+\subsection{编辑器之神vim}
+
+vim是vi的改进，全称是\textbf{Vi IMproved}。	%
+%
+\newcommand{\keyboradparty}[1]{
+#1是最好的编辑器，没有之一。
+
+
+对于键盘党\footnote{对惯用键盘操作电脑，提倡抛弃鼠标的人的称呼。}来说，让双手离开键盘是一种罪恶。
+没有比让双手保持在键盘上更能发挥打字的速度了。不仅仅如此，#1 还罪恶的提出，双手不仅不能离开键盘，甚至连主键盘区都不能离开。
+对光标位置的操纵，明明有直观的四个箭头按键， #1 还是采用的定义主键盘区的快捷方式来控制。双手不离开主键盘区是  #1 的设计宗旨之一。
+
+#1 被初学者说成复杂的原因大概也缘于此吧！ 毕竟使用鼠标直接定位是最直观方便的操作方式了。再不济用键盘上的方向键也顶用多了。好在 #1 仍然支持使用方向键，只不过不推荐用户这么做。
+
+“除了#1，其他编辑器神码的都弱爆炸了”，资深#1用户如是说，“这个世界上只有两种人，一种人使用#1,另一种使用其他。” 这大概就是{}#1{}在用户心目中的评价吧。
+
+先安装#1
+
+\begin{code}
+\# emerge #1 -av \footnote{在安装任何软件之前，使用“-av”这样的参数让emerge先打印将要进行的操作，然后回答yes/no继续安装永远都是一个好习惯。}
+\end{code}
+
+}
+%
+\keyboradparty{vim}
+
+%\marginpar{
+可能依赖很多，不过可以去掉{}X{}，这样vim就不会引入X相关的依赖。
+%}
+%可能依赖很多，不过可以去掉X，这样vim就不会引入X相关的依赖。
+
+\begin{code}
+\# USE=-X emerge vim -av
+\end{code}
+
+耐心的等待片刻，新鲜出炉的vim就准备好了。
+
+vim为了支持前面提到的“纯键盘”操作，把编辑器设定成两种工作模式：命令模式和输入模式。在命令模式下，按键盘的结果是每个按键都被解释成相应的命令。
+输入模式下，按下键盘按钮会在当前输入位置（光标所处位置）输入对应的字符。\footnote{这里还是要废话一下，以免误导大家。只有能显示的字符才能输入。比如即便是输入模式下，按{\tt "Del"}键的结果也是删除字符而不是输入“Del”字符。因为“Del”并不是能显示的字符。还有方向键在任何模式下都是移动光标位置。能输入的，只有英文字母大小写A-Z和数字0-9以及0-9上方的字符，还有标点符号。}
+
+命令模式下按“i”进入输入模式。
+
+任何时候按“Esc”键都可以退出输入模式转到命令模式下。
+
+在命令模式下，先输入“:”，会开启命令行模式，终端最下一行出现“:”提示并开始回显输入的命令。命令行模式下，输入完整的一条命令然后按回车，vim就会执行该命令。
+比如保存并关闭文件的命令为 “:wq”。意思就是先退出到命令模式，然后输入“：”进入命令行模式，接着依次输入‘w’、‘q’并按回车。
+
+在命令行模式下，按N次某命令，和先用数字输入次数然后再按下某个命令字符，效果是一样的。
+比如：按10次‘j’向下移动10行，和依次按‘1’、‘0’、‘j’的效果是一样的\footnote{马上下文就讲到光标移动了}。
+
+特別提示︰在浏览本教程時，不要強行记忆。记住一点︰在使用中学习。\footnote{如果用不到，就不用学了。:）}
+
+\subsubsection{打开关闭和保存文件}
+
+
+打开文件的办法有两个，一是在命令行上给出文件名，就像这样
+
+\begin{code}
+\$ vim 文件名
+\end{code}
+
+二是先打开vim然后使用命令模式 “:o 文件名” 打开文件。
+
+保存文件使用命令“:w”
+
+退出使用命令：“:q”。如果文件已经修改，vim会提示文件被修改，不能退出。使用“:q!”命令忽略修改强制退出，或者使用“:wq”保持并退出。
+
+
+
+\subsubsection{移动光标}
+
+除了使用键盘上的方向键，还可以使用 ‘h’、‘j’、‘k’、‘l’
+这4个键代替。
+
+{
+\vspace{-3ex}
+\begin{wrapfigure}{l}{0.4\textwidth}
+
+ \tt \mbox{
+
+\begin{tabular}{ccccccc}
+ &  &  & \UParrow  &  &  &  \\ 
+ &  &  & k &  &  &  \\ 
+ &  &  &  &  &  &  \\ 
+\LEFTarrow & h &  &  &  & l & \RIGHTarrow \\ 
+ &  &  &  &  &  &  \\ 
+ &  &  & j &  &  &  \\ 
+ &  &  & \DOWNarrow &  &  & 
+\end{tabular} 
+}
+\end{wrapfigure}{
+%
+~ \\
+~ \\
+\noindent
+\leftskip=-2em
+提示︰ \\
+\leftskip=2em
+		\hbox to 1em {h} 每次按下就会向左移动。\\
+		\hbox to 1em {l} 每次按下就会向右移动。 \\
+		\hbox to 1em {j} 每次按下就会向下移动。 \\
+		\hbox to 1em {k} 每次按下就会向上移动。 \\
+\vskip 3ex
+}
+
+}
+
+
+\subsubsection{文本的编辑操作}
+
+\begin{enumerate}
+\item 删除:
+
+	输入模式下，使用退格键和删除键删除光标前后的字符；命令模式下，使用x删除光标处的字符。“dd”（按两下d）删除光标所在行。
+	“dw”（依次按下d和c键，下同）删除光标处的一个英文单词。“de”删除到行尾。
+
+\item 插入：
+
+	将光标定位到要插入的地方，按‘i’进入插入模式。按‘Esc’退出。\\
+	将光标定位到要插入的地方，按‘a’进入光标后移动一个字符，插入模式。按‘Esc’退出。\\
+	将光标定位到要插入的行，按‘A’就自动定位到行尾巴，并进入插入模式。按‘Esc’退出。
+
+\item 区域选择：
+
+	选择一个区块通常是“复制”和“剪切”操作的前奏。
+	命令模式下，按‘v’就进入区块选择模式，并定义区块的起始位置。移动光标选择终止位置。被选中的文本会反白显示。
+
+\item 复制：
+
+	选择好区块后，按‘y’。选中的文本会被拷贝到vim自己的剪切板。
+
+\item 剪切：
+
+	选择好区块后，按‘d’。选中的文本会被剪切到vim自己的剪切板。
+	
+\item 粘贴：
+
+	在命令模式下，按 p 就可以把vim自己的剪切板的内容粘贴到光标位置。vim不是X程序，不能使用X界面的剪切板哦。
+
+\item 撤销：
+
+	按‘u’撤消最後執行的命令，按‘U’來修正整行。
+
+\end{enumerate}
+
+
+\subsubsection{从vim那获得帮助}
+
+由于本书定位是“入门”，所以高级的vim话题就不探讨了，有兴趣的同学可以参阅其他书籍。通过本小节的阅读，使用vim编辑配置文件之类的工作应该能胜任了。
+
+惊愕的是，vim居然自带了教程！使用
+
+
+
+\begin{code}
+\$ vimtutor
+\end{code}
+
+就能打开这个教程了。默认会打开本地语言版本的教程！如果你的本地语言设置不是中文\footnote{到\secref{sec:lang}脑补。}，使用 
+
+\begin{code}
+\$ vimtutor zh
+\end{code}
+
+即可打开。虽然是繁体中文，不过阅读上并无大碍。
+
+
+
+\subsection{神之编辑器emacs}
+
+emacs是GNU出品的正牌编辑器，出自RMS大神之手。故称之为神之编辑器。
+%
+\keyboradparty{emacs}
+
+
+可能依赖很多，不过可以去掉X和gtk，这样vim就不会引入X相关的依赖。
+
+\marginnote{可能依赖很多，不过可以去掉{}X{}和{}gtk{}，这样vim就不会引入X相关的依赖。}
+
+\begin{code}
+\# USE="-X -gtk -gtk3" emerge emacs -av
+\end{code}
+
+耐心的等待片刻，新鲜出炉的emacs就准备好了。
+
+和vim不一样，emacs并不使用命令模式和输入模式这样的区分\footnote{因为这意味着在码字的过程中要不停的按‘Esc’和‘i’切换模式。}。
+emacs下所有的命令都是立即可用的，不会要求你时刻记住当前工作模式并随时准备切换。
+
+
+%TODO
+\todo{写更多的 emacs 入门}
+
+
+~
+
+
+\section{系统管理基础}
+
+如果一个系统能自发的自我维护就好了。不过这种系统目前只存在于Tony Stock的家里。想好好的用Linux干活，一些基本系统的维护知识还是必要的\footnote{汗！用惯了Windows的小白表示从来不进行系统维护。定期重装或者安装个还原系统。一般品牌笔记本不都会带个系统恢复功能么？}。
+它可以在让你永远不会遇到系统瘫痪而必须重装的问题，或者就算瘫痪了都能起死回生。
+
+
+\subsection{进程管理}
+\subsection{系统服务管理}
+
+%\section{shell 进阶应用}

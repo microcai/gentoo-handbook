@@ -1,0 +1,172 @@
+\chapter{压榨机器的性能}
+
+这个世界上有许多人总是说，计算机处理能力已经过剩了。
+
+不，从没有。计算机的处理能力从来就没有过剩过。如果说过剩，只能说，他从来就不需要计算机。计算机硬件的发展速度永远跟不上人对计算能力的爆发性增长的需求，
+调和这个矛盾的唯一办法就是进行优化。所谓优化，就是不改变功能的前提下让程序执行的更快，占用的资源更少。
+
+优化可以在好几个层面进行。从最底层的汇编优化再到最高的设计优化，每个层级都有优化的可能。
+
+\begin{enumerate}
+\item 设计优化	~	即使是同样功能的程序，也拥有不同的设计。不同的设计通常导致非常差异化的编码思路，从根本上影响到一个系统的效率。不同的设计导致关键逻辑上采取了不同的算法，很大完成同样功能的不同的算法有根本上的效率差距。
+
+\item 代码优化	~	编写程序的时候，即便是相同的算法和设计，也有机会选择不同的代码描述形式。参数传递是采用指针还是对象？编写宏还是函数？等等。这些因素也会影响到最终代码的效率。
+好的代码\footnote{那种一眼看上去就知道代码要做什么。}总是比写的烂的代码\footnote{让人看了半天没看明白，格式混乱，诸如此类的代码}更讨人喜欢。但是好的代码并不总是能生成优化的结果的代码。有时候为了最终编译后的程序的执行效率，会采取一些trick编写代码，一些trick能极大的提高代码的执行效率，但是大大降低了代码的可读性。现代程序普遍不再使用trick，只编写具有良好可读性的代码。把优化的工作交给优化编译器。
+
+\item 构建优化	~	通常一个软件项目包含多个功能模块，每个模块使用多个编译单元\footnote{一个源代码文件就是一个编译单元}, 通过一套构建系统\footnote{autotools,cmake,qmake等等。}调用编译器生成最终结果。许多软件可以将其中一些功能列为可选，禁用的可选功能直接导致跳过编译对应的编译单元。
+这被称为条件编译。条件编译也可以发生在编译单元内部\footnote{学过C语言的人都知道，\#ifdef ... \#endif 预处理指令就是干这个的}。
+通过条件编译，使得一些用不到的功能代码被排除在最终可执行文件之外。减少了冗余代码，节约了程序运行时所占用的资源。
+
+\item 编译优化	~	编译器能“读懂”源代码并将其转化为等价的二进制指令。在这个过程中，如果加入优化过程，编译器能删除\footnote{这里的删除并不是编译器将代码从源文件中删除，而是说是编译器并不将其转化为机器指令，而是直接丢弃。}冗余代码\footnote{源码中存在的但是实际上编译器发行并没有被调用的函数，会被删除。一些做无效操作的代码被删除。一些重复操作被编译器合并为一个操作.}，常量折叠\footnote{将相同的数据合并}，常量表达式\footnote{编译器在编译的时候发行一些表达式的值是固定可知的，而且在编译期就能求得，故在最终程序中使用一个常量代替直接计算表达式}优化，循环展开等等。
+
+\item 特定CPU优化	~	其实这也是编译优化的一部分。这里单独列出来讲一下。在CISC\footnote{复杂指令计算机，参考 \faqref{FAQ:CISCandRISC}}指令的计算机上，由于指令繁多，编译器具有较大的选择余地。同时，一种指令在一款CPU上执行较快，而做另一款CPU上则执行的较慢。这使得编译器无法正确的作出最优的选择，因为对于某个型号的CPU的最优选择并不适用于另一个型号。汇编优化的意思就是指定为某个特定的CPU上选择生成对于该CPU而言最快的指令。例如同样是浮点操作，在x86平台可以使用x87指令集或者使用SSE指令。某些型号的处理器，x87指令的速度和SSE的速度不相上下，而x87的精度要比SSE高，就因该尽量使用x87指令进行浮点运算。而有的型号，x87速度比SSE指令慢好几个数量级，自然优先使用SSE指令\footnote{除非用户表明了使用双精度浮点数}。不仅仅为某个特定型号的CPU进行优化有可能再另一个CPU上起反效果，有些指令并不是所有的CPU都支持的。例如SSE指令只在奔腾3以上的CPU中才支持。avx指令更是只有在sandy bridge\footnote{intel 2011年发布的core2处理器的代号}中才支持。如果软件使用了 core2指令，放到非2011年前生产的CPU中可全部无法运行了。所有通常二进制发布程序都不为用户所使用的CPU进行专门优化，这也丧失了一大性能。
+
+\end{enumerate}
+
+使用Gentoo的时候，由于我们只是用户，并不是上游软件开发者，虽然无法在设计上改动上游的代码，但是我们手里能控制的还有编译优化和构建优化。将不需要的功能通过USE选项筛剪，并调节编译器的参数生成为本机的CPU优化的最优指令。这也是portage给我们的最强大的武器。
+
+\section{最廉价的优化 – 编译优化}
+
+%优化的理论依据是，
+现代程序通常由高级语言编写，使用编译器将其编译为机器可执行的二进制指令。在这个转换的过程中，事实上存在无穷多个可能的结果
+\footnote{从源程序获得最优化的结果是个NP完全问题。}。正所谓条条大路通罗马。
+人们对编译器的期望是，它总能够选择其中执行速度最快的那个作为最终结果。所谓执行速度最快，通常是完成同样的功能使用最少的指令，或者指令序列总执行时间最短。
+这也是编译器能对程序进行优化的依据。
+
+\subsection{编译期优化}
+前面提到过，生成最优结果对编译器来说是个NP完全问题\footnote{所谓NP完全问题，就是说在“有限”的时间内无法找到最优解的问题}。编译器必须能在有限的时间内给出编译结果。所以编译器提供了“优化级别”概念。
+
+所谓优化级别，就是给出编译器执行优化过程的时候所尽的“努力”程度。最高级别的优化就是尽最大的努力生成编译结果。通常生成的结果运行速度最快，但也意味着最费时的编译。
+最低级别的优化就是不优化，编译速度为最快，生成的结果程序的运行速度也是最慢的。
+
+对GCC编译器来说，优化级别由参数 -Ox 指定。x是一个  0 到 3 之间的数字。数字越大，优化级别越高。0表示不优化,如果不给出优化级别，默认就是0。
+对用户来说，只要知道使用“-Ox”参数开启指定级别的优化即可。
+
+emerge{}使用的编译优化参数由 make.conf(5) 文件中的{ }CFLAGS{ }和{ }CXXFLAGS{ }指定。通常指定\texttt{"-O2 -march -pipe"}，其中的-O2即指定优化级别为2。这是Gentoo推荐
+的设置。虽然说-O3有可能带来更好的性能。但是激进的优化措施有时候会带来意想不到的问题。为保守起见，Gentoo只推荐全局启用-O2级别的优化。
+
+GCC支持另一个特殊的优化级别：-Os。‘s’在这里的含义是size，也就是为大小进行优化。
+
+\begin{insertnote}
+\subsubsection{什么是为大小优化？}
+
+编译器进行优化的时候，有时候会碰到代码大小和执行速度的矛盾。有的代码可以优化为更少的指令，但是每条指令都更复杂，导致总执行时间更长；或者优化为更多的指令，但是每条指令更简单，而且在超标量处理器上能做到指令级的并行执行，总执行时间反而更短。
+虽然说大部分情况下，更少的代码总是意味着更快的执行速度，但是遇到某些特殊情况时，编译器就必须作出代码大小和执行速度的权衡。
+-Os{}优化级别就是告诉编译器，在遇到代码大小和执行速度两难的境地，优先考虑代码大小，使用让代码体积更小的优化措施。
+
+\end{insertnote}
+
+一些人认为，只有为内存受限的特定环境编写程序时才考虑-Os优化。但是Linus在一次邮件中鲜明的指出，至少在x86平台，-Os优化生成的结果总是最快的。下面列出邮件原文，也可以从内核邮件列表的网上归档上查看 \url{https://lkml.org/lkml/2003/2/6/182}。
+
+\begin{insertnote}
+
+\subsubsection*{Linus讨论-Os和-O2的邮件}
+
+\leftskip 2em
+\rightskip 2em
+\parindent 0pt
+
+\colorbox{gray}{\hbox to 5em {Date} Thu, 6 Feb 2003 15:16:16 -0800 (PST)}
+
+\colorbox{gray}{\hbox to 5em {From}	 Linus Torvalds <>   }
+
+\colorbox{gray}{\hbox to 5em {Subject}	Re: gcc -O2 vs gcc -Os performance }
+
+\footnotesize 
+
+\parskip 4ex
+
+\noindent{}On Thu, 6 Feb 2003, Martin J. Bligh wrote:\\
+> \\
+> The observation re low repeat rate is interesting ... might be amusing \\
+> to do some really basic profile-guided optimisation on this grounds,\\
+> take readprofile / oprofile output, and compile the files that don't\\
+> get hammered at all with -Os rather than -O2. Given their low frequency\\
+> (by definition), I'm not sure that improving their icache footprint will\\
+> have a measureable effect though.
+
+Icache footprint has nothing to do with repeat rates, which is exactly why 
+repeat rates are interesting for -Os.
+
+Icache footprint is directly proportional to the \_static\_ size of the code 
+(ie exactly the thing that -Os is supposed to optimize for), while 
+instruction-level performance measurement is only valid on the \_dynamic\_ 
+code.
+
+And with modern CPU's with big caches, a \_lot\_ of cache misses are the 
+forced kind - the startup costs, not the actual runtime cost. That's not 
+always true (if you touch big data sets, you'll have replacement misses 
+too, of course), but it's not really false either.
+
+So think of the I\$ (and TLB, and page load/map - all the same) cost as a 
+fixed cost that will always be there, but that -Os tries to minimize. 
+That's \_one\_ dimension in the total cost.
+
+The "traditional" -O2 kind of "try to make the code run fast" 
+optimizations tend to try to minimize a totally different dimension, 
+namely the dynamic code speed.
+And the time required for running the program is the sum of the static and 
+dynamic factors. In other words, a \_good\_ optimization should try to 
+minimize not one or the other, but the sum.
+
+And low repeat rates means that the dynamic component is smaller, which 
+clearly makes the static component more important.
+
+For example, if you are doing mp3 encoding, the repeat rates for the core 
+loop are huge, and the code is small, so clearly the static component is 
+largely insignificant. Use -O2.
+
+But if you're running a GUI program then just the loading time is often
+quite noticeable, and if you can improve that by, say, 10%, then that can
+\_more\_ than make up for almost any amount of stupidity in your code.  
+Especially since a lot of the code isn't even all that loopy and tends to
+have low repeat rates. You're almost guaranteed to be better off using -Os
+than -O2.
+
+If you've got performance counter data, check the I\$ and ITLB miss ratios, 
+and if they are at all noticeable, think about the fact that a I\$ miss 
+tends to cost a lot more than a few more dynamic instructions. 
+
+I suspect the kernel I\$ behaviour is generally pretty good, and the ITLB 
+behaviour is improved even further thanks to large pages etc. That said, a 
+user app that blows the I\$ will blow the kernel out of the I\$ too, so 
+small is always beautiful, even in the kernel.
+
+\qquad Linus
+
+--\\
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in \\
+the body of a message to majordomo@vger.kernel.org \\
+More majordomo info at  \url{http://vger.kernel.org/majordomo-info.html}\\
+Please read the FAQ at  \url{http://www.tux.org/lkml/}
+
+\end{insertnote}
+
+在邮件中，Linus指出，CPU的指令缓存是有限的，更小的代码意味着程序能将自身更多的部分放入指令缓存从而带来指令缓存命中率的提升。更大的代码导致CPU更多的发生 Icache miss（指令缓存不命中），指令缓冲一旦没有命中，CPU不得不暂停执行到内存读取指令并刷新指令缓存。众所周知，CPU之所以有缓存设计，就是因为内存无法和CPU同频运行。
+CPU的一级缓存是单周期访问的，但是容量有限。通常只有数十KB；而二级和三级缓存虽然大很多\footnote{在i7级别的CPU上三级缓存有8MB。但是入门级别的CPU可能就没有三级缓存}，但是访问时间却要好几个时钟周期；但是内存的访问是更慢的了，达到数十个周期。也就是说，如果一次Icache miss发生，CPU将会浪费几十个周期到二级和三级缓冲刷新，但是如果三级缓存中都没有，必须到主内存刷新，浪费的时钟周期将达数百个\footnote{缓存刷新的时候会执行预读取，所以浪费的是数个内存访问周期。}。随着CPU主频的提升，访问一次内存导致的CPU时钟周期浪费也会越来越高。更大的指令除了导致更容易出现Icache miss，也导致可执行文件变的更大，也将是初次加载的
+时候要花费更多的时间将代码从硬盘读取到内存。
+
+不论是从运行时的速度上考虑还是从加载速度上考虑，更小的代码总是意味着更快的速度。更何况将算没有将缓冲填满，更小的代码也给其他程序留下了更多的缓存空间。所以整个系统以-Os参数进行优化似乎能获得从整体而言最快的系统。
+
+
+
+\subsection{链接时优化（LTO，Link Time Optimization）}
+
+Linux系统从内核到应用程序，几乎都是由C/C++语言写成的。C家族语言都需要经历“编译”$\Rightarrow$“链接”的过程才能最终转化为可执行文件。
+
+C家族语言的源代码是分开编译的。一个程序通常会包含多个源代码文件，每个源码文件分别编译，最好执行链接合并成一个可执行文件。
+
+大多数优化都是发生在编译的时候。
+
+
+\subsection{PGO}
+\section{  有目的的优化 – 查找性能瓶颈}
+\subsection{ 查找性能瓶颈}
+\subsection{  优化瓶颈}
+\section{  benchmark – 优化的基准测试}
+\subsection{  CPU 单核能力测试}
+\subsection{  CPU 多线程性能测试}
+\subsection{  文件系统 IO 测试}
+\subsection{  网络性能测试}
+\subsection{  GPU/OpenGL 性能测试}
+
