@@ -23,7 +23,7 @@
 %\usepackage{needspace}
 \usepackage{wrapfig}
 \usepackage{float}
-%\usepackage[below,section]{placeins}
+\usepackage[below,section]{placeins}
 \usepackage{color}
 \usepackage{tabularx}
 \usepackage{supertabular}
@@ -245,8 +245,9 @@ It only takes three commands to install Gentoo!
 “Where there is a shell，there is a way!”
 \end{quotes}
 
-\ifdefined\compileall
-\input{install}\fi
+%\ifdefined\compileall
+\input{install}
+%\fi
 
 \chapter{Linux的日常}
 

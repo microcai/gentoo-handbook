@@ -967,8 +967,11 @@ git的具体用法请参考　\secref{sec:git}。
 内核代码非常大，这一步操作会比较费时。可以先放一边，重新打开个新的终端然后chroot /gentoo，进行下一节的操作。等内核的代码克隆完成了再回到这里继续。
 
 Mark一下。
+%TODO
 
 \subsubsection{initrd}\label{sec:initrd}
+
+%TODO
 
 \subsubsection{新手使用 genkernel}
 
@@ -1077,8 +1080,31 @@ passwd: password updated successfully
 这样就设置好root帐号的密码了。
 
 \subsubsection{语言设置}\label{sec:lang}
-%TODO
+
 很多程序都有本地化语言支持。支持本地化的程序，通过检查环境变量LANG的内容决定使用何种语言。
+
+LANG环境变量的格式为 语言.编码。比如简体中文为 zh\_CN，使用UTF-8编码，则LANG设置为 zh\_CN.UTF-8（zh\_CN.utf8等价）。
+编码影响的是程序向终端输出的时候使用的编码。绝对只建议使用utf-8编码。
+
+\begin{code}
+\#eselect locale list
+\end{code}
+
+列出支持的语言，使用
+
+\begin{code}
+\#eselect locale set zh\_CN.utf8
+\end{code}
+
+设置语言为中文，编码为utf8。
+如果zh\_CN没有出现在列表里，应该考虑一下 /etc/locale.gen 文件里是不是有
+``zh\_CN.UTF-8 UTF-8''这么一行。没有的话添加了然后执行。
+
+\begin{code}
+\#locale-gen
+\end{code}
+
+这样就能重新生成语言支持文件。
 
 \subsection{安装基础系统}
 
