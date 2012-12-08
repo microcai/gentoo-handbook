@@ -478,28 +478,28 @@ S表示　Start，?? 是一个两位数的数字，代表启动的次序。
 S表示　Kill，?? 是一个两位数的数字，代表停止的次序（停止的次序和启动次序一样重要）。\footnote{
 我表示我已经被Fedora这种模式弄晕了，Gentoo的openrc好歹是设置依赖关系自动决定启动次序的。这也是Fedora后来果断废除sysvinit的原因吧。}Fedora的 /etc/init.d/下是实实在在的shell脚本。没有依赖关系。引入Gentoo的openrc不如彻底革新到自动确定依靠关系或者是根本不需要依赖关系的新服务管理系统。
 
-\subsubsection{SystemD}
+\subsubsection{systemd}
 sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本的一大特点就是慢。
 另一个诟病的地方就是服务之间的关系复杂，很难搞懂。而且各个发行版并没有统一这些脚本。有的发行版为脚本加入了依赖关系，有的要依靠手工设置（是发行版打包的时候确定的）启动次序。管理上非常复杂。
 
-那么，针对sysvinit的问题：慢、管理复杂，Redhat的一个牛人开发了SystemD做为PID 1以克服sysvinit的缺陷。
+那么，针对sysvinit的问题：慢、管理复杂，Redhat的一个牛人开发了systemd做为PID 1以克服sysvinit的缺陷。
 
-那么SystemD到底有哪些好处呢？
+那么systemd到底有哪些好处呢？
 
 \begin{itemize}
 \item 极度并行化启动。
-		SystemD开发者说过，要系统启动更快的，第一条需要做到的是单位时间内启动更多服务。不像sysvinit那样串行启动，SystemD是高度并行的。SystemD同时启动多个服务。
+		systemd开发者说过，要系统启动更快的，第一条需要做到的是单位时间内启动更多服务。不像sysvinit那样串行启动，systemd是高度并行的。systemd同时启动多个服务。
 
-\item 无脚本启动。SystemD开发者说过，要系统启动更快，你还需要做到的是整个系统启动过程启动更少的程序。SystemD实现不依靠一行shell脚本启动完整的系统。
+\item 无脚本启动。systemd开发者说过，要系统启动更快，你还需要做到的是整个系统启动过程启动更少的程序。systemd实现不依靠一行shell脚本启动完整的系统。
 
-\item	按需启动。SystemD开发者说过，要系统启动更快，按需启动是必不可少的。按需启动功能更进一步的使整个系统启动过程启动更少的程序。
+\item	按需启动。systemd开发者说过，要系统启动更快，按需启动是必不可少的。按需启动功能更进一步的使整个系统启动过程启动更少的程序。
 
 \item	无需配置依赖性。
 		按需启动还使得服务之间的依赖关系成了过去式。你不需要直接指定服务之间的依赖关系——只要一个服务用到了另一个服务，另一个服务会被按需启动，\em 就好像它本来就已经被启动了一样。
 
 \end{itemize}
 
-SystemD能实现按需启动和避开依赖性配置，原因就是实现了socket activation。
+systemd能实现按需启动和避开依赖性配置，原因就是实现了socket activation。
 
 \begin{insertnote}
 \subsection*{Socket Activation解释}
@@ -513,17 +513,17 @@ SystemD能实现按需启动和避开依赖性配置，原因就是实现了sock
 有了Socket Activation, NetworkManager和DBus不再需要串行化启动，同时启动即可。NetworkManager总能连接上需要的Socket，因为它已经在那里了。
 甚至DBus自身都不用启动，NetworkManager也能正常开启直到NetworkManager向这个socket发送了一些数据——这个时候DBus必须开起以便处理这个数据。这就是“安需启动”的实现方式。
 
-Socket Activation 将创建socket的任务交给了SystemD——利用了UNIX父进程可以向子进程遗传文件描述符\footnote{socket也是文件。也是使用的文件描述符标识的。}的特性——由SystemD创建后再由其启动的服务继承。
+Socket Activation 将创建socket的任务交给了systemd——利用了UNIX父进程可以向子进程遗传文件描述符\footnote{socket也是文件。也是使用的文件描述符标识的。}的特性——由systemd创建后再由其启动的服务继承。
 \end{insertnote}
 
 除了Socket Activation，还有类似的Path Activation，DBus Activation。 
 
 DBus Activation好理解，有的服务提供的并不是Socket，而是在DBus下的一个名称接口。服务使用者并不连接到该服务，而是直接连接到DBus，然后向DBus发送请求，由DBus转发给对应的服务。这是一种RPC\footnote{远程过程调用。}实现的说。如果该服务不存在（比如还未启动），DBus会返回错误。DBus Activation将未启动的服务的接口提前标记为“可用”，等该服务真的被用到的时候再将对应的服务启动。
 
-Path　Activation原理类似。比如邮件投递服务，只要在 /var/spool/mail 下有文件，该服务就应该进行邮件投递，将成功投递的邮件删除。Path Activation将监视该文件夹的任务交给了SystemD，文件存在后SystemD激活邮件投递服务。
+Path　Activation原理类似。比如邮件投递服务，只要在 /var/spool/mail 下有文件，该服务就应该进行邮件投递，将成功投递的邮件删除。Path Activation将监视该文件夹的任务交给了systemd，文件存在后systemd激活邮件投递服务。
 
-那么，决定使用sysvinit还是SystemD了么？话说Gentoo给的不就是选择么？
-%如果决定使用sysvinit什么都不用做，stage3里已经带上sysvinit了。如果决定用SystemD就继续哦，话说现在还不着急安装，内核代码下好了么？下好的话可以回到上面编译内核去了的说哦。
+那么，决定使用sysvinit还是systemd了么？话说Gentoo给的不就是选择么？
+%如果决定使用sysvinit什么都不用做，stage3里已经带上sysvinit了。如果决定用systemd就继续哦，话说现在还不着急安装，内核代码下好了么？下好的话可以回到上面编译内核去了的说哦。
 
 
 \section{分区规划}
@@ -928,7 +928,7 @@ MAKEOPTS%="-j8"
 
 stage3开始，已经没有硬循环依赖了。这个时候的循环依赖通常是这样的“A依赖B，但是B有个可选的选项导致会依赖A”。这样只要将那个可选的选项关闭，编译好B，然后再编译A，如果那个功能用户需要的话，重新打开后再次编译B。
 
-\begin{example}{Dbus和SystemD相互依赖}
+\begin{example}{Dbus和systemd相互依赖}
 
 直接使用 emerge systemd 的时候，系统会提示dbus开了[systemd]选项后依赖systemd，而systemd也依赖dbus。同时systemd编译的时候并不依赖开启systemd选项的dbus，但是运行的时候却依赖。
 
