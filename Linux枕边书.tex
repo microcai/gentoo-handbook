@@ -20,10 +20,10 @@
 		marginparwidth=2cm
 	]{geometry}
 
-\usepackage{needspace}
+%\usepackage{needspace}
 \usepackage{wrapfig}
 \usepackage{float}
-\usepackage[below,section]{placeins}
+%\usepackage[below,section]{placeins}
 \usepackage{color}
 \usepackage{tabularx}
 \usepackage{longtable}
@@ -272,14 +272,33 @@ We made the buttons on the screen look so good you'll want to lick them.
 \ifdefined\compileall
 \input{gui}\fi
 
-\chapter{网络}\label{chap:network}
+\chapter{网络基础}\label{chap:basenetwork}
 
 \begin{quotes}[0.5]{Bill Gates}
 I see little commercial potential for the Internet for at least 10 years
 \end{quotes}
 
 %\ifdefined\compileall
-\input{network} %\fi
+\input{basenetwork}%\fi
+
+\chapter{网络应用}\label{chap:network}
+
+\begin{quotes}[0.5]{Bill Gates}
+I see little commercial potential for the Internet for at least 10 years
+\end{quotes}
+
+\section{网络配置}\label{sec:ifconfig}
+\subsection{图形环境下的工具}
+%TODO \subsection{配置虚拟局域网}
+\subsection{命令行配置工具}
+\subsection{网络自动配置和DHCP}\label{sec:DHCP}
+
+
+
+\section{网络攻击和防火墙}
+\subsection{网络攻击类型和检测}
+\subsection{iptables防火墙}
+
 
 \chapter{文件系统}
 
