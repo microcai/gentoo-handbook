@@ -178,8 +178,11 @@ TODO:#1}
 % 首页
 %=========================================================
 {
-
 \include{coverpage}
+
+%TODO 发行的时候解除这个
+%\include{copyrightnote}
+
 \include{thanks}
 }
 
@@ -191,140 +194,92 @@ TODO:#1}
 %=========================================================
 % 序言
 %=========================================================
+\chapter{序}
+\begin{quotes}{George Santayana}
+Those who cannot remember the past are condemned to repeat it.
+\end{quotes}
+
 \ifdefined\compileall
-	\include{preface}
-\else
-	\addtocounter{chapter}{1}
+\input{preface}
 \fi
 
 
 %=========================================================
 % 正文开始
 %=========================================================
+\chapter{UNIX哲学}
+\begin{quotes}{Dennis Ritchie}
+UNIX is very simple, it just needs a genius to understand its simplicity.
+\end{quotes}
 
 \ifdefined\compileall
-\include{chp_unix}
-\else
-\addtocounter{chapter}{1}
-\fi 
+\input{chp_unix}
+\fi
+
+\chapter{黑客和Linux}
+\begin{quotes}{Linus Benedict Torvalds}
+If 386-BSD had been available when I started on Linux, Linux would probably never had happened.
+\end{quotes}
+\ifdefined\compileall
+\input{chp_hackerandlinux}
+\fi
+
+\chapter{初识Linux}
+
+\begin{quotes}[0.63]{The Gospel of Tux}
+Now may you code in the power of the Source; may the Kernel, the Libraries and the Utilities be with you, throughout all Distributions, until the end of the Epoch. Amen. 
+\end{quotes}
 
 \ifdefined\compileall
-\include{chp_hackerandlinux}
+\input{linuxintro}\fi
+
+\chapter{安装 Linux}
+
+\begin{quotes}[0.5]{insomnia}
+It only takes three commands to install Gentoo!
+\end{quotes}
+
+\begin{quotes}{Anonymous}
+“Where there is a shell，there is a way!”
+\end{quotes}
+
+\ifdefined\compileall
+\input{install}\fi
+
+\chapter{Linux的日常}
+
+\begin{quotes}[0.52]{Jef Raskin}
+A computer shall not waste your time or require you to do more work than is strictly necessary.
+\end{quotes}
+
+\ifdefined\compileall
+\input{dialy}\fi
+
+
+
+\ifdefined\compileall
+\include{pkgmgr}
 \else
 \addtocounter{chapter}{1}
 \fi
 
-\ifdefined\compileall
-\include{linuxintro}
-\else
-\addtocounter{chapter}{1}
-\fi
+\chapter{图形界面}
+
+\begin{quotes}{Steven Paul Jobs}
+We made the buttons on the screen look so good you'll want to lick them.
+\end{quotes}
 
 \ifdefined\compileall
-\include{install}
-\else
-\addtocounter{chapter}{1}
-\fi
+\input{gui}\fi
 
-\ifdefined\compileall
-\include{dialy}
-\else
-\addtocounter{chapter}{1}
-\fi
+\chapter{网络}\label{chap:network}
 
-\chapter{软件管理}\label{软件管理}
+\begin{quotes}[0.5]{Bill Gates}
+I see little commercial potential for the Internet for at least 10 years
+\end{quotes}
 
-
-\section{软件的分发}
-\section{软件的编译}
-\section{发行版的包管理}\label{section:pkgmgr}
-\section{portage和emerge}\label{sec:emerge}
-
-\section{什么是overlay，如何使用}\label{sec:overlay}
-
-/usr/portage下存放了数万个ebuild文件，这些文件按照预定的格式组织，形成了Gentoo的软件仓库，又称portage树。
-使用命令{\tt emerge --sync}可以方便的将本地的portage树与Gentoo官方发布的portage树进行增量同步。
-
-portage里虽然有数万个\footnote{截至到本书写作的时候有32225个ebuild共计15731个软件。}ebuild，但是总有软件是游离在portage之外的。
-总要有机制可以添加第三方仓库吧？这样有的特殊软件可以放到第三方仓库中，想要使用的人添加第三方仓库即可使用emerge安装这些软件。
-用户还可以自己维护一个给自己用的仓库，编写自己用的ebuild，这样就有可以更强大的定制能力了。
-Gentoo使用overlay来支持这种需求。
-
-所谓overlay就是结构和portage一样的一个目录，该目录里存放的ebuild也会被emerge使用。如果overlay里的版本和portage里的一样高，则overlay里的ebuild有更高的优先级。
-overlay通常包含portage没有的软件，或者相同版本但是打上不同的补丁以提供增强功能。只要在 make.conf 中设定 PORTDIR\_OVERLAY 为一个overlay的路径即可使用该overlay。
-overlay可以有多个，亦即PORTDIR\_OVERLAY可以设定多个路径，以空白隔开（通常是每行写一个overlay，参考 /var/lib/layman/make.conf），相互之间的优先级看它在PORTDIR\_OVERLAY变量中出现的次序。后出现的优先级高。
-
-\subsection{用layman管理overlay}
-
-现成的overlay被gentoo官方收录到了一个xml文件中：
-
-\url{http://www.gentoo.org/proj/en/overlays/repositories.xml}
-
-使用layman(8)工具即可自动获取这些overlay。这些overlay使用版本控制工具\footnote{参考 \chapref{chap:VCS}}，用户也使用版本控制工具获得这些overlay。
-所以layman依赖一些版本控制工具，可以用USE控制layman依赖的版本控制工具。
-
-\begin{code}
-\#USE="git subversion" emerge layman
-\end{code}
-
-这样会将 git 和 subversion （大部分overlay使用git和svn）作为 layman 的依赖而被自动安装（如果还没安装的话）。没有安装的版本控制工具将无法添加使用该工具管理的overlay。
-
-在 make.conf\footnote{ /etc/portage/make.conf 别忘记哦！} 里最后加入一行 “{\tt source /var/lib/layman/make.conf}”（不包括引号）， 然后就可以使用 layman -a overlay名字 添加指定名字的overlay了。
-
-\begin{insertnote}
-注意：/var/lib/layman/make.conf只有在添加了第一个overlay后才会生成。所以可以在添加一个overlay后再加入对该文件的source操作。
-\end{insertnote}
-
-\begin{example}{添加 gentoo-zh overlay。}
-\begin{code}
-\#layman -f \\
-\#layman -a gentoo-zh
-\end{code}
-
-第一次使用layman需要layman -f，这一步到gentoo.org下载repositories.xml文件。如果已经下载过可以跳过这条命令。
-
-\end{example}
-
-\subsubsection*{列出所有的overlay}
-
-\begin{code}
-\#layman -L
-\end{code}
-
-\subsubsection*{列出已经添加的overlay}
-
-\begin{code}
-\#layman -l
-\end{code}
-
-\subsubsection*{添加一个overlay}
-
-\begin{code}
-\#layman -a <overlay名字>
-\end{code}
-
-\subsubsection*{删除一个overlay}
-
-\begin{code}
-\#layman -d <overlay名字>
-\end{code}
-
-\subsubsection*{更新一个overlay}
-
-\begin{code}
-\#layman -s <overlay名字>
-\end{code}
-
-\subsubsection*{一次性升级所有overlay}
-
-\begin{code}
-\#layman -S
-\end{code}
-
-
-% \include{gui}
-\include{network}
-
+%\ifdefined\compileall
+\input{network} %\fi
 
 \chapter{文件系统}
 
