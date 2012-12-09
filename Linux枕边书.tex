@@ -1,6 +1,6 @@
 % !TeX spellcheck = <none>
 
-%\newcommand{\compileall}{def}
+\newcommand{\compileall}{def}
 
 
 \documentclass[amstex,twoside]{ctexbook}
@@ -20,7 +20,7 @@
 		marginparwidth=2cm
 	]{geometry}
 
-%\usepackage{needspace}
+\usepackage{needspace}
 \usepackage{wrapfig}
 \usepackage{float}
 \usepackage[below,section]{placeins}
@@ -183,7 +183,10 @@ TODO:#1}
 \include{coverpage}
 
 %TODO 发行的时候解除这个
-%\include{copyrightnote}
+
+\ifdefined\compileall
+\include{copyrightnote}
+\fi
 
 \include{thanks}
 }
