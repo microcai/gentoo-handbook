@@ -75,6 +75,7 @@ ext3、ext4、reiserfs 、 reiserfs4 、 zfs 、 xfs 、 btrfs、 ntfs 都是日
 
 磁盘文件系统上保存的文件是实打实的存储在磁盘上的。而虚拟文件系统则不是。虽然也有目录结构，也有文件，但是这些文件的内容可不存在于硬盘上。
 
+
 \subsection{内核信息窗口/proc和/sys}
 
 procfs是一个虚拟文件系统，标准挂载目录是 /proc ，内核用这个文件系统显示正在运行的进程的信息。每个进程都表现为一个以进程号为名的目录。\footnote{ 这当中有一个特殊的self目录，是一个软连接，它对每个程序来说都是自己。访问/proc/self/相当于访问 /proc/getpid()/。}
@@ -87,10 +88,30 @@ procfs是一个虚拟文件系统，标准挂载目录是 /proc ，内核用这�
 
 \subsection{/dev设备文件系统和udev}
 
-UNIX有个传统的“一切都是文件”原则。
+UNIX有个传统的“一切都是文件”原则。这个原则的体现就是 /dev 目录。该目录挂载的是一个设备文件系统。在早些时候，是devfs，由内核维护。加载驱动的时候设备文件被创建，卸载驱动的时候设备文件被删除。
+设备文件默认的所有者是root:root，权限是0600。不过这种模式有些许弊端：
 
+\begin{itemize}
+\item 不便于权限控制。想声卡最佳的所有者应该是audio:audio，权限模式0660。而内核并不被允许访问/etc/passwd文件，这个问题只能通过开机脚本强制执行chown实现了。
+\item 即便使用了脚本，热插拔的设备呢？脚本运行的时候设备还没有出现，等用户插入设备的时候脚本已经执行过了。权限模式如何更改？
+\item 设备文件由内核创建，驱动需要硬编码设备文件名。如何给设备起别名\footnote{多个设备文件指向同一个设备}？
+\item 内核需要驱动才能检测到设备，为了节约内存，用户希望内核不载入没有的设备的驱动。但是不加载驱动就不知道对应的设备是否存在。如何解决\footnote{微软的解决办法是驱动需要“安装”，写死到注册表里，下次开机就知道加载了。}？
+\end{itemize}
 
-\subsection{虚拟内存盘tmpfs}
+针对一系列devfs的短处，内核开发者Greg KH\footnote{此人也是Gentoo开发者哦！}开发了udev作为应对方案。
+
+\begin{itemize}
+\item /dev 不再挂载devfs，而只是一个临时目录。通常挂载为tmpfs\footnote{参见 \secref{sec:tmpfs}。}。
+\item udev 启动后，遍历/sys目录，收集系统信息。依此信息到/dev目录下创建设备文件。并在此过程中分析 udev rules 规则文件，由规则文件控制设备文件的创建过程。udev rules存放在 /lib/udev/rules.d/ /usr/lib/udev/rules.d/ 和 /etc/udev/rules.d/ 下。
+\item udev 监听内核事件，出现热插拔事件后可以创建设备文件，并同样使用规则文件套用规则。
+\item udev 从sysfs获悉总线信息，然后使用hwids（硬件数据库）\footnote{每一种PCI设备有一个全球唯一的厂商ID和设备ID，此ID在BIOS自检的时候即被收集，所以内核没有驱动也有关于系统上有那些设备的ID号信息（但是不知道具体是什么设备）。用户在自己电脑上执行lspci即可获得此信息哦~。这个厂家ID和设备ID到设备类型和功能对应（包括名字）有一个IEEE维护的数据库。安装 sys-apps/hwids 即可安装此数据库。udev依赖hwids，所以这个包会被自动安装。}即可知道总线上有那些设备并加载对应的驱动。
+\end{itemize}
+
+由于udev启动的时候需要解析数千个rules文件，遍历数万个/sys文件，所以启动速度非常慢。大约需要数秒的事件才能完成udev的启动。而/dev如此重要，他必须是init启动的第一个程序。这就大大延迟了开机速度。
+所以新捣鼓了一个 devtmpfs 文件系统。结合了devfs和tmpfs的文件系统。这样udev的启动可以被延迟到需要的时候。udev计算不不启动，也有devtmpfs提供的设备文件。udev启动后也只需要修改而不是重新创建，所以加快了系统的启动速度。
+udev在新版本中已经要求内核必须有devtmpfs支持了。所以编译内核的时候，千万别把devtmpfs选项去掉哦~。
+
+\subsection{虚拟内存盘tmpfs}\label{sec:tmpfs}
 
 \section{网络文件系统}
 
