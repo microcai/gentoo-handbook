@@ -108,14 +108,30 @@ UNIX有个传统的“一切都是文件”原则。这个原则的体现就是 
 \end{itemize}
 
 由于udev启动的时候需要解析数千个rules文件，遍历数万个/sys文件，所以启动速度非常慢。大约需要数秒的事件才能完成udev的启动。而/dev如此重要，他必须是init启动的第一个程序。这就大大延迟了开机速度。
-所以新捣鼓了一个 devtmpfs 文件系统。结合了devfs和tmpfs的文件系统。这样udev的启动可以被延迟到需要的时候。udev计算不不启动，也有devtmpfs提供的设备文件。udev启动后也只需要修改而不是重新创建，所以加快了系统的启动速度。
+所以新捣鼓了一个 devtmpfs 文件系统。结合了devfs和tmpfs的文件系统。这样udev的启动可以被延迟到需要的时候。udev就算不启动，也有devtmpfs提供的设备文件。udev启动后也只需要修改而不是重新创建，所以加快了系统的启动速度。
 udev在新版本中已经要求内核必须有devtmpfs支持了。所以编译内核的时候，千万别把devtmpfs选项去掉哦~。
+
+由于udev对开机过程来说是个非常重要的程序，所以现如今已经和systemd合并。udev是systemd的一部分了。
 
 \subsection{虚拟内存盘tmpfs}\label{sec:tmpfs}
 
 \section{网络文件系统}
 
+我们一直在追求网络透明——像本地文件那样操作远程主机上的文件。\footnote{商业上炒概念的人把它叫做“云”。}
+X协议让我们的窗口系统网络透明，是不是也有办法能做到文件系统的网络透明呢？
+
 \subsection{NFS}
+
+SUN开发了一个协议RPC\footnote{Remote Procedure Call，远程过程调用，参考 \faqref{FAQ:RPC}}。居然还用这个协议实现了文件系统的read/write/open/close等调用，这就实现了一个网络文件系统（NFS, Network File System）。
+NFS是个C/S结构的网络文件系统。提供共享文件的主机是服务器，其他主机作为客户端连接到服务器上使用其共享的文件。访问NFS上的文件于访问本地文件并无二致。在内核，文件系统层向远程主机发起RPC调用而不是转而执行磁盘访问。
+
+使用NFS和其他文件系统一样，都要先``mount"。比如如下的命令将主机``server''的 /usr/portage 挂载到本地的	/usr/portage
+
+\begin{code}
+\# mount -t nfs //server/usr/portage	/usr/portage
+\end{code}
+
+还可以使用 fstab(5) 做到开机自动挂载。
 
 \subsection{Windows 网络邻居 CIFS}
 
