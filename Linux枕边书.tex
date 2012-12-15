@@ -298,9 +298,9 @@ I see little commercial potential for the Internet for at least 10 years
 We have persistant objects, they're called files.
 \end{quotes}
 
-%\ifdefined\compileall
+\ifdefined\compileall
 \input{fs}
-%\fi
+\fi
 
 \chapter{架设服务器}
 \section{  搭建 HTTP 服务器}
@@ -317,11 +317,22 @@ We have persistant objects, they're called files.
 \subsection{ CUPS 打印服务	}
 \subsection{ Samba 打印机共享	}
 
-\ifdefined\compileall
-\include{optimize}
-\else
-\addtocounter{chapter}{1}
-\fi
+\chapter{压榨机器的性能}
+
+
+\begin{quotes}{Donald Knuth}
+We should forget about small efficiencies, say about 97\% of the time: 
+premature optimization is the root of all evil.
+\end{quotes}
+
+\begin{quotes}{Michael A. Jackson}
+The First Rule of Program Optimization: Don't do it.\\
+The Second Rule of Program Optimization (for experts only!): Don't do it yet.
+\end{quotes}
+
+%\ifdefined\compileall
+\input{optimize}
+%\fi
 
 
 \chapter{时光机器-版本控制系统}\label{chap:VCS}
