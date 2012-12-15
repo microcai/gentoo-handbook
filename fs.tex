@@ -125,18 +125,67 @@ X协议让我们的窗口系统网络透明，是不是也有办法能做到文�
 SUN开发了一个协议RPC\footnote{Remote Procedure Call，远程过程调用，参考 \faqref{FAQ:RPC}}。居然还用这个协议实现了文件系统的read/write/open/close等调用，这就实现了一个网络文件系统（NFS, Network File System）。
 NFS是个C/S结构的网络文件系统。提供共享文件的主机是服务器，其他主机作为客户端连接到服务器上使用其共享的文件。访问NFS上的文件于访问本地文件并无二致。在内核，文件系统层向远程主机发起RPC调用而不是转而执行磁盘访问。
 
-使用NFS和其他文件系统一样，都要先``mount"。比如如下的命令将主机``server''的 /usr/portage 挂载到本地的	/usr/portage
+使用NFS和其他文件系统一样，都要先``mount"。比如如下的命令将主机``server''\footnote{没有名称的，直接使用IP地址嘛。}的 /usr/portage 挂载到本地的	/usr/portage
 
 \begin{code}
 \# mount -t nfs //server/usr/portage	/usr/portage
 \end{code}
 
-还可以使用 fstab(5) 做到开机自动挂载。
+还可以使用 fstab(5) 做到开机自动挂载。至于服务器端，当然不是随便都能共享的啦！首先要开启nfsd服务，没开服务别人怎么共享。
+开了服务，就可以使用 /etc/exports 控制导出（共享）的目录了。
 
-\subsection{Windows 网络邻居 CIFS}
+TODO /etc/exports 解释 %TODO 
+
+\subsubsection{Gentoo下安装和使用NFS}
+TODO Gentoo 下安装和使用NFSD
+
+\subsection{Windows网上邻居：CIFS}
+
+Windows的网上邻居，在资源管理器上使用``\textbackslash\textbackslash对方主机名字\textbackslash共享文件夹名'' 即可访问共享的文件夹。还可以映射到本地驱动器，相当于UNIX下的mount了吧。
+
+网上邻居使用的是CIFS协议，也就是SMB协议。在Linux下实现该协议的软件是samba，samba包含客户端和服务器端，不过内核也实现了一个客户端，使用 mount.cifs 命令挂载。
+
+\begin{code}
+\# mount.cifs //server/共享	 /mnt/cifsshare
+\end{code}
+
+该命令将名server\footnote{没有名称的，直接使用IP地址嘛。}的主机上共享名称为“共享”的文件夹挂载到本地的 /mnt/cifsshare 上。如果Windows设置了共享密码，mount还会提示输入用户名和密码。
+如果不想打命令手工挂载，并且使用KDE或 GNOME这样的桌面环境，在文件浏览器的地址栏\footnote{GNOME默认隐藏掉地址栏，使用Ctrl+L显示。}里输入``\url{smb://server/共享}''即可浏览，这个使用的是samba提供的客户端库实现的。非GNOME或KDE程序无法打开这样的URL，遇到无法打开的情况，还是得内核的支持管用。
+
+\subsubsection{Gentoo下安装和使用Samba}
+
+浏览Windows的共享文件看来非常简单，那么反过来给Windows提供共享呢？诶呀，那简单的，安装samba，把smbd服务加入开机启动列表，配置一下 /etc/samba/smb.conf 就好了。
+
+使用systemd的话，需要使用systemctl enable smbd.service，如果是openrc，则是 rc-update add smbd。
+
+TODO
+% TODO 
+参考讲解
+/etc/samba/smb.conf.default
 
 \section{其他的文件系统}
 
+TODO iso9660 
+
+
 \subsection{LiveCD的最爱——压缩文件系统squashfs}
 
+TODO mksquashfs 
+
+
+
 \subsection{为Flash芯片设计的文件系统}
+
+在嵌入式系统上，通常会使用FLASH芯片作为外部存储设备。FLASH芯片相比硬盘有其固有特征，适用于硬盘的文件系统在FLASH下并不是最合适的。
+
+FLASH的构造特点：
+
+
+\begin{itemize}
+\item 没有机械运动，随机访问速度很快。
+\item 数据访问以块为单位。典型的块大小是4096字节。
+\item 数据写入前要先做擦除。整个清空块上的所有数据。即使只修改一个字节也需要整个清除重新写入。
+\item 擦写次数有限。FLASH芯片使用的物理原理决定了每块数据区只能进行有限次数的擦除。通常这个次数不会太高，看芯片档次，有一万次到十万次擦写次数不等。
+\end{itemize}
+
+数据写入次数有限，文件系统必须进行块平衡算法，把数据写入操作平均分配到块中。
