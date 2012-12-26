@@ -12,7 +12,7 @@
 
 从手指接触键盘伊始，手中被编辑的文件就有了版本。随着时间推移，很多东西加了进来，也有很多东西被Del请了出去。你一定会对你用着的靠谱的编辑器点下那很靠谱的“\includegraphics[width=1em]{pics/document-save.png}”按钮。 % 好的，有一天，突然想起来一个月前删除的那段代码/文字/数据... 需要恢复。
 关闭编辑器后，你发现你写错了，需要修改。或者说，你迫切的想回退到原来的那个版本。
-怎么办？一般的编辑器有撤销按钮，可是关闭了编辑后再打开，可以从来就没有编辑器还能再撤销的。
+怎么办？一般的编辑器有撤销按钮，可是关闭了编辑后再打开，可从来就没有编辑器还能再撤销的。
 %这个时候的版本控制就是你的后悔药。就算你把整个项目的文件都删除，版本控制都能轻轻松松的帮你找回所有的文件。
 
 幸运的是，你可能一早就想到了解决办法——备份。因为你有一个非常好的习惯：在编辑任何文件前备份。
@@ -49,7 +49,7 @@ diff 的输出非常容易理解， +打头的表示添加了一行，-打头的
 下面是本文写作的时候的一个小差异\footnote{diff 的输出有多种格式，最广泛接受，人类可读性最好的就是这里使用的统一输出格式。使用 -u 参数获得。}:
 
 {\tiny 
-\begin{verbatim*}
+\begin{verbatim}
 diff -u a/git.tex b/git.tex
 --- a/git.tex
 +++ b/git.tex
@@ -75,7 +75,7 @@ diff -u a/git.tex b/git.tex
 \subsection{GIT典型工作流}
 \subsection{GIT 简单使用}
 -- 
-\end{verbatim*}
+\end{verbatim}
 }
 
 \begin{insertnote}
@@ -83,10 +83,10 @@ diff -u a/git.tex b/git.tex
 我简单的讲解一下 diff 输出。
 
 {\scriptsize 
-\begin{verbatim*}
+\begin{verbatim}
 --- a/git.tex
 +++ b/git.tex
-\end{verbatim*}}
+\end{verbatim}}
 
 的意思是下面的输出是 git.tex 这个文件的差异。 两个\verb @ \verb @ 开始的一行定义了一个改变的区域。这个区块一直到下一个\verb @ \verb @ 出现为止。\verb @ \verb @后面的数字表示修改的位置，数字为行号，也就是第120行。行号后面的数字6表示修改前这个区块有6行，自然，那个20就是修改后区块有20行了。因为只有这一处改动，所以 +120这个数字还是120,表示修改后的区块位于源文件的第120行。
 
@@ -94,9 +94,41 @@ diff -u a/git.tex b/git.tex
 
 diff的输出\footnote{其实根本用不着讲解，典型的自解释型输出。}很好的表达了文件内容的变更。如果变动不是太大，似乎靠肉眼阅读就能顺手把文件修改了。
 
+当然，人都是懒的，既然diff的输出是差异，要是有个程序能自动应用这个差异就再好不过了。
 
+当然，执行这个任务的程序就是patch。
 
-\subsection{修订历史}
+\begin{code}
+\# diff -uR modifiedproject  myproject-2012-12-21.bak > difftomyproject.diff
+
+\# cd myproject 
+
+\# patch -p1 < ../difftomyproject.diff
+\end{code}
+
+注意一下这里的  -p1 参数，主要是看
+
+ {\scriptsize 
+\begin{verbatim}
+--- a/git.tex
++++ b/git.tex
+\end{verbatim}}
+
+如果这里是 a/ b/ 这样的，应用的时候本地因为没有 a/ b/ 目录，所以使用  -p1 去掉第一层假目录。通常使用版本控制软件生成的补丁会带有 a/ b/这样的虚拟前缀。如果没有带这样的前缀，则不需要 -p1 参数。如本例子中的diff,生成的前缀是 modifiedproject/ myproject-2012-12-21.bak/ , 因为当前目录是 myproject，所以要合并的文件应该不需要目录前缀了，故而需要 -p1 去掉前缀。
+
+patch 将 diff 的输出合并，所以diff文件被形象的称呼为补丁\footnote{多数情况下使用 .patch做为扩展名，而不是如例子所用的.diff。}。
+这个时候 myproject 就算和  myproject-2012-12-21.bak 有了差异都能合并成功。
+只要你和你朋友没有同时修改同一行，合并就能成功。如果你们同时修改了同一个文件的同一个，会导致这个部分无法应用补丁，patch会把无法应用的部分写入到 .rej 结尾的文件中，并提升补丁合并失败。但是能成功合并的地方还是会打上去的。如果认为只有部分合并成功是一种混乱，但是事先又不知道，可以使用 --dry-run 参数。
+
+\begin{code}
+\# patch -p1 -dry-run < ../difftomyproject.diff
+\end{code}
+
+这样就能不弄坏工作正本的情况下检查补丁是否能成功打上。使用补丁这种形式一直是多年来开源社区相互之间协作的主要方式。
+
+\subsection{版本控制}
+
+虽然原始的办法管用，
 
 当然版本控制不仅仅是后悔药，它还是历史。
 通过细化的修订记录，能比较全面的反应项目的整个流程。它忠实的记录了项目被编辑修改的过程。
