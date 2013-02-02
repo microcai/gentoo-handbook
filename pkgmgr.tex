@@ -1,9 +1,107 @@
 
-\chapter{软件管理}\label{软件管理}
-
-
 \section{软件的分发}
+
+除了写给自己用的软件，大部分软件都需要向最终用户进行分发。软件的分发不仅仅是一次下载，一份拷贝。如何发行软件也是很考究的活。
+安装发布内容的形式可以分为二进制发布和源码发布。
+
+闭源软件没得说，只有二进制发布。开源软件通常使用源码发布，并为流行的发行版提供预编译的二进制发布。
+
+商业软件使用二进制发布，通常还会带上一个安装程序。用户只要执行这个安装程序就可以自动的将软件安装到指定位置，调节好系统配置，建立快捷方式等等操作。
+安装程序的傻瓜方式就是 “下一步”。使用Windows的人，不知不觉的养成了一路Next的习惯。有恶意程序就专门针对一路Next的人的习惯偷偷的给安装上一些广告插件。
+
+Linux下的软件通常以源码形式发布。源码常常以tar打包并用gz或者bzip2压缩，扩展名 .tar.gz 或者 .tar.bz2。发布的文件名通常为 “软件名-版本.tar.bz2”。
+用户将源码下载后，就进入了编译阶段。软件会在压缩包内带一份文档告诉用户如何编译，或者在官方网站上提供编译指导。
+
 \section{软件的编译}
+源码发布，不仅仅是把源代码打包发布完事，还需要带上一套构建脚本。但凡一个真正工作的现实软件，都不会只有一个 .c 文件完事。有的大型软件包含上万个文件。
+如此众多的文件，一个一个手工调用gcc命令去编译显然不人性化，也非常烦琐。所以但凡一个软件项目，都有一套编译系统。
+
+编译系统不仅仅用于从源码从头构建可执行文件，还包括追踪文件的修改，再次编译的时候只重新编译改动的部分。这样可以极大的加快开发的进程。因为开发者做一个小修改不需要重新编译所有的文件。
+基于这样的目的，UNIX界发明了Makefile。
+
+\subsection{Makefile}
+
+Makefile是一个基于时间戳的依赖追踪器。Makefile 定义多个目标和依赖。并在目标的时间戳比依赖旧的情况下调用定义的命令行更新目标。
+比如下面的一个Makefile文件：
+
+\begin{code}
+helloworld: helloworld.c\\
+\qquad gcc helloworld.c -o helloworld
+\end{code}
+
+意思是当helloworld的最后修改时间比helloworld.c旧，或者helloworld文件不存在的时候，调用`gcc helloworld.c -o helloworld'命令更新helloworld文件。
+
+\begin{notice}
+但是直接执行 make , 则不会更新 helloworld, 必须执行 make helloworld。 因为 helloworld 不是默认更新目标。直接执行 make 只会更新默认的目标。默认更新目标是 all， 所以需要这样写
+
+\begin{code}
+all: helloworld
+\\
+\qquad
+\\
+
+helloworld: helloworld.c\\
+\qquad gcc helloworld.c -o helloworld
+\end{code}
+
+all依赖helloworld，所以更新 all 前要更新 helloworld， 这样直接执行 make 即可更新helloworld了。
+
+\end{notice}
+
+通常发布的Makefile还定义一个特殊的目标,  install： 直接执行 make install 就可以把编译好的可执行文件拷贝到系统的 bin 目录下。
+
+一旦项目变大，手写的Makefile一起膨胀。逐个的追踪文件的变化，并手工更新相互间的依赖关系变得非常的头疼。所以，最好的办法是有个工具能自动的生成Makefile。
+这样很多软件都可以有统一的make行为了，比如支持 make test,  make install, make uninstall, make dist-bzip2 自动打包为源码发布包，等等。
+
+利用更简单的规则生成符合标准的Makefile的工具有很多，最常用的莫过于autotools了，这个是软件发布的事实标准。除了autotools，还有scons, cmake, qmake 等。
+这里着重介绍常用的autotools和cmake的使用。
+
+因为本书并不是开发手册，所以并不打算教大家如何编写Makefile, 如何编写autotools的规则，如何编写CMakeLists.txt。需要知道这些详细规则的同学可以参考各自工具的手册。
+
+\subsection{autotools}
+
+autotools 并不是一个工具，而是一组工具的集合。autotools 在开发阶段需要 m4, automake , autoconf 三个工具的配合，最终生成的是一个名为 configre 的 shell 脚本和一系列的Makefile.in文件。生成的configure 脚本和Makefile.in被打包到最终发布的源码中。因此\textbf{用户并不需要安装autotools工具集\footnote{这是autotools非常重要的优点，最终发布的源码包只依赖shell脚本和make工具。并不依赖autotools本身。}}。用户需要执行configure脚本从Makefile.in生成Makefile。然后使用make编译即可。
+
+典型的使用 autotools 编译工具的源码包的编译流程为：
+
+\begin{code}
+\#tar -xvf somepkg-ver.tar.bz2
+
+\#cd somepkg-ver
+
+\#./configure --prefix=/usr % [--prefix=/installpath --enable-XXX --disable-XXX --with-XXX --without-XXX] 
+
+\#make
+
+\#sudo make install
+\end{code}
+
+configure、make、make install 又被称为软件编译三部曲。括弧笑。
+
+代码的编译期配置都发生在调用 ./configure 脚本的时候。所有的 ./configure 脚本都支持 --prefix 指定安装路径。通常将程序安装到 /usr 下。
+autotools 的规则是这样的
+
+\begin{enumerate}
+\item 可执行文件安装到 \$\{prefix\}/bin 下
+\item 库文件安装到 \$\{prefix\}/lib \footnote{如果指定了 --libdir=XXX , 则是安装到 \$\{libdir\} 下 } 下
+\item 头文件安装到 \$\{prefix\}/include 下
+\item 数据文件安装到 \$\{prefix\}/share 下
+\end{enumerate}
+
+所以指定了 --prefix 就把其他相对路径都确定下来了。如果不指定 prefix , 默认则是 /usr/local。
+
+autotools 天生支持交叉编译。要交叉编译，只需要使用 --host=XXX 参数即可。
+GNU为一个平台定义了一个叫 host triplets 的东西，一个平台使用 cpuarch-platform-kernel 这样的三组来唯一确定。比如64位PC上跑的linux系统就是 x86\_64-pc-linux-gnu。 x86\_64 是 CPU 架构， pc-linux 指的是操作系统内核\footnote{一些发行版使用 unknow-linux}，gnu指的是libc的牌子，表示使用glibc\footnote{嵌入式系统通常是uclibc}。这样处理这样一个平台的编译工具都使用 x86\_64-pc-linux-gnu- 前缀，比如 x86\_64-pc-linux-gnu-gcc , x86\_64-pc-linux-gnu-g++,  x86\_64-pc-linux-gnu-ld , x86\_64-pc-linux-gnu-ar . 如果指定了 --host=x86\_64-pc-linux-gnu-,  则 configure 生成的 Makefile 了默认就把各种编译工具设置为 x86\_64-pc-linux-gnu- 前缀的版本。
+
+
+\subsection{cmake}
+
+autotools 对最终用户非常友好，可是开发者需要做大量的工作。显然搞明白 m4 automake autoconf (甚至还有 libtool) 相互之间的复杂关系非常令人头痛。所以 KDE 果断迁移到了 cmake 构建工具。连 KDevelop 这种重量级的IDE都放弃了原生autotools支持，转而支持cmake。
+
+cmake 使用一个 CMakeLists.txt 文件来记录项目的编译配置。开发者通过编写 CMakeLists.txt 及其简单的规则， 然后由 cmake 处理成 Makefile。 cmake 除了能将 CMakeLists.txt 转化为 Makefile， 还可以转化为 Visual Studio 的工程文件，生成 Eclipse 的工程文件，CodeBlocks的项目文件。是个对 IDE 比较友好的 工具。
+
+
+
 \section{发行版的包管理}\label{section:pkgmgr}
 \section{portage和emerge}\label{sec:emerge}
 

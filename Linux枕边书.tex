@@ -1,6 +1,6 @@
 % !TeX spellcheck = <none>
 
-%\newcommand{\compileall}{def}
+\newcommand{\compileall}{def}
 
 
 \documentclass[amstex,twoside]{ctexbook}
@@ -261,11 +261,15 @@ A computer shall not waste your time or require you to do more work than is stri
 \ifdefined\compileall
 \input{dialy}\fi
 
+\chapter{软件管理}\label{软件管理}
+
+\begin{quotes}{Ian Murdock}
+Package Management is the single biggest advancement Linux has brought to the industry
+\end{quotes}
+
 
 \ifdefined\compileall
-\include{pkgmgr}
-\else
-\addtocounter{chapter}{1}
+\input{pkgmgr}
 \fi
 
 \chapter{图形界面}

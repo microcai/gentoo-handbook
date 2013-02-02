@@ -214,20 +214,9 @@ PGO就是为这个问题诞生的一种优化形式。PGO的意思就是编译�
 \#USE=gpo emerge firefox
 \end{code}
 
-这样会编译火狐两次，第一次编译完成后会开启一个火狐，里面运行测试页面。测试完成后进入第二次编译状态。最终的结果也许比没有开启PGO优化快吧。
+这样会编译火狐两次，第一次编译完成后会开启一个火狐，里面运行测试页面。测试完成后进入第二次编译状态。最终的结果也许比没有开启PGO优化快吧\footnote{之所以用\textbf{也许}这个词，因为GPO优化的效果取决于试运行期收集到的数据。}。
+
 
 %\section{有目的的优化 – 查找性能瓶颈}
 %\subsection{查找性能瓶颈}
 %\subsection{  优化瓶颈}
-\section{benchmark – 优化的基准测试}
-
-%\subsection{优化}
-
-编译优化到底能提升多数性能呢？很多时候，轻微的性能提升并不能肉体感知。需要用数据说话。
-
-\subsection{  CPU 单核能力测试}
-\subsection{  CPU 多线程性能测试}
-\subsection{  文件系统 IO 测试}
-\subsection{  网络性能测试}
-%\subsection{  GPU/OpenGL 性能测试}
-
