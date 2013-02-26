@@ -94,21 +94,479 @@ autotools 天生支持交叉编译。要交叉编译，只需要使用 --host=XX
 GNU为一个平台定义了一个叫 host triplets 的东西，一个平台使用 cpuarch-platform-kernel 这样的三组来唯一确定。比如64位PC上跑的linux系统就是 x86\_64-pc-linux-gnu。 x86\_64 是 CPU 架构， pc-linux 指的是操作系统内核\footnote{一些发行版使用 unknow-linux}，gnu指的是libc的牌子，表示使用glibc\footnote{嵌入式系统通常是uclibc}。这样处理这样一个平台的编译工具都使用 x86\_64-pc-linux-gnu- 前缀，比如 x86\_64-pc-linux-gnu-gcc , x86\_64-pc-linux-gnu-g++,  x86\_64-pc-linux-gnu-ld , x86\_64-pc-linux-gnu-ar . 如果指定了 --host=x86\_64-pc-linux-gnu-,  则 configure 生成的 Makefile 了默认就把各种编译工具设置为 x86\_64-pc-linux-gnu- 前缀的版本。
 
 
-\subsection{cmake}
+\subsection{cmake}\label{section:cmake}
 
 autotools 对最终用户非常友好，可是开发者需要做大量的工作。显然搞明白 m4 automake autoconf (甚至还有 libtool) 相互之间的复杂关系非常令人头痛。所以 KDE 果断迁移到了 cmake 构建工具。连 KDevelop 这种重量级的IDE都放弃了原生autotools支持，转而支持cmake。
 
 cmake 使用一个 CMakeLists.txt 文件来记录项目的编译配置。开发者通过编写 CMakeLists.txt 及其简单的规则， 然后由 cmake 处理成 Makefile。 cmake 除了能将 CMakeLists.txt 转化为 Makefile， 还可以转化为 Visual Studio 的工程文件，生成 Eclipse 的工程文件，CodeBlocks的项目文件。是个对 IDE 比较友好的 工具。
 
+cmake 的通常用法是 
 
+\begin{code}
+\#tar -xvf somepkg-ver.tar.bz2
+
+\#mkdir build \&\& cd build
+
+\#cmake ../somepkg-ver -DCMAKE\_INSTALL\_PREFIX=/usr
+
+\#make
+
+\#sudo make install
+\end{code}
+
+cmake 推荐的做法是使用 out-of-tree build， 也就是不要在源码目录编译，而是新建一个目录用于编译。例子中 cmake 的第一个参数是源码路径。
+cmake 在当前目录生成 Makefile，所以需要 cd 到 新建的 build 目录。
+
+cmake 对交叉编译支持并不佳。通常仅用于执行本地编译。
+
+不像 autotools 只需要开发者安装 autotools , cmake 需要用户也安装有 cmake ， 所以不太适合那种需要尽量少的外部依赖的软件。一些人有洁癖，多一个依赖都要吵吵闹闹的。所以才会有 Gentoo 这种系统诞生的嘛（笑）。
 
 \section{发行版的包管理}\label{section:pkgmgr}
-\section{portage和emerge}\label{sec:emerge}
 
-\section{什么是overlay，如何使用}\label{sec:overlay}
+从源码编译软件，怎么说呢， 好是好啊。问题是麻烦。虽然有 autotools 这种傻瓜式的编译工具，可是依赖问题呢？一个一个的到源网站下载，然后又一个一个编译。如果编译失败还要仔细检查是否因为依赖没有安装。
+这可是非常麻烦的事情，如果有工具能自动化这些事情，自然就再好不过了。这种自动化的工具就是包管理器。
+
+二进制发布除了像Windows上的程序那样使用一个安装程序，还能以发行版的包管理器使用的二进制包进行发布。二进制包管理最有名的就是 rpm 和 deb 了。所谓rpm系和deb系就是指使用 rpm 包管理器的一系列发行版和使用 deb 包管理器的一系列发行版。也有重复再发明一次轮子的发行版，使用自己发明的包管理器。比如 archlinux。
+
+基本上，二进制包就是将软件编译，打包，压缩，然后配上一些相关信息，比如包名啊，依赖关系啊，等等。包管理器检查一下包的信息，然后把压缩的二进制文件解压到系统里，到数据库里记录一下就完成软件安装了。
+因为包里包含了依赖关系，因此包管理器得以自动处理依赖关系：自动下载安装缺失的依赖。
+
+因为包管理器的存在，系统目录下的所有文件都由包管理器严格追踪。任何一个文件都有所属的包。
+
+\subsection{软件仓库}
+
+为了包管理器能自动的安装依赖，需要提供一个软件仓库。正是软件仓库和包管理器定义了一个发行版。
+
+软件仓库是一个伟大的发明。在软件仓库发明之前，操作系统和应用程序独立更新；每一个应用程序都要自带一个自动更新机制——每个程序都要开个后台进程\footnote{个别缺德程序还注册成系统服务，禁止用户中止。}检查更新。
+
+而软件仓库发明后，操作系统和应用程序之间的界面就模糊了。操作系统和应用程序使用同一套机制进行管理和更新。想要安装什么软件只需要打开统一的仓库搜索安装即可。不需要到茫茫网络上去搜索下载，说不定一不小心就安装上了恶意程序或者流氓软件。
+
+不管是应用程序还是操作系统，都统一在一个包管理程序的控制下被安装、更新和卸载。\footnote{如此伟大的创意最终被乔帮主借鉴，搞了个App Store。}
+
+\subsection{portage和emerge}\label{sec:emerge}
+
+portage是Gentoo的包管理工具。
+\textit{ Portage可能是Gentoo在软件包管理方面最瞩目的创新。它所具有的高度灵活性以及其他大量的特性，使其经常被认为是Linux中最好用的软件包管理工具。\footnote{语出自Gentoo官方文档}}
+emerge是portage的命令行前端。绝大部分用户通过emerge使用Portage。
 
 /usr/portage下存放了数万个ebuild文件，这些文件按照预定的格式组织，形成了Gentoo的软件仓库，又称portage树。
-使用命令{\tt emerge --sync}可以方便的将本地的portage树与Gentoo官方发布的portage树进行增量同步。
+
+ebuild 包含了Portage管理工具（emerge）维护软件（安装，搜索，查询， ...）时所需要的所有信息
+
+本地portage树需要经常同远程仓库进行同步。使用rsync可以方便的将本地的portage树与Gentoo官方发布的portage树进行增量同步。
+Gentoo为rsync提供了便捷的命令{\tt emerge --sync}。建议的同步频率为不要高于每天一次。
+
+%在 \secref{sec:quickemergeguide} 已经进行了适当的 emerge 入门了。这里进行一些高级进阶。
+
+\begin{enumerate}
+\item 查询软件　
+
+使用　emerge -s [软件名称] 查询软件,如果需要查找软件的描述，使用大写的 -S 参数。
+\begin{example}{查找名字中包含mplayer}
+\begin{code}
+\#emerge -s mplayer
+\end{code}
+\end{example}
+
+\item 安装软件
+
+直接使用　emerge [软件名]　即可安装。portage会自动处理好软件间的相互依赖关系。
+
+\begin{example}{安装mplayer}
+\begin{code}
+\#emerge mplayer
+\end{code}
+\end{example}
+
+如果需要查看mplayer有哪些USE标记，有哪些依赖会被安装，可以加　-vp 参数。参数　-v　告诉emerge显示详细信息，而参数-p则告诉emerge执行“假装(pretent)”安装，并不真的执行安装，也就是只显示将要安装的软件包。
+
+\begin{code}
+\#emerge -vp mplayer　
+
+[ebuild   N    ] media-video/mplayer-1.1-r1::gentoo-zh [1.1-r1::gentoo] USE="X a52 aalib alsa cdio dts dv dvd dvdnav enca encode faac faad fbcon gif iconv jpeg jpeg2k libass libcaca libmpeg2 live lzo mad md5sum mmx mng mp3 network opengl osdmenu oss png pulseaudio quicktime rar real rtc rtmp samba shm speex sse sse2 ssse3 theora toolame tremor truetype twolame unicode vdpau vorbis x264 xinerama xscreensaver xv xvid -3dnow -3dnowext (-altivec) (-aqua) -bidi -bindist -bl -bluray -bs2b -cddb -cdparanoia -cpudetection -debug -dga -directfb -doc -dvb -dxr3 -ftp -ggi -gsm -ipv6 -jack -joystick -ladspa -lirc -mmxext -nas -nut -openal -pnm -pvr -radio -sdl -tga -v4l -vaapi\% (-vidix) (-win32codecs) -xanim -xvmc -zoran" VIDEO\_CARDS="-mga -s3virge -tdfx"
+\end{code}
+
+[ebuild   N   ] 表示新安装。　可能会出现的标记有：　　R 表示重新安装，U 表示升级，UD　表示降级，NS 则表示安装到新的　SLOT\footnote{一些软件支持多版本共存。Gentoo对于这些软件的处理办法是不同的版本安装到不同的SLOT。}。
+
+\item 卸载软件
+
+使用　emerge -C [软件名称] 来卸载软件。如果软件SLOT安装，而你只想卸载某个版本，可以使用　emerge -C =软件名称+版本 的形式卸载特定的版本。
+
+
+\begin{code}
+\#emerge -C mplayer　
+
+ * This action can remove important packages! In order to be safer, use\\
+ * `emerge -pv --depclean <atom>` to check for reverse dependencies before\\
+ * removing packages.\\
+\\
+ media-video/mplayer\\
+    selected: 1.1-r1 \\
+   protected: none \\
+     omitted: none \\
+\\
+All selected packages: media-video/mplayer-1.1-r1\\
+\\
+>>> 'Selected' packages are slated for removal.\\
+>>> 'Protected' and 'omitted' packages will not be removed.\\
+\\
+>>> Waiting 5 seconds before starting...\\
+>>> (Control-C to abort)...\\
+>>> Unmerging in:  5 4 3 2\\ 
+\end{code}
+
+不过，你需要特别注意的是：Portage将不会检查你要删除的包是否仍被其他的包依赖。但是当你要删除一个可能破坏你系统的重要的软件包时，它还是会给予警告。 
+
+当从系统中移除一个软件包时，之前那些\textbf{为了满足其依赖关系而自动被一并安装的软件包}将会被保留。
+如果想让Portage找出那些现在可以移除的相关软件包，可以使用emerge的--depclean功能。
+
+\begin{example}{移除系统中所有孤立软件包\footnote{孤立软件包指的是没有被其他软件依赖并且不是用户显式指定安装的软件}}
+\begin{code}
+\#emerge --depclean 
+\end{code}
+\end{example}
+
+所谓用户显式指定安装的软件，其实会被写入world集合。有关world/slot/virtual东西的详细概念稍后介绍。
+
+
+\item Meta软件包
+
+有时候，一些软件包自身什么也不安装，为的是通过依赖关系将很多很多其他的包一并安装。比如　kde-meta，　只要安装　kde-meta , 就能正确的将　KDE 的百八十个组件都安装了。就不用自己一个一个去emerge了。
+
+如果你试图从系统中移除一个这样的软件包的集合体，只是单纯地使用emerge --unmerge命令并不能完成你的要求，原因在于这些包的依赖关系仍然保留在系统中。 
+
+\begin{example}{移除孤立依赖的软件包}
+
+\begin{code}
+\# emerge --update --deep --newuse world\\
+\# emerge --depclean\\
+
+\# revdep-rebuild\footnote{revdep-rebuild工具由gentoolkit包提供；使用前别忘了首先emerge它哦。}\\
+ 或者如果用的　portage-2.2 以上的版本则用\\
+\#　emerge @preserved-rebuild \\
+\end{code}
+
+\end{example}
+
+
+
+
+\item 更新系统
+
+更新系统可以获得新功能，可以修正bug，安全漏洞。总之更新的好处多多。对于Gentoo而言，更新的另一个原因是，长久不更新的系统将失去无痛更新的机会甚至不得不重新安装。
+更新能保持系统最佳状态。
+
+由于Portage只能检查本地Portage树中已有的ebuilds文件，因此你首先应该更新你的Portage树。使用　\#emerge　--sync　更新本地的portage树，如果使用了overlay\footnote{下节}, 使用　layman -S 更新本地的overlay。
+
+
+\begin{example}{更新整个系统}
+\begin{code}
+\# emerge --update --deep world
+\end{code}
+\end{example}
+
+因为有时开发者会为那些你没有明确要求安装（但被其他软件包依赖而装入系统中）的包推出安全更新，我们也推荐偶尔运行一下这个命令。
+
+每当你改变了系统中任何的USE标记后，你可能需要加入--newuse选项。这样Portage将会检查这个USE标记的变动是否导致需要安装新的软件包或者将现有的包重新编译。
+
+\begin{example}{执行完整更新}
+\begin{code}
+\# emerge --update --deep --newuse world
+\end{code}
+\end{example}
+
+\end{enumerate}
+
+\subsection{有关SLOT，Virtual，分支，体系结构和Profile\protect\footnotemark{}}\footnotetext{这段是Gentoo官方文档的复制粘贴版。}
+
+通过使用Portage，一个软件的不同版本可以共存于一个系统中。其他发行版倾向于直接在软件包名字中包含版本号（例如freetype 和 freetype2），Gentoo的Portage使用一种称之为SLOT的技术来实现这种并存。
+
+一个ebuild为它自身的版本声明了一个确切的SLOT。具有不同SLOT的同一软件的Ebuild可以共存于同一个系统中。例如，上例中那个freetype包就拥有不同的ebuilds，里面分别有SLOT="1"和SLOT="2"的标志。
+
+这样软件的包的名字就不会被随机的修改为另外的名字\footnote{Gentoo认为包名加上个2是一个很2的行为}。其他包管理工具，因为缺乏SLOT机制，不得不将版本好作为包名的一部分形成如　freetype2-2.XXX.rpm　这样的包。
+
+有一些不同的软件包提供了类似的功能。比如metalogd，sysklogd和syslog-ng都是系统日志记录工具。那些依赖于“系统日志记录工具”的程序并不能随便的依赖于其中之一，比如metalogd，因为其他的系统日志工具可能也是很好的选择。好在Portage允许使用虚拟包：每一个系统日志记录工具都可以提供virtual/syslog包，因此应用程序们可以设定成仅仅依赖于virtual/syslog即可。
+
+Portage树中的软件可以存在于不同的分支中。系统默认只会接受那些Gentoo认为稳定的软件包。绝大多数新提交的软件会被添加到测试分支里。这意味着在此软件被标示为稳定版前需要进行更多的测试。尽管那些软件的ebuilds已经加入Portage树，在它们未被加入稳定分支前Portage将不会安装它们。
+
+有些软件只在某几个体系结构上可用。或者在其他体系结构中还不能运行，或者仍需要对其进行更多的测试，或者将软件提交到Portage树中的开发者还不能确定这个软件能否运行于其他体系结构。
+
+每一个Gentoo安装都依附于一个确定的profile，此文件里除了其他信息外还包含了一个正常工作的系统需要的软件包的列表。
+
+
+\subsection{当Portage抱怨的时候......}
+
+恩，使用　portage 的过程并不总是一帆风顺的。portage 也会出现一些乍一看无法理解的错误。
+
+\begin{enumerate}
+\item 被阻碍的软件包
+
+\begin{example}{安装了mariadb又安装mysql}
+
+
+\begin{code}
+\# emerge dev-db/mysql -av \\
+\\
+These are the packages that would be merged, in order:\\
+\\
+Calculating dependencies     ... done!\\
+【ebuild  N     】 dev-db/mysql-5.5.29-r1 USE="berkdb community ssl -cluster -debug -embedded -extraengine -jemalloc -latin1 -max-idx-128 -minimal -perl -profiling (-selinux) -static -systemtap -tcmalloc \{-test\}" 26,143 kB\\
+【blocks B      】 dev-db/mysql ("dev-db/mysql" is blocking dev-db/mariadb-5.5.29)\\
+【blocks B      】 dev-db/mariadb ("dev-db/mariadb" is blocking dev-db/mysql-5.5.29-r1)\\
+\\
+Total: 1 package (1 new), Size of downloads: 26,143 kB\\
+Conflict: 2 blocks (2 unsatisfied)\\
+\\
+ * Error: The above package list contains packages which cannot be\\
+ * installed at the same time on the same system.\\
+\\
+  (dev-db/mariadb-5.5.29::gentoo, installed) pulled in by
+    =dev-db/mariadb-5.5*[embedded,-minimal,-static] required by (virtual/mysql-5.5::gentoo, installed)\\
+\\
+  (dev-db/mysql-5.5.29-r1::gentoo, ebuild scheduled for merge) pulled in by
+    dev-db/mysql\\
+\\
+\\
+For more information about Blocked Packages, please refer to the following
+section of the Gentoo Linux x86 Handbook (architecture is irrelevant):
+\\
+http://www.gentoo.org/doc/en/handbook/handbook-x86.xml?full=1\#blocked
+\end{code}
+
+mysql 和　mariadb 是相互冲突的，不能同时安装到一个系统上。
+为了使安装得以继续进行，你可以选择不安装这个软件包，或者先将发生冲突的包卸载。如先移除　mariadb 再安装 mysql。
+\end{example}
+
+
+如果　mariadb 和mysql不是用户手动安装的，而是作为依赖的一部分自动安装的。升级的时候Portage有可能能自动的决定卸载mariadb安装mysql。
+比如在笔者一次例行升级中，出现了　
+
+\begin{code}
+\begin{flushleft}
+[ebuild  N     ] kde-base/print-manager-4.10.0:4  USE="(-aqua) -debug" 87 kB
+
+[uninstall     ] kde-base/printer-applet-4.9.5:4  USE="handbook (-aqua)"
+
+[blocks b      ] kde-base/printer-applet:4 ("kde-base/printer-applet:4" is blocking kde-base/print-manager-4.10.0)
+
+\end{flushleft}
+\end{code}
+
+KDE 4.10 使用　kde-base/print-manager 替换了原先使用的kde-base/printer-applet，而这2个都是作为　kde-meta 的依赖安装的，所以 kde-meta 从 4.9 升级到　4.10 的时候，Portage能正确的卸载掉和kde-base/print-manager冲突的kde-base/printer-applet。
+
+\item 被屏蔽的包
+
+\begin{example}{Portage关于被屏蔽的包的警告}
+
+\begin{code}
+
+These are the packages that would be merged, in order:\\
+\\
+Calculating dependencies               ... done!
+
+
+[ebuild  N   \#] media-gfx/blender-2.64a  USE="dds elbeem ffmpeg game-engine jpeg2k nls openexr openmp player sdl sse -3dmouse -col
+lada -cycles -debug -doc -fftw (-iconv) -jack -openal -redcode -sndfile -tweak-mode" LINGUAS="zh\_CN -ar -bg -ca -cs -de -el -en -es
+ -es\_ES -fa -fi -fr -he -hr -hu -id -it -ja -ky -ne -nl -pl -pt -pt\_BR -ru -sr -sr@latin -sv -tr -uk -zh\_TW" 
+
+The following mask changes are necessary to proceed:
+
+\qquad (see "package.unmask" in the portage(5) man page for more details)
+
+\#required by blender (argument)
+
+\# /usr/portage/profiles/package.mask:
+
+\# Diego Elio Pettenò <flameeyes@gentoo.org> (05 Feb 2013)
+
+\# Needs a complete ebuild rewrite to use CMake, and a new patchset to
+
+\# unbundle the bundled libraries. Use at your own risk; don't ask for
+
+\# a bump unless you can provide the two needed items (see bug \#364291).
+
+=media-gfx/blender-2.64a\\
+\\
+The following USE changes are necessary to proceed:\\
+ (see "package.use" in the portage(5) man page for more details)\\
+\#required by media-gfx/blender-2.64a, required by blender (argument)\\
+>=dev-cpp/glog-0.3.2 gflags\\
+\\
+NOTE: The --autounmask-keep-masks option will prevent emerge
+      from creating package.unmask or ** keyword changes.
+\end{code}
+
+\end{example}
+
+当你想安装一个对于你系统不可用的软件包。你会收到类似这样的屏蔽错误提示。你应该试着安装那些对于你系统可用的程序或者等待那些不可用的包被置为可用的。通常一个软件包被屏蔽的原因在于：
+
+\begin{enumerate}
+
+\item ~arch keyword 意味着这个软件没有经过充分的测试，不能进入稳定分支，请等待一段时间后在尝试使用它。或者如果你打算bleeding edge可以在　make.conf 加入　ACCEPT\_KEYWORDS="~arch"，　这里arch是你所使用的体系结构名字，如amd64、x86、arm、mips。
+
+\item -arch keyword或-* keyword 意味着这个软件不能工作在你机器的体系结构中。如果你确信它能工作那么请到我们的bugzilla网站提交一个bug报告。
+\item missing keyword 意味着这个软件还没有在你机器的体系结构中进行过测试。你可以咨询相应体系结构移植小组是否能对它进行测试，或者你自己为他们进行这样的测试并将你得到的结论提交到我们的bugzilla网站。
+\item package.mask 意味着这个软件被认为是损坏的，不稳定的或者有更严重的问题，它被故意标识为“不应使用”。
+\item profile 意味着这个软件不适用于你的profile。安装这样的应用软件可能会破坏你的系统，或者只是不能与你使用的profile相兼容。
+
+\end{enumerate}
+
+显然　blender　被　package.mask 屏蔽了。一个包的ebuild还在portage里缺又要屏蔽掉禁止用户安装，是不是觉得有点不能理解？
+一般来说，新加入的包会先 mask 以免用户在软件稳定之前安装。除非用户自动自己在做什么，他可以手工解除屏蔽。另外一些包被mask是因为portage即将移除它。
+
+
+\item 依赖缺失
+
+如果出现
+
+\begin{code}
+emerge: there are no ebuilds to satisfy ">=sys-devel/gcc-3.4.2-r4".
+
+\qquad\\
+
+!!! Problem with ebuild sys-devel/gcc-3.4.2-r2
+
+!!! Possibly a DEPEND/*DEPEND problem. 
+
+\end{code}
+
+这表示正在尝试安装的应用程序依赖于你的系统不可用的另外一些软件包。请到bugzilla查看是否有此问题的记录，如果没有查找到相关信息的话请提交一个报告。除非你的系统混用了不同分支，否则这类问题不应该发生，若发生了那就是一个bug。
+
+\item 意指不明的Ebuild名称
+
+\begin{example}{Portage对于意指不明的Ebuild名称的警告}
+\begin{code}
+!!! The short ebuild name "aterm" is ambiguous.  Please specify
+
+!!! one of the following fully-qualified ebuild names instead:
+
+ \\
+
+    dev-libs/aterm
+
+    x11-terms/aterm
+
+\end{code}
+
+\end{example}
+
+表明你要安装的应用程序对应有多个同名的包。Portage会列出所有可供选择的名称匹配的包。你需要同时指定类别的名称——如 emerge x11-terms/aterm。
+
+
+\item 循环依赖
+
+\begin{example}{Portage关于循环依赖问题的警告}
+\begin{code}
+!!! Error: circular dependencies: 
+
+ebuild / net-print/cups-1.1.15-r2 depends on ebuild / app-text/ghostscript-7.05.3-r1
+
+ebuild / app-text/ghostscript-7.05.3-r1 depends on ebuild / net-print/cups-1.1.15-r2 
+\end{code}
+\end{example}
+
+循环依赖应该是最头疼的问题吧。幸运的是，几乎只有安装过程中会出现，平时使用基本不会遇到。安装过程中会遇到循环依赖，通常是USE没设置好。
+
+两个（或多个）您想安装的包由于循环依赖而不能安装。这很可能源于Portage树中的bug。请等一段时间后重新sync再尝试安装。您也可以去bugzilla看看是否已经有此问题的报告，或者提交一个关于它的报告。
+
+若是USE的关系，Portage通常会在错误信息中给出调节USE的建议，则可以尝试调节一下USE参数。
+
+\item 下载失败
+
+\begin{example}{Portage关于下载失败的警告}
+\begin{code}
+!!! Fetch failed for net-misc/avbot, continuing...
+
+(...)
+
+!!! Some fetch errors were encountered.  Please see above for details.
+\end{code}
+\end{example}
+
+当Portage下载指定软件的源代码失败时，它会尝试继续安装其它（若适用）的应用程序。源代码下载失败可能源于镜像服务器没有正确同步，也可能因为ebuild文件给出了错误的下载地址。那些保存源代码的服务器也可能因为某些原因当机。也有可能是国家防火墙阻断了某些源码的下载，也有可能是当地ISP试图劫持HTTP访问插入广告。总之原因很多。
+
+过段时间重试一次看看问题是否仍然存在。
+
+\item Digest验证失败
+
+有时当你试图emerge一个软件包时，它会失败并给出以下信息：
+
+\begin{example}{Digest验证失败}
+\begin{code}
+>>> checking ebuild checksums
+
+!!! Digest verification failed:
+\end{code}
+\end{example}
+
+这是Portage树中出现了错误的迹象，通常这是由于开发者在向Portage树提交一个软件包时出错造成的。
+
+当digest校验失败的时候，请不要尝试自己去为此软件包重新产生digest。使用ebuild foo manifest并不能修复问题，反而几乎肯定会使问题变得更糟。
+
+取而代之的应该是等待一至两个小时以便让开发者来修复Portage树。一般来说错误很有可能马上就会被开发者注意到，但Portage树的修复也需要一点点时间。当你等待的时候，到Bugzilla看看是否已经有人报告了这个问题。如果没有，那就为那个损坏的包提交一个bug报告吧。
+
+一旦在Bugzilla上看到此问题已经修复，你只需要重新sync就可以下载下来那些修复后的digest。
+
+\begin{notice}
+重要: 但值得注意的是：这并不意为着你可以短时间内多次重复sync你的portage树（对于同一个rsync服务器）。正如（当你运行emerge --sync时）rsync策略所指出的那样，那些短时间内过于频繁进行多次sync的用户将会被更新服务器禁止访问（一般是将你的IP添加到禁止名单并保留一段指定的时间后才解除）。实际上，最好等到你的下次计划更新的日子再sync，因为这样你不会使rsync服务器过载而影响其他用户的正常使用。
+\end{notice}
+
+
+\item 系统Profile保护
+
+\begin{example}{Portage关于profile中保护的包的警告}
+\begin{code}
+!!! Trying to unmerge package(s) in system profile. 'sys-apps/portage'
+
+!!! This could be damaging to your system.
+\end{code}
+\end{example}
+
+您要求移除系统核心软件包中的一个。它是您的profile中所列出的必需的软件，因此不能从系统中移除。
+
+\end{enumerate}
+
+\section{理解portage}
+
+\subsection{文件和目录}
+
+要理解　portage 首先要从他的目录结构开始。
+
+所有的Portage配置选项都是通过变量来控制的。
+
+因为许多配置命令在不同的架构下是不同的,　portage通过profile来选择　make.defaults 文件以继承　profile 里的默认配置。如果你打算修改配置，不要变动　profile 里的　make.defaults ，　而应该修改 /etc/protage/make.conf\footnote{你会发现还有一个/usr/share/portage/config/make.conf.example文件。顾名思义，它仅仅是一个例子而已——Portage并不读取这个文件。}　。因为它有更高的优先级，它的设置会覆盖profile里的默认设置。
+
+除了　make.conf ，　portage 还直接支持环境变量——并且环境变量拥有最高优先级——环境变量通常只用于临时改变设置。
+当你需要变更Portage安装软件的行为时，你需要做的就是编辑/etc/portage 中的文件。我们强烈建议你使用/etc/portage中的文件而不是通过修改环境变量来变更这些行为！
+
+
+在/etc/portage目录中，你可以创建下列文档：
+
+\begin{enumerate}
+\item package.mask它列出了你永远不希望Portage安装的软件包。
+\item package.unmask它列出了本来Gentoo的开发者不建议安装的，但是你希望能安装的软件包。也就是将开发者　mask 的包强制解除　mask 状态。
+\item package.keywords它列出了还未被确认适合你的系统或架构，但是你希望能安装的软件包。也就是强制为某些包加入KEYWORDS。
+\item package.use它列出了你希望某些特定软件包使用的而不是整个系统使用的USE标记。为每个软件设定独立的USE标记。
+\end{enumerate}
+
+这些并不需要一定是文件；它们也可以是目录。例如你可以在　/etc/portage/package.use 这个文件中写入　\texttt{"app-editors/vim X -python -gpm vim-pager"}，　也可以建立
+/etc/portage/package.use 目录，并在　/etc/portage/package.use　中建立一个文件（文件名任意），在文件中写入 \texttt{"app-editors/vim X -python -gpm vim-pager"}。
+
+将　/etc/portage/package.use 创建为目录通常是更好的主意——他允许将软件包进行分组，在每个分组里设定各个软件包的USE参数。避免了单个文件变得过于庞大而变得难以编辑。
+
+\vspace{3ex}
+
+Portage树的默认位置是/usr/portage。这是PORTDIR变量定义的。当你把Portage树保存在其他位置（通过改变这个变量），不要忘了相应地改变符号链接/etc/make.profile指向的位置。
+
+如果你改变了PORTDIR变量，你可能也需要改变下面几个变量，因为它们不会知道PORTDIR变量的改变。这是Portage处理这些变量的方式导致的：PKGDIR、DISTDIR、RPMDIR。
+
+\begin{notice}
+注意：如果要移动默认的portage树的位置，将PORTDIR的修改写入make.conf而不是export一个环境变量。
+\end{notice}
+
+程序的源代码默认保存于/usr/portage/distfiles。这个位置是通过DISTDIR变量定义的。
+
+\section{什么是overlay，如何使用}\label{sec:overlay}
 
 portage里虽然有数万个\footnote{截至到本书写作的时候有32225个ebuild共计15731个软件。}ebuild，但是总有软件是游离在portage之外的。
 总要有机制可以添加第三方仓库吧？这样有的特殊软件可以放到第三方仓库中，想要使用的人添加第三方仓库即可使用emerge安装这些软件。
