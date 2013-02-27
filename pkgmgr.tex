@@ -469,7 +469,7 @@ ebuild / app-text/ghostscript-7.05.3-r1 depends on ebuild / net-print/cups-1.1.1
 
 两个（或多个）您想安装的包由于循环依赖而不能安装。这很可能源于Portage树中的bug。请等一段时间后重新sync再尝试安装。您也可以去bugzilla看看是否已经有此问题的报告，或者提交一个关于它的报告。
 
-若是USE的关系，Portage通常会在错误信息中给出调节USE的建议，则可以尝试调节一下USE参数。
+若是USE的关系，Portage通常会在错误信息中给出调节USE的建议，则可以尝试调节一下USE参数。例如　freetype开启fontforge这个　USE flag　就会依赖fontforge，而fontforge本身就是依赖freetype的。所以首次需要关闭fontforge即可打破循环依赖。如果真的需要开启fontforge支持的freetype,　可以先关闭fontforge编译一次freetype，接着再开启fontforge编译freetype，这就打破了一次循环依赖了。
 
 \item 下载失败
 
@@ -566,7 +566,58 @@ Portage树的默认位置是/usr/portage。这是PORTDIR变量定义的。当你
 
 程序的源代码默认保存于/usr/portage/distfiles。这个位置是通过DISTDIR变量定义的。
 
-\section{什么是overlay，如何使用}\label{sec:overlay}
+当你的系统上没有所需要的信息和数据时，Portage就会从网络上获取数据。含有这些信息和数据的服务器的位置定义在以下变量中：
+
+\begin{enumerate}
+\item GENTOO\_MIRRORS　定义了一些提供源代码（distfiles）的服务器地址。
+\item PORTAGE\_BINHOST　定义了一个特定的服务器地址，此服务器可为你的系统提供预先编译好的软件包。第3个变量设定rsync服务器的地址，此服务器用来更新你的Portage树。
+\item SYNC　定义了一个特定的服务器，Portage用此服务器获取Portage树。
+\end{enumerate}
+
+\vspace{3ex}
+
+Gentoo提供了一个ACCEPT\_KEYWORDS变量来定义您系统所使用的软件分支。默认情况下，系统会选择您的体系结构的稳定软件分支。例如x86或amd64。
+Gentoo使用稳定分支名字前面加\~的方式，如　~x86, ~amd64 来表示不稳定分支。通常我们分别用ARCH和~ARCH指代稳定分支和非稳定分支。
+
+如果你是个折腾族，那么稳定分支一定无法满足你的胃口，如果如果您想用最新版本的软件，稳定分支可能需要等很久。
+那么使用不稳定分支就是解你饥渴的办法。顾名思义，不稳定分支就是不稳定的，带有测试性质的。
+如果一个包正处于测试中，这代表软件的开发人员认为它虽然已经具有了相当的功能但还没有经过完全的测试。使用这样的软件，你可能会第一个发现它的bug，并可以提交一个bug报告来通知相关的开发者。
+
+要小心的是，您可能会遇到不稳定性、不完美的软件包处理（例如错误或者缺失的依赖关系）、过于频繁的更新（导致大量的编译）和损坏的包等问题。如果您还不是很清楚Gentoo的工作方式以及如何去解决这些问题，我们推荐您还是使用稳定且测试过分支。
+
+例如，要选择针对x86体系结构的测试分支，请修改/etc/make.conf文件并设定如下内容：
+
+\begin{example}{设定ACCEPT\_KEYWORDS变量}
+\begin{code}
+ACCEPT\_KEYWORDS="\~x86"
+\end{code}
+\end{example}
+
+\subsection{附加工具}
+
+\begin{enumerate}
+\item  etc-update
+
+/etc 目录下有许多配置文件。也许是软件自带的默认配置，用户也许编辑过。如果新版本提供了不同的默认配置，该如何处理呢？RPM的做法是覆盖掉用户修改的配置——将用户的配置备份为 .rpmnew 文件。
+Gentoo 将这一切的选择留给了用户。etc-update就是帮助用户更新/etc下的配置文件的。如果用户没有编辑过配置文件，那么etc-update简单的用新的默认配置文件替换掉老的配置文件。
+如果用户编辑过配置文件，则　etc-update 会给出选择，保留用户修改还是用更新覆盖掉用户的修改。如果用户想看一下二者的不同之处，etc-update也能调用diff输出不同之处。etc-update甚至能交互式合并——同时接纳更新的默认配置文件和用户的修改。
+
+\item equery 
+
+equery 如果需要知道一个文件属于哪个包，如果需要知道一个包都安装了哪些文件，如果需要知道一个包被哪些依赖，如果需要自带一个包的依赖树，equery就是你要找的工具。
+需要提醒的是equery只查找已经安装的包。
+
+\item eclean-dist
+
+/usr/portage/distfiles 文件夹变得臃肿？　全部清空又觉得可惜？　想要保留最近安装的那个版本的源码？ eclean-dist就是专门对付这种问题的小工具。 eclean-dist -d 就可以将过时的源码清除，只保留用于重新编译的最近一份源码。
+
+\item quickpkg
+
+quickpkg可以将已经安装的软件打包为二进制包。
+
+\end{enumerate}
+
+\section{使用overlay扩展portage}\label{sec:overlay}
 
 portage里虽然有数万个\footnote{截至到本书写作的时候有32225个ebuild共计15731个软件。}ebuild，但是总有软件是游离在portage之外的。
 总要有机制可以添加第三方仓库吧？这样有的特殊软件可以放到第三方仓库中，想要使用的人添加第三方仓库即可使用emerge安装这些软件。
@@ -576,8 +627,6 @@ Gentoo使用overlay来支持这种需求。
 所谓overlay就是结构和portage一样的一个目录，该目录里存放的ebuild也会被emerge使用。如果overlay里的版本和portage里的一样高，则overlay里的ebuild有更高的优先级。
 overlay通常包含portage没有的软件，或者相同版本但是打上不同的补丁以提供增强功能。只要在 make.conf 中设定 PORTDIR\_OVERLAY 为一个overlay的路径即可使用该overlay。
 overlay可以有多个，亦即PORTDIR\_OVERLAY可以设定多个路径，以空白隔开（通常是每行写一个overlay，参考 /var/lib/layman/make.conf），相互之间的优先级看它在PORTDIR\_OVERLAY变量中出现的次序。后出现的优先级高。
-
-\subsection{用layman管理overlay}
 
 现成的overlay被gentoo官方收录到了一个xml文件中：
 
@@ -598,6 +647,48 @@ overlay可以有多个，亦即PORTDIR\_OVERLAY可以设定多个路径，以空
 注意：/var/lib/layman/make.conf只有在添加了第一个overlay后才会生成。所以可以在添加一个overlay后再加入对该文件的source操作。
 \end{insertnote}
 
+\begin{enumerate}
+
+
+\item 列出所有的overlay
+
+\begin{code}
+\#layman -L
+\end{code}
+
+\item{列出已经添加的overlay}
+
+\begin{code}
+\#layman -l
+\end{code}
+
+\item{添加一个overlay}
+
+\begin{code}
+\#layman -a <overlay名字>
+\end{code}
+
+\item{删除一个overlay}
+
+\begin{code}
+\#layman -d <overlay名字>
+\end{code}
+
+\item{更新一个overlay}
+
+\begin{code}
+\#layman -s <overlay名字>
+\end{code}
+
+\item{一次性升级所有overlay}
+
+\begin{code}
+\#layman -S
+\end{code}
+
+\end{enumerate}
+
+
 \begin{example}{添加 gentoo-zh overlay。}
 \begin{code}
 \#layman -f \\
@@ -606,40 +697,6 @@ overlay可以有多个，亦即PORTDIR\_OVERLAY可以设定多个路径，以空
 
 第一次使用layman需要layman -f，这一步到gentoo.org下载repositories.xml文件。如果已经下载过可以跳过这条命令。
 
+强烈建议使用 gentoo-zh overlay，　它除了有中文相关的补丁增强，还包含各种有用的小软件，你懂的。
+
 \end{example}
-
-\subsubsection*{列出所有的overlay}
-
-\begin{code}
-\#layman -L
-\end{code}
-
-\subsubsection*{列出已经添加的overlay}
-
-\begin{code}
-\#layman -l
-\end{code}
-
-\subsubsection*{添加一个overlay}
-
-\begin{code}
-\#layman -a <overlay名字>
-\end{code}
-
-\subsubsection*{删除一个overlay}
-
-\begin{code}
-\#layman -d <overlay名字>
-\end{code}
-
-\subsubsection*{更新一个overlay}
-
-\begin{code}
-\#layman -s <overlay名字>
-\end{code}
-
-\subsubsection*{一次性升级所有overlay}
-
-\begin{code}
-\#layman -S
-\end{code}
