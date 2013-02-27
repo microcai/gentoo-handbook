@@ -199,17 +199,17 @@ Gentoo为rsync提供了便捷的命令{\tt emerge --sync}。建议的同步频�
  * This action can remove important packages! In order to be safer, use\\
  * `emerge -pv --depclean <atom>` to check for reverse dependencies before\\
  * removing packages.\\
-\\
+~\\
  media-video/mplayer\\
     selected: 1.1-r1 \\
    protected: none \\
      omitted: none \\
-\\
+~\\
 All selected packages: media-video/mplayer-1.1-r1\\
-\\
+~\\
 >>> 'Selected' packages are slated for removal.\\
 >>> 'Protected' and 'omitted' packages will not be removed.\\
-\\
+~\\
 >>> Waiting 5 seconds before starting...\\
 >>> (Control-C to abort)...\\
 >>> Unmerging in:  5 4 3 2\\ 
@@ -306,30 +306,30 @@ Portage树中的软件可以存在于不同的分支中。系统默认只会接�
 
 \begin{code}
 \# emerge dev-db/mysql -av \\
-\\
+~\\
 These are the packages that would be merged, in order:\\
-\\
+~\\
 Calculating dependencies     ... done!\\
 【ebuild  N     】 dev-db/mysql-5.5.29-r1 USE="berkdb community ssl -cluster -debug -embedded -extraengine -jemalloc -latin1 -max-idx-128 -minimal -perl -profiling (-selinux) -static -systemtap -tcmalloc \{-test\}" 26,143 kB\\
 【blocks B      】 dev-db/mysql ("dev-db/mysql" is blocking dev-db/mariadb-5.5.29)\\
 【blocks B      】 dev-db/mariadb ("dev-db/mariadb" is blocking dev-db/mysql-5.5.29-r1)\\
-\\
+~\\
 Total: 1 package (1 new), Size of downloads: 26,143 kB\\
 Conflict: 2 blocks (2 unsatisfied)\\
-\\
+~\\
  * Error: The above package list contains packages which cannot be\\
  * installed at the same time on the same system.\\
-\\
+~\\
   (dev-db/mariadb-5.5.29::gentoo, installed) pulled in by
     =dev-db/mariadb-5.5*[embedded,-minimal,-static] required by (virtual/mysql-5.5::gentoo, installed)\\
-\\
+~\\
   (dev-db/mysql-5.5.29-r1::gentoo, ebuild scheduled for merge) pulled in by
     dev-db/mysql\\
-\\
-\\
+~\\
+~\\
 For more information about Blocked Packages, please refer to the following
 section of the Gentoo Linux x86 Handbook (architecture is irrelevant):
-\\
+~\\
 http://www.gentoo.org/doc/en/handbook/handbook-x86.xml?full=1\#blocked
 \end{code}
 
@@ -361,7 +361,7 @@ KDE 4.10 使用　kde-base/print-manager 替换了原先使用的kde-base/printe
 \begin{code}
 
 These are the packages that would be merged, in order:\\
-\\
+~\\
 Calculating dependencies               ... done!
 
 
@@ -386,12 +386,12 @@ The following mask changes are necessary to proceed:
 \# a bump unless you can provide the two needed items (see bug \#364291).
 
 =media-gfx/blender-2.64a\\
-\\
+~\\
 The following USE changes are necessary to proceed:\\
  (see "package.use" in the portage(5) man page for more details)\\
 \#required by media-gfx/blender-2.64a, required by blender (argument)\\
 >=dev-cpp/glog-0.3.2 gflags\\
-\\
+~\\
 NOTE: The --autounmask-keep-masks option will prevent emerge
       from creating package.unmask or ** keyword changes.
 \end{code}
@@ -440,7 +440,7 @@ emerge: there are no ebuilds to satisfy ">=sys-devel/gcc-3.4.2-r4".
 
 !!! one of the following fully-qualified ebuild names instead:
 
- \\
+~ \\
 
     dev-libs/aterm
 

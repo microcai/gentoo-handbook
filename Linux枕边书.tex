@@ -68,8 +68,14 @@ TODO:#1}
 %=====================================================================================
 \newenvironment{notice}{\tt}{}
 \newenvironment{insertnote}{ \ttfamily\CJKfamily{KaiTi} }{\vskip 0.5cm }
-\newenvironment{code}{\small\tt\begin{longtable}{p{0.8\textwidth}}}{\end{longtable}}
+%\newenvironment{code}{\small\tt\begin{longtable}{p{0.8\textwidth}}}{\end{longtable}}
 
+\newenvironment{code}{\small\tt
+
+\begin{flushleft}
+\parindent=0em
+\leftskip=2em
+}{\end{flushleft}}
 
 \newcommand{\email}[1]{\href{mailto:#1}{#1}}
 
@@ -99,9 +105,7 @@ TODO:#1}
 
 %\hline
 
-}{	\end{minipage}}
-
-
+}{\end{minipage}}
 
 
 \newcounter{lizi}[chapter]

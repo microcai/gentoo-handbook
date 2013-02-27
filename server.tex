@@ -1,6 +1,31 @@
 
 
-\section{  搭建 HTTP 服务器}
+\section{搭建 HTTP 服务器}
+
+首先要做的是先安装一个HTTP服务器。Gentoo在portage里收录了很多HTTP服务器。这里自然说的是LAMP\footnote{Linux、Apache　、　MySQL、　PHP}里的Apache　HTTP　Server。
+
+\begin{example}{安装Apache}
+\begin{code}
+\# emerge apache -av
+\end{code}
+
+由于apache高度模块化，各个功能被拆分到了不同的模块里。而Gentoo独有的USE机制就允许用户只编译需要的模块。
+安装 apache 会出现类似下面的提示
+\begin{code}
+[ebuild  N     ] app-admin/apache-tools-2.4.3-r1  USE="ssl" 4,453 kB
+
+[ebuild  N    　] www-servers/apache-2.4.3:2  USE="ssl -debug -doc -ldap (-selinux) -static -suexec -threads" APACHE2\_MODULES="actions alias auth\_basic authn\_alias authn\_anon authn\_core authn\_dbm authn\_file authz\_core authz\_dbm authz\_groupfile authz\_host authz\_owner authz\_user autoindex cache cgi cgid dav dav\_fs dav\_lock deflate dir env expires ext\_filter file\_cache filter headers include info log\_config logio mime mime\_magic negotiation rewrite setenvif socache\_shmcb speling status unique\_id unixd userdir usertrack vhost\_alias -access\_compat -asis -auth\_digest -authn\_dbd -cache\_disk -cern\_meta -charset\_lite -dbd -dumpio -ident -imagemap -lbmethod\_bybusyness -lbmethod\_byrequests -lbmethod\_bytraffic -lbmethod\_heartbeat -log\_forensic -proxy -proxy\_ajp -proxy\_balancer -proxy\_connect -proxy\_ftp -proxy\_http -proxy\_scgi -reqtimeout -slotmem\_shm -substitute -version" APACHE2\_MPMS="-event -itk -peruser -prefork -worker" 24 kB
+\end{code}
+
+可以在make.conf里设定APACHE2\_MPMS和APACHE2\_MODULES的值。初次配置apache的同学可能要犯傻了，这么多模块！　我咋知道我需要哪个呢？
+
+拿不准的情况下就全编译了吧(笑)。
+
+\end{example}
+
+
+
+
 \subsection{  apache 用的最多的服务器}
 \subsection{ nginx 轻量级服务器}
 \subsection{ lighttpd 超轻量级服务器}
