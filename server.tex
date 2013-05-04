@@ -4,7 +4,8 @@
 
 首先要做的是先安装一个HTTP服务器。Gentoo在portage里收录了很多HTTP服务器。这里自然说的是LAMP\footnote{Linux、Apache　、　MySQL、　PHP}里的Apache　HTTP　Server。
 
-\begin{example}{安装Apache}
+\subsection{安装Apache}
+
 \begin{code}
 \# emerge apache -av
 \end{code}
@@ -21,20 +22,334 @@
 
 拿不准的情况下就全编译了吧(笑)。
 
-\end{example}
+\subsection{添加开机自启动Apache}
+
+如果你用的是OpenRC，使用下面的命令添加到开机自启动
+
+\begin{code}
+\# rc-update add apache2 default\\
+\# /etc/init.d/apache2 start
+\end{code}
+
+如果用的是　SystemD，　则简单如下\footnote{记得添加systemd overlay，　并安装 systemd-units的时候开启server这个USE flag。}
+
+\begin{code}
+\# systemctl　enable apache2.servie\\
+\# systemctl　start apache2.service
+\end{code}
+
+\textbf{如果}将来的某一天　Apache 获得了　Socket Activation 支持，则可以用
+
+\begin{code}
+\# systemctl　enable apache2.socket\\
+\# systemctl　start apache2.socket
+\end{code}
+
+这个时候Apache将会延迟到第一个客户链接的时候才启动。当然也可以在第一个客户连接上之前启动。
+
+\begin{code}
+\# systemctl　enable apache2.socket\\
+\# systemctl　start apache2.socket\\
+\# systemctl　enable apache2.service\\
+\# systemctl　start apache2.service
+\end{code}
+
+\subsection{php支持}
+
+要使用PHP，首先安装php，同时别忘记启用apache2 这个USE标记。
+
+\begin{code}
+\# USE=apache2 emerge php
+\end{code}
+
+或者将　dev-lang/php apache2 写入　/etc/portage/package.use。
+然后编辑/etc/conf.d/apache2，在APACHE2\_OPTS= 后面追加 \texttt{"-D PHP5"}
+
+最后重启 apache:
+
+\begin{code}
+\# systemctl restart apache2
+
+或者
+
+\# /etc/init.d/apache2 restart
+
+\end{code}
+
+\begin{notice}
+php　的USE标记也是相当的多，而且还有相互依赖关系。开启一个USE而不开启另一个USE或将导致portage报错。自求多福吧。（笑）
+依据提示慢慢的修改。
+\end{notice}
+
+\section{数据库}
+
+MySQL 是最流行的开源数据库。虽然被Oracle收购后前景似乎不那么没明朗了。不过仍然是最流行的数据库。
+
+少废话，先安装：
+
+\begin{code}
+(查看可用的 USE flags) \\
+\# emerge --pretend --verbose mysql \\
+(安装 MySQL) \\
+\# emerge mysql
+\end{code}
+
+记住开启所有自己先要开启的功能。
+
+如果这是你第一次安装　mysql , portage会在接近完成的最后输出这样的话：
+
+\begin{code}
+You might want to run:　\\
+"emerge --config =dev-db/mysql-[version]" \\
+if this is a new install.
+\end{code}
+
+也就是利用　“\# emerge --config  dev-db/mysql”　这条命令进行配置。设定root密码，建立初始数据库。
+
+\begin{code}
+\# emerge --config  dev-db/mysql
+\end{code}
+
+按照提示设定密码即可。
+
+接着就和　apache 一样了，分为　OpenRC 模式和　systemd 模式，分别有两种不同的办法设定为开机启动。
+
+\begin{code}
+\# rc-update add mysql default\\
+\# /etc/init.d/mysql start
+\end{code}
+
+或者　systemd 模式
+
+\begin{code}
+\# systemctl enable mysql.service\\
+\# systemctl start mysql.service
+\end{code}
+
+或者如果哪天mysql的systemd socket activation模式并入主分支了，可以这么干：
+
+\begin{code}
+\# systemctl enable mysql.socket\\
+\# systemctl start mysql.socket
+\end{code}
+
+好处就是，不需要为Web服务器和MySQL安排谁先谁后的启动次序了。第一个到mysql的连接建立的时候mysql随即被启动。
+如果担心第一次使用的等待时间过长，可以使用socket activation的同时启用mysql.service.
 
 
+\begin{code}
+\# systemctl enable mysql.socket\\
+\# systemctl start mysql.socket
+
+\# systemctl enable mysql.service\\
+\# systemctl start mysql.service
+\end{code}
+
+这样即获得了不需要操心Web服务器和MySQL谁先谁后的问题，同时也没有第一次使用的延时问题了。
+
+\section{文件共享——FTP和Samba}
+
+我们可以使用FTP来传输文件，也可以使用网上邻居 —— Samba。
+
+\subsection{FTP}
+
+FTP 是在internet上进行文件传输的协议。从名字上来说FTP就是File（文件）Transfer（传输）Protocol（协议）的缩写。FTP的实现非常多，不过似乎大家都用一个叫　Very Secure FTP Daemon 的软件。
+
+第一步先安装它。
+\begin{code}
+\# emerge　-av vsftpd
+\end{code}
+
+配置允许匿名访问，匿名用户的根目录是 /home/ftp：
+
+编辑配置文件/etc/vsftpd/vsftpd.conf
+\begin{code}
+
+listen=YES
+
+local\_enable=NO
+
+anonymous\_enable=YES
+
+write\_enable=NO
+
+anon\_root=/home/ftp
+\end{code}
+
+接着是配置开机启动。
+
+这是openrc下的配置办法：
+\begin{code}
+\# rc-update add vsftpd default
+
+\# /etc/init.d/vsftpd start
+\end{code}
+
+systemd 下则这样配置：
+\begin{code}
+\# systemctl enable vsftpd
+
+\# systemctl start vsftpd
+\end{code}
+
+\subsection{Samba}
+
+如果仅仅为了和同事或家庭成员共享一下文件，大可不必搭建一个FTP服务器。使用“网上邻居”即可。
+在Linux下借助Samba这个网上邻居的开源实现就可以和Windows主机相互访问了。
+
+恩，当然首先还是先安装：
+\begin{code}
+\# emerge samba
+\end{code}
+
+samba　分客户端和服务器端两个。客户端除了samba本身提供的一个命令行界面的　smbclient外，还有内核实现的 CIFS\footnote{参加　\secref{sec:fscifs}}。　
+各个桌面环境还有利用Samba提供的libsamba库实现了客户端，直接在文件管理器的地址栏里输入网上邻居的地址\footnote{$\backslash\backslash$主机名$\backslash$共享名 }即可访问。
+
+KDE 环境下，要实现在文件管理器地址栏里直接输入网上邻居地址，要为　kdebase-kioslaves　加入　samba USE flag。　而要编译出libsamba就需要为samba加入client这个USE　flag。
+然后重新编译　kde-base/kdebase-kioslaves　——　如果开始并没有编译进 samba 支持的话。
+\begin{code}
+\# echo net-fs/samba client >> /etc/portage/package.use/net-fs
+
+\# echo kde-base/kdebase-kioslaves samba >> /etc/portage/package.use/kde-base
+
+\# emerge kde-base/kdebase-kioslaves --oneshot
+
+\end{code}
+
+GNOME使用gvfs，只要gvfs支持了samba即可让所有gnome程序支持samba，当然也包括gnome的御用文件浏览器nautilus了。
+
+\begin{code}
+\# echo net-fs/samba client >> /etc/portage/package.use/net-fs
+
+\# echo gnome-base/gvfs samba >> /etc/portage/package.use/gnome
+
+\# emerge gnome-base/gvfs -av --oneshot
+\end{code}
+
+这样nautilus就支持在地址栏直接输入网上邻居的地址访问了。
+
+那么剩下的问题，如何配置让Windows访问Linux呢？
+
+samba　的配置文件为　/etc/samba/smb.conf
+
+smb.conf 的格式为ini格式，也就是
+
+\begin{code}
+[共享名]
+
+path = 本机路径\\
+read only = yes或no\\
+guest ok = yes或者no\\
+printable = yes或者no
+\end{code}
+
+这样的格式。
+guest ok 控制是否允许匿名访问，read only控制是不是只读，printable控制是不是可打印。
+
+其中用三个特素的节[global], [homes] 和 [printers]。　他们的配置选项比较特素化。
+
+global用于全局配置。global里配置会编程其他节的默认配置。例如在global下配置　read only=no，则所有共享默认可写除非设置了read only = yes。
+
+homes 则是账户目录模板。比如用户请求的共享名为 jhonsmith，　但是 smb.conf 并没有包含　[jhonsmith]　，　samba 并会查找本地账户是否有jhonsmith，恰好本机有一个 jhonsmith　账户，那么　[homes] 内的设置将会作为模板用来建立　 jhonsmith　　这个共享目录。
+
+[printers]　用户设置打印机，使用printable = yes
+
+\section{共享打印机}
+
+办公室/家里有很多电脑？只有一台打印机？那么需要共享打印机咯！
+
+\subsection{使用CUPS共享打印机}
+
+要共享打印机，需要一台电脑作为打印服务器。既然CUPS是一种打印服务，它能接受本机程序的请求，也一定能用接受网络上的请求。要接受网络请求，第一个想到的问题就是\textbf{权限}。如果没有权限控制，你的打印机岂不是要白白的被人使用？白白浪费许多墨水。
+
+CUPS默认禁止网络访问，所以你所需要做的就是配置好它。
+
+现在还在使用文本编辑器？弱爆了。咱有　kde-base/print-manager !　先安装了它\footnote{它可能已经作为KDE的一部分安装了，吼吼}。
+
+\begin{code}
+\# emerge　kde-base/print-manager
+\end{code}
+
+打开KDE的设置，选择打印机。输入root密码完成授权。
+
+\chatu{kdesystemsettingsprint}{KDE设置-打印机}
+
+然后点击“系统首选项”->“共享链接到此系统的打印机”。如图 \ref{fig:kdeprintmanagerallowshare}　所示。
+
+\chatu{kdeprintmanagerallowshare}{KDE打印机设置-允许共享打印机}
+
+然后将需要共享的打印机的“共享此打印机”的复选框选中即可。
+
+接下来是客户端的设置。
+
+\begin{enumerate}
+\item{}浏览器打开\url{http://localhost:631/admin}
+
+\item    点击添加打印机“Add　Printer”
+\item    选择　Internet Printing Protocol (http) 
+\item   点继续“continue”
+\item   输入打印机的地址，比如　http://printerserver:631/printers/Canon\_MP288
+\item   点继续“continue”
+\item   选择驱动，然后完成。
+\end{enumerate}
+
+\begin{notice}
+像 http://printerserver:631/printers/Canon\_MP288　这样的　URL　如何获得？
+
+可以打开　http://192.168.1.1:631/printers/ 浏览该主机共享的打印机。
+\end{notice}
+
+如果是Windows客户端，同样选择网络上的打印机，然后使用该URL即可。如图 \ref{fig:winaddprinter} 所示。
+
+\chatu[scale=0.6]{winaddprinter}{Windows添加网络打印机}
+
+\subsection{使用Samba共享打印机}
+
+Samba不仅仅可以共享文件，还可以为Windows主机提供打印机共享。因此除了让Windows直接使用CUPS外，还可以（对Windows来说）以更友好的网上邻居提供打印机共享。
+
+\begin{code}
+[global]
+
+		map to guest = bad user <== 这是为了能不用用户名密码就自动认证到Guest账户
+
+		.....其他省略.....
+		
+		\#这里列出的则是打印机相关的资料啊！
+		load printers = yes
+		
+		printing = cups
+
+[printers] <==这个分享的资源名称一定是printers
+
+		comment = All Printers
+		
+		path = /var/spool/samba
+		
+		printer admin = root
+		
+		create mask = 0600
+		
+		guest ok = Yes
+		
+		printable = Yes
+		
+		use client driver = Yes
+		
+		public = yes
+		
+		browsable = yes
+		
+		guest ok = yes
+		
+		.....其他省略..... 
+         
+\end{code}
+
+如注释里说的，打印机资源的名称必须是printers。
 
 
-\subsection{  apache 用的最多的服务器}
-\subsection{ nginx 轻量级服务器}
-\subsection{ lighttpd 超轻量级服务器}
-\subsection{ squid 加速代理	}
-\section{  数据库	}
-\subsection{  最流行的开源数据库 MySQL}
-\subsection{  最优秀的开源数据库 PostgreSQL 	}
-\subsection{  商业霸主 OracleDB	}
-\section{  加速 DNS ，在本机搭建 DNS	}
-\section{  共享打印机	}
-\subsection{ CUPS 打印服务	}
-\subsection{ Samba 打印机共享	}
+然后Windows用户即可正常的在资源管理器里里浏览网上邻居，就能直接在网上邻居里添加打印机了。如图 \ref{fig:winbroweprinter}。
+
+\chatu[scale=0.55]{winbroweprinter}{浏览网上邻居的打印机}
+
+需要安装Windows打印机驱动哦。
