@@ -67,7 +67,7 @@ L3 cache:              8192K\\
 （2）  Windows 下使用CPU-Z：
 
 \chatu{cpuz}{cpuz截图}
-如图\thefigure所示。我红圈标注的EM64T表示CPU支持64位指令。对于AMD系的CPU，您大可放心，全部支持64位指令。
+如图\thefigure{}所示。我红圈标注的EM64T表示CPU支持64位指令。对于AMD系的CPU，您大可放心，全部支持64位指令。
 
 
 \begin{insertnote}
@@ -391,7 +391,7 @@ Linux内核被引导后，会自动加载 /sbin/init 程序，之后系统的启
 
 \begin{insertnote}
 \subsection*{Linux启动过程}
-计算机的启动步骤为 固件初始化 \textrightarrow 引导程序　\textrightarrow　内核加载并初始化　\textrightarrow　执行首个程序负责剩余的初始化　\textrightarrow　检查并挂载文件系统　\textrightarrow　启动后台服务　\textrightarrow　开启登录　\textrightarrow　（用户登录或者自动登录）　\textrightarrow　执行shell\footnote{Linux下命令行的shell就是bash。但是图形界面也可以算是一个shell哦，Desktop Shell是也。}。
+计算机的启动步骤为 固件初始化 \textrightarrow{} 引导程序　\textrightarrow{}　内核加载并初始化　\textrightarrow{}　执行首个程序负责剩余的初始化　\textrightarrow{}　检查并挂载文件系统　\textrightarrow{}　启动后台服务　\textrightarrow{}　开启登录　\textrightarrow{}　（用户登录或者自动登录）　\textrightarrow{}　执行shell\footnote{Linux下命令行的shell就是bash。但是图形界面也可以算是一个shell哦，Desktop Shell是也。}。
 
 PID 1 的任务就是操作系统启动过程中的{\em 最后一英里（last mile）}。
 
@@ -545,7 +545,7 @@ MS-DOS将其中一个分区作为扩展分区，然后再扩展分区里再建�
 \chatu{logicalpart}{链式逻辑分区表}
 
 \begin{notice}
-注意：扩展分区里的逻辑分区并不是表格形式存储的，而是“链式”存储。如图\thefigure所示。每个逻辑分区包含查找下一个逻辑分区的信息。因而一个逻辑分区的破坏有可能造成链式效应，将所有的逻辑分区全部摧毁。
+注意：扩展分区里的逻辑分区并不是表格形式存储的，而是“链式”存储。如图\thefigure{}所示。每个逻辑分区包含查找下一个逻辑分区的信息。因而一个逻辑分区的破坏有可能造成链式效应，将所有的逻辑分区全部摧毁。
 \end{notice}
 
 由于近来UEFI\footnote{参考附录A “UEFI 和 BIOS”。}  的兴起，
@@ -629,21 +629,21 @@ umount /media/usbdisk
 
 有很多种工具可以对硬盘进行分区。今天的主角是 gparted , 这个是一个非常简单易用的分区管理软件，带图形界面的哦~~
 
-要打开gparted，在终端执行sudo gparted。如果 Fedora 的LiveCD提示没有这个命令，则用命令sudo yum install gparted或者apt-get install gparted进行安装。gparted界面如图\thefigure所示。
+要打开gparted，在终端执行sudo gparted。如果 Fedora 的LiveCD提示没有这个命令，则用命令sudo yum install gparted或者apt-get install gparted进行安装。gparted界面如图\thefigure{}所示。
 
 在gparted里所做的一切操作都不是立即执行的，只有应用操作后才被一次性执行。所以未应用前撤销操作是来得及的。
 下面我把为硬盘分区所需要的几个主要操作图解一下。请读者根据此处的图示熟悉操作流程，并在学习下一个小节后自行分区。
 
 \chatu{gparted-apply}{gparted应用操作}
-\noindent要应用操作：\\\indent
-1. 单击“编辑”|“应用全部操作”菜单。如图\thefigure所示。\\\indent
+\noindent{}要应用操作：\\\indent
+1. 单击“编辑”|“应用全部操作”菜单。如图\thefigure{}所示。\\\indent
 2. 在弹出的警告对话框中选择“是”。
 
 \chatu{gparted-newpart-boot}{gparted新建分区}
 
-\noindent建立一个分区：\\\indent
+\noindent{}建立一个分区：\\\indent
 1. 选择磁盘的空白区域，右击后在菜单里选择“新建”。\\\indent
-2. 在弹出的对话框里指定一个大小、分区类型和文件系统，如图\thefigure所示。\\\indent
+2. 在弹出的对话框里指定一个大小、分区类型和文件系统，如图\thefigure{}所示。\\\indent
 \hskip 4em %
 \begin{notice} %
   注意：分区表为GPT格式的只能选择主分区。
@@ -651,18 +651,18 @@ umount /media/usbdisk
 3. 单击“添加”按钮，新建的分区就编排在了任务列队里了\\\indent
 
 \chatu{gparted-delpart}{gparted删除分区}
-\noindent删除一个分区:\\\indent
-1. 右击要删除的分区在菜单里选择“删除”。如图\thefigure所示。 %\\\indent
+\noindent{}删除一个分区:\\\indent
+1. 右击要删除的分区在菜单里选择“删除”。如图\thefigure{}所示。 %\\\indent
 
 \chatu[scale=0.2]{gparted-newpt1.png}{新建分区表}
 
-\noindent新建一个分区表：\\\indent
-1. 单击“设备”｜“创建分区表”菜单，如图\thefigure所示。
+\noindent{}新建一个分区表：\\\indent
+1. 单击“设备”｜“创建分区表”菜单，如图\thefigure{}所示。
 
 \chatu[scale=0.2]{gparted-newpt2.png}{新建分区表}
 
 \indent2.在打开的对话框里点“高级”前面的箭头，选择一个分区表类型。默认为MS-DOS分区表，也就是MBR分区表。
-我需要在这里我选择gpt分区表。如图\thefigure所示。
+我需要在这里我选择gpt分区表。如图\thefigure{}所示。
 
 好了，gparted的基本操作就完成了，接下来学习一下文件系统的结构后按照自己的意愿为自己的系统分区吧。
 
@@ -947,12 +947,12 @@ stage3开始，已经没有硬循环依赖了。这个时候的循环依赖通�
 编译内核，对初学者来说是个艰巨的任务。不过这是通往资深用户和熟练管理员的必经之路。该做的迟早要做，不如现在就做个了断吧。
 
 首先获取一个内核代码。推荐使用git获得内核的代码而不是下载tar压缩包。因为更新到下一个版本的时候git只会下载差异部分而不会重新下载。
-git的具体用法请参考　\secref{sec:git}。
+% git的具体用法请参考　\secref{sec:git}。
 
 必须把内核代码放到　/usr/src/linux　哦，这样依赖内核头文件的软件才能找到所需的内核代码（仅限Gentoo设定）。
 
 {
-\bf\noindent 提示：
+\bf\noindent{} 提示：
 }{
 \em shell　下一行太长可以在后面输入``$\backslash$''并在下一行输入剩余的命令。shell会在下一行自动出现提示符 $>$　。
 }
@@ -966,6 +966,9 @@ git的具体用法请参考　\secref{sec:git}。
 
 内核代码非常大，这一步操作会比较费时。可以先放一边，重新打开个新的终端然后chroot /gentoo，进行下一节的操作。等内核的代码克隆完成了再回到这里继续。
 
+内核克隆完成后，接下来的任务就是编译内核。 编译内核是安装 Gentoo 的过程中最难的步骤。新人只要克服了编译内核这个大关，就再也没有什么能难倒他了。
+
+进入内核目录 \texttt{/usr/src/linux} 并执行 \texttt{make menuconfig} 会看到如下的界面。
 
 \chatu{kernelconfig}{内核配置界面} 
 
@@ -997,7 +1000,7 @@ Gentoo开发者似乎注意到了不会自行编译内核的しんまい%ざこ%
 在此之前还是得用nano。
 
 nano 编辑器的使用非常简单，打开一个文件用“ nano 要编辑的文件” 这种简单的指令就可以了。编辑也非常简单，支持
-\textuparrow \textdownarrow \textleftarrow \textrightarrow 上下左右移动。退出按Ctrl-X，提示是否保存，回答yes就可以了。
+\textuparrow{} \textdownarrow{} \textleftarrow{} \textrightarrow{} 上下左右移动。退出按Ctrl-X，提示是否保存，回答yes就可以了。
 
 
 \subsubsection{时区设置}
