@@ -2,7 +2,7 @@
 操作系统内核是一个抽象层，提供统一的接口给应用程序。网络是套接字(socket)，对于存储设备，就是文件系统。
 UNIX类操作系统使用树形文件系统结构。文件被组织成目录，目录和文件还可以组织成父级目，一直到根目录。
 
-TODO 树形目录插图。 %TODO
+\chatu[width=4.8cm]{FileSystemTree}{树形目录}
 
 文件系统提供了统一的方式组织数据。应用程序和用户不需要关心数据存储在哪个磁盘扇区，只需要使用一个文件名去引用即可。
 在内核，同样是提供“文件”这么一个抽象的接口，不同的人提出了不同的数据组织方式。文件系统类型就是文件在磁盘上的具体组织格式。
@@ -15,14 +15,17 @@ TODO 树形目录插图。 %TODO
 
 \subsection{硬盘结构}
 
-TODO 硬盘图片 %TODO
+\chatu[width=5.2cm]{Hard-Disk}{硬盘}
 
 硬盘具备随机访问能力，它不像磁带那样，需要经历漫长的“进带”“倒带”操作才能定位到莫个位置进行访问。
-硬盘的基本结构是碟片和磁头，磁头能沿着碟片的半径移动，随着碟片的旋转和磁头的移动，碟片上的任一位置都能被磁头快速定位。
+硬盘的基本结构是碟片和磁头，磁头能沿着碟片的半径移动，随着碟片的旋转和磁头的移动，\textbf{碟片上的任一位置都能被磁头快速定位}。
 
-TODO 磁头和碟片的示意图 %TODO
-
-为了最大化的利用磁碟的可用空间，硬盘为每个碟片配两个磁头分别用于正反面读写。为了提高容量，除了加大存储密度外，还可以采取“堆砌”——使用多片磁碟。为了简化实现，降低成本，同一时刻只能有一个磁头能和控制电路通讯；所有的磁头是统一定位的——同进同退——因为这样只需要一个磁头定位电机\footnote{移动磁头臂的电机类似喇叭里头的音圈，又称音圈电机}。磁头臂步进一次，每个磁头都能访问磁碟上狭窄的一圆周形数据区。这个数据区叫磁道。所有同半径的磁道构成一个柱面。磁头臂从最外侧移动到最内侧，步进的次数就是柱面数。每个磁道都被分隔为长度一致的扇区。
+为了最大化的利用磁碟的可用空间，硬盘为每个碟片配两个磁头分别用于正反面读写。
+为了提高容量，除了加大存储密度外，还可以采取“堆砌”——使用多片磁碟。
+为了简化实现，降低成本，同一时刻只能有一个磁头能和控制电路通讯；所有的磁头是统一定位的——同进同退——因为这样只需要一个磁头定位电机\footnote{移动磁头臂的电机类似喇叭里头的音圈，又称音圈电机}。
+磁头臂步进一次，每个磁头都能访问磁碟上狭窄的一圆周形数据区。
+这个数据区叫磁道。所有同半径的磁道构成一个柱面。磁头臂从最外侧移动到最内侧，步进的次数就是柱面数。
+每个磁道都被分隔为长度一致的扇区。
 显然硬盘容量就是柱面数\texttimes{}磁头数\texttimes{}每磁道扇区数\texttimes{}每扇区容量 \footnote{如今的硬盘，每个柱面包含的扇区数并不相等。这个简单的公式，也只适用于老式硬盘。现在的硬盘，容量需要每个柱面的扇区数一个一个加上来。}。
 柱面的编号是从外侧开始的，最外侧是柱面0。图 \ref{fig:Cylinder_Head_Sector} 是一个4磁碟8磁头的扇区和柱面示意图，该硬盘使用的还是所有磁道等扇区数的形式。
 
@@ -32,7 +35,10 @@ TODO 磁头和碟片的示意图 %TODO
 由此可见一个扇区的地址可以用 “柱面X磁头Y扇区Z”（CHS） \footnote{扇区的编号从1开始，磁头和柱面编号从0开始。}来描述\footnote{那是老式硬盘的做法了，现在都使用LBA（Logical Block Addressing）寻址了。LBA寻址为每个扇区分配一个逻辑扇区号（从0开始），由硬盘自己将逻辑扇区号映射到“柱面+磁头+扇区”的形式。逻辑扇区号采取线性编排措施，首先编排柱面0磁头0的扇区，然后是柱面0磁头1的扇区...... 逻辑扇区向操作系统屏蔽了磁盘的物理结构。操作系统在访问磁盘的时候，可以选择使用CHS格式的地址，也可以使用LBA形式。因为CHS格式的地址因为历史原因不能访问超过8.3G边界的扇区，所以大于8.3G的硬盘必须使用LBA寻址。}。
 
 
-音圈电机移动磁头臂的速度，决定了硬盘执行柱面定位的速度。所花时间被称为寻道时间。因为这个是机械运动，受限于磁头的惯性，不可能无限提高。磁头移动到目标柱面位置后，等待目标扇区移动到磁头下，所花的时间为等待时间。显然磁盘旋转速度越高，等待时间越短。每次访问扇区的时候，寻道和等待的时间都依赖目的扇区的位置和当前磁头的位置，并不是固定不变的。所以硬盘参数上标明的是平均寻道时间和平均等待时间。
+音圈电机移动磁头臂的速度，决定了硬盘执行柱面定位的速度。所花时间被称为寻道时间。
+因为这个是机械运动，受限于磁头的惯性，不可能无限提高。磁头移动到目标柱面位置后，等待目标扇区移动到磁头下，所花的时间为等待时间。
+显然磁盘旋转速度越高，等待时间越短。每次访问扇区的时候，寻道和等待的时间都依赖目的扇区的位置和当前磁头的位置，并不是固定不变的。
+所以硬盘参数上标明的是平均寻道时间和平均等待时间。
 因为硬盘以非常高的恒定速度旋转\footnote{民用桌面硬盘通常转速为7200RPM（每分钟7200转）。服务器使用的硬盘转速普遍超过10000RPM，当然，转速高了噪音也大，所以桌面硬盘少有大于7200RPM的。}
 所以硬盘访问时间主要受制于寻道时间。操作系统在读写硬盘的时候，都要尽力减少磁头移动的次数，减少花在寻道上的时间。
 
@@ -92,7 +98,10 @@ UNIX有个传统的“一切都是文件”原则。这个原则的体现就是 
 设备文件默认的所有者是root:root，权限是0600。不过这种模式有些许弊端：
 
 \begin{itemize}
-\item 不便于权限控制。想声卡最佳的所有者应该是audio:audio，权限模式0660。而内核并不被允许访问/etc/passwd文件，这个问题只能通过开机脚本强制执行chown实现了。
+\item 不便于权限控制。
+想声卡最佳的所有者应该是audio:audio，权限模式0660。
+而内核并不被允许访问/etc/passwd文件\footnote{内核其实可以访问这个文件，没有技术上的难题。但是内核不与用户空间的特定文件强耦合，因此不能由内核读取指定的文件以支持此类型的配置。这是内核的政策决定的。}，
+这个问题只能通过开机脚本强制执行chown实现了。
 \item 即便使用了脚本，热插拔的设备呢？脚本运行的时候设备还没有出现，等用户插入设备的时候脚本已经执行过了。权限模式如何更改？
 \item 设备文件由内核创建，驱动需要硬编码设备文件名。如何给设备起别名\footnote{多个设备文件指向同一个设备}？
 \item 内核需要驱动才能检测到设备，为了节约内存，用户希望内核不载入没有的设备的驱动。但是不加载驱动就不知道对应的设备是否存在。如何解决\footnote{微软的解决办法是驱动需要“安装”，写死到注册表里，下次开机就知道加载了。}？
@@ -115,6 +124,22 @@ udev在新版本中已经要求内核必须有devtmpfs支持了。所以编译�
 
 \subsection{虚拟内存盘tmpfs}\label{sec:tmpfs}
 
+Windows 用户对内存虚拟磁盘应该不陌生，安装一个专用的软件，把内存模拟成一块硬盘， 然后就可以把临时文件挪到里面加快系统的速度了。
+
+Linux下要想搞个内存文件系统远比Windows上简单，简单到只需要一条 mount 命令就可以了。
+
+\begin{code}
+\# mount -t tmpfs /tmp /tmp
+\end{code}
+
+上面这条命令就将 一块内存盘\footnote{其实只是将一个tmpfs挂载了。Linux下没有内存盘，因为tmpfs并不是一个磁盘设备。}挂载于 /tmp 上。
+
+看上去是不是很 cool? 这意味着不用任何第三方软件就支持了内存磁盘。
+
+\begin{notice}
+强烈建议内存足够的用户将 /tmp 挂载为 tmpfs。
+\end{notice}
+
 \section{网络文件系统}
 
 我们一直在追求网络透明——像本地文件那样操作远程主机上的文件。\footnote{商业上炒概念的人把它叫做“云”。}
@@ -123,7 +148,7 @@ X协议让我们的窗口系统网络透明，是不是也有办法能做到文�
 \subsection{NFS}
 
 SUN开发了一个协议RPC\footnote{Remote Procedure Call，远程过程调用，参考 \faqref{FAQ:RPC}}。居然还用这个协议实现了文件系统的read/write/open/close等调用，这就实现了一个网络文件系统（NFS, Network File System）。
-NFS是个C/S结构的网络文件系统。提供共享文件的主机是服务器，其他主机作为客户端连接到服务器上使用其共享的文件。访问NFS上的文件于访问本地文件并无二致。在内核，文件系统层向远程主机发起RPC调用而不是转而执行磁盘访问。
+NFS是个C/S结构的网络文件系统。提供共享文件的主机是服务器，其他主机作为客户端连接到服务器上使用其共享的文件。访问NFS上的文件与访问本地文件并无二致。在内核，文件系统层转而向远程主机发起RPC调用而不是执行本地磁盘访问。
 
 使用NFS和其他文件系统一样，都要先``mount"。比如如下的命令将主机``server''\footnote{没有名称的，直接使用IP地址嘛。}的 /usr/portage 挂载到本地的	/usr/portage
 
@@ -134,10 +159,69 @@ NFS是个C/S结构的网络文件系统。提供共享文件的主机是服务�
 还可以使用 fstab(5) 做到开机自动挂载。至于服务器端，当然不是随便都能共享的啦！首先要开启nfsd服务，没开服务别人怎么共享。
 开了服务，就可以使用 /etc/exports 控制导出（共享）的目录了。
 
-TODO /etc/exports 解释 %TODO 
+exports 文件以行为单位, 每一行指示一个导出的目录。每个目录都有一系列的访问控制设置，表示哪个客户有权限访问。
 
+格式如下：
+
+\begin{code}
+
+/tmp  ~      192.168.1.0/24(ro)  ~  localhost(rw)  ~  *.gentoo.org(ro,sync)
+
+[分享目錄]   [第一个客户端(权限只读)]     [第二个客户端]    [第三个客户端]
+
+\end{code}
+
+各个列一空格分开， 除了第一列是设置的要分享的目录外， 后面的都是每列设置一个客户端的访问控制。相信的访问权限放到括号里。只有出现在 /etc/exports 里的客户端才有权限挂载并访问上面的文件。可以使用 ip地址和主机名的形式指定客户端。也可以使用通配符。如果打算完全公开给任意的主机，使用 * 就可以了。
+
+至于权限方面 (就是小括号的参数) 常见的有：
+
+\begin{table}[!h]
+\begin{center}
+\begin{tabular}{l|r}
+\hline
+ro & 只读 \\
+rw & 读写 \\
+sync & 同步访问，客户端不缓存 \\
+async & 异步访问，客户端可以对读写进行缓存 \\
+all\_squash & 将客户端的用户的 id 映射成 nobody \\
+root\_squash & 将客户端的root用户的 id 映射成 nobody \\
+no\_root\_squash & 将客户端的root用户的 id 映射成 root \\
+\hline
+\end{tabular}
+\caption{exports客户端权限}
+\end{center}
+\end{table}
 \subsubsection{Gentoo下安装和使用NFS}
-TODO Gentoo 下安装和使用NFSD
+
+使用 NFS 需要安装 nfs-utils， 它提供了 nfsd 和 mount.nfs 分别用于对外提供服务和挂载其他服务器的 nfs 共享。
+
+要使用其他主机提供的 NFS 共享， 只需要使用 mount 命令即可。 例如 
+
+\begin{code}
+\# mount -t nfs //server/usr/portage	/usr/portage
+\end{code}
+
+而需要对外提供 NFS 共享服务的话，则需要启动 nfsd 服务
+
+\begin{code}
+\# systemctl enable nfsd.service
+
+\# systemctl enable rpc-mountd.service
+
+\# systemctl enable rpc-statd.service
+\end{code}
+
+然后如果不想等下次启动系统， 现在就可以立即启动他们：
+
+\begin{code}
+\# systemctl start nfsd.service
+
+\# systemctl start rpc-mountd.service
+
+\# systemctl start rpc-statd.service
+\end{code}
+
+就完成安装和启动了， 是不是非常简单呢？
 
 \subsection{Windows网上邻居：CIFS}\label{sec:fscifs}
 
@@ -156,22 +240,97 @@ Windows的网上邻居，在资源管理器上使用``\textbackslash{}\textbacks
 
 浏览Windows的共享文件看来非常简单，那么反过来给Windows提供共享呢？诶呀，那简单的，安装samba，把smbd服务加入开机启动列表，配置一下 /etc/samba/smb.conf 就好了。
 
-使用systemd的话，需要使用systemctl enable smbd.service，如果是openrc，则是 rc-update add smbd。
+使用systemd的话，需要使用systemctl enable smbd.socket。
 
-TODO
-% TODO 
-参考讲解
-/etc/samba/smb.conf.default
+如果是openrc，则是 rc-update add smbd。
+
+\begin{code}
+\# emerge samba
+
+\# systemctl enable  nmbd.service
+
+\# systemctl enable  smbd.socket
+\end{code}
+
+然后如果不想等下次启动系统， 现在就可以立即启动他们：
+
+\begin{code}
+\# systemctl start  nmbd.service
+
+\# systemctl start  smbd.socket
+
+\end{code}
+
+注意这里使用了 smbd.socket， 意味着 smbd 并不真的随系统启动， 而是等待第一个用户访问你的电脑才被启动起来。这样如果大部分时间没有人访问你的共享文件，则 smbd 根本就不会被启动。 这也是 systemd 异常的优越性所在。
+
+想控制什么文件能被共享，什么不能被共享？ 那就需要编辑 /etc/samba/smb.conf 文件了。
+
+
+smb.conf 文件是一个 INI\footnote{早期Windows多半将这种格式使用扩展名 .ini , 故得名 INI 格式。} 格式的文件。参考 \secref{FAQ:INI} 获得 INI 文件的一些格式信息。
+
+smb.conf 有2个特殊的节， global 和 printers 。 global 节用于配置 samba 本身的一些信息， printers 则配置打印机相关的选项。其他的节，其节名就是网上邻居上看到的共享的文件夹名。利用 path 指定共享的文件夹的本地路径，还有其他选项用于控制访问权限。下面列举一个典型的配置文件，并解释每条选项的用途。
+
+
+\begin{verbatim}
+[global]
+; 打印机的后端， 指示 samba 使用 cups 作为打印机后端
+printing = cups
+; 组名，加入名为 MSHOME 的组
+workgroup = MSHOME
+; 安全性 为 user 
+; 可选的设置有 USER, DOMAIN, ADS, and SERVER
+; share 意思是共享模式，不用用户认证，即可访问共享资源
+; user 需要进行认证，这是默认模式
+; domain 模式则将认证信息存储于一台中心服务器上，需要再配置中心服务器
+; ADS 则是 加入windows的Active Directory domain。
+; server 按照 samba 的文档，不建议使用。
+security = user
+
+[printers]
+comment = All Printers
+; cups 使用的打印文件目录
+path = /var/spool/samba
+; 管理员帐号
+printer admin = root
+; 允许 guest 使用
+guest ok = Yes
+; 状态可用
+printable = Yes
+; 使用客户端驱动, 意味着 windows 客户端需要安装对应的打印机驱动
+use client driver = Yes
+; 公开
+public = yes
+; 可以从网上邻居浏览到
+browsable = yes
+
+
+; 共享名是 myshare
+[myshare]
+; 被共享的文件夹本地路径是 /home/myshare
+path = /home/myshare
+
+guest ok = Yes
+browsable = yes
+public = yes
+
+\end{verbatim}
+
+节 [myshare] 指示 samba 创建个共享名为 myshare, windows用户可以使用  \textbackslash{}\textbackslash{}你的主机名\textbackslash{}myshare 访问到这个共享。
+
+path = /home/myshare 就是这个共享在你机器上的路径。
+
+samba 是个本质上复杂的软件，其配置非常复杂， 需要花费相当的精力才能配置出比较高级的用法。samba官方网站列举了大量的文档，建议想深入研究的读者去
+\url{http://www.samba.org/samba/docs/man/Samba4-HOWTO/} 学习。
 
 \section{其他的文件系统}
 
-TODO iso9660 
-
+本节介绍一些桌面系统不常用的文件系统，如 Flash 使用的文件系统，为 LiveCD 准备的压缩文件系统。
 
 \subsection{LiveCD的最爱——压缩文件系统squashfs}
 
-TODO mksquashfs 
+如果仔细观察过一个LiveCD的文件结构，你会发现， 其实里面就那么几个文件。但是有一个文件特别大，有数百MB之巨。这个文件就是 LiveCD 系统的真正的 根文件系统了。该文件实际上是一个 squashfs 的文件系统映像\footnote{文件系统映像指的是包含一个文件系统并可以直接以loopback模式挂载到系统里的一个文件。}。
 
+TODO mksquashfs 
 
 
 \subsection{为Flash芯片设计的文件系统}
@@ -191,4 +350,4 @@ FLASH的特点：
 写入前要擦除，而且擦除块通常比较大，所以文件系统要设计成“追加”数据而不是在原有的数据上修改。
 数据写入次数有限，文件系统必须进行块平衡算法，把数据写入操作平均分配到块中。不能因为一个区块的过度损耗导致整个芯片报废。
 
-专门为FLASH设计的文件系统，要考虑到FLASH的优缺点，扬长避短。
+专门为FLASH设计的文件系统，要考虑到FLASH的优缺点，以扬长避短。

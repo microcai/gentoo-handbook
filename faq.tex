@@ -123,3 +123,37 @@ RISC则反过来，每个指令只提供一种低级操作，CISC中的典型指
 
 在计算机中，远程过程调用指的是程序调用一个子过程，子过程在另一个进程（可以是本机的另一个进程，也可以是网络上的另一台主机上的进程）里执行，但是编程上不需要关心网络传输细节。
 只需要执行一次普通的函数调用即可。这样的过程就是远过程。远过程调用实现上有很多。桌面上常用的是DBus。Web编程有XML RPC 和 JSON RPC等可选。
+
+\section{INI文件格式}\label{FAQ:INI}
+
+INI 格式是 微软在 MS-DOS 开始沿用到 Windows ME 的系统配置文件的格式，通常使用扩展名.ini 因此得名。虽然后来被“注册表”所取代，但是并没有完全消亡。INI 文件因为其简洁的风格，被大量的软件用作其配置文件格式。
+
+INI 文件的设置以 键值对为基础。如
+
+\begin{verbatim}
+key=value
+\end{verbatim}
+
+同时 ini 文件可以将这些键值对分节，节名用 中括号表示，如
+
+\begin{verbatim}
+[section1]
+key1=value1
+[section2]
+key2=value2
+\end{verbatim}
+
+这样的文件就有2个节。key2 属于 节 section2 . 不同的节下允许同名的 key 。
+
+
+另外 ini 文件也支持 以 “;” 号起始的行作为注释。如
+
+
+\begin{verbatim}
+[section1]
+key1=value1
+[section2]
+; 注释哦
+key2=value2
+\end{verbatim}
+
