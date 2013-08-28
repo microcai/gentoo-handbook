@@ -324,14 +324,42 @@ samba 是个本质上复杂的软件，其配置非常复杂， 需要花费相�
 
 \section{其他的文件系统}
 
-本节介绍一些桌面系统不常用的文件系统，如 Flash 使用的文件系统，为 LiveCD 准备的压缩文件系统。
+本节介绍一些桌面系统不常用的文件系统，如为什么 Flash 芯片不应该使用为硬件设计的文件系统；以及为 LiveCD 准备的压缩文件系统。
 
 \subsection{LiveCD的最爱——压缩文件系统squashfs}
 
 如果仔细观察过一个LiveCD的文件结构，你会发现， 其实里面就那么几个文件。但是有一个文件特别大，有数百MB之巨。这个文件就是 LiveCD 系统的真正的 根文件系统了。该文件实际上是一个 squashfs 的文件系统映像\footnote{文件系统映像指的是包含一个文件系统并可以直接以loopback模式挂载到系统里的一个文件。}。
 
-TODO mksquashfs 
+squashfs是一个只读的文件系统，并对文件内容进行了压缩——当然，这个压缩对用户来说是透明的。读取位于其上的文件时，系统自动对内容
+进行解压。 要使用 squashfs ，首先在内核里启用 squashfs,
 
+\begin{verbatim}
+内核配置: SquashFS
+
+Device Drivers --->
+  Block Devices --->
+    <M> Loopback device support
+File systems --->
+  Miscellaneous Filesystems --->
+    <M> SquashFS
+
+\end{verbatim}
+
+接着安装 squashfs-tools
+
+\begin{code}
+\# emerge squashfs-tools
+\end{code}
+
+如何创建 squashfs 文件系统映像呢？ 那就要使用 squashfs-tools 里带的 mksquashfs 啦！
+
+\begin{example}{将 path-to-squashfs-root/ 的内容打包到 path-to-squashfs.img 文件里}
+\begin{code}
+\# mksquashfs path-to-squashfs-root/  path-to-squashfs.img 
+\end{code}
+\end{example}
+
+需要详细的用法请参考 mksquashfs --help
 
 \subsection{为Flash芯片设计的文件系统}
 
@@ -351,3 +379,6 @@ FLASH的特点：
 数据写入次数有限，文件系统必须进行块平衡算法，把数据写入操作平均分配到块中。不能因为一个区块的过度损耗导致整个芯片报废。
 
 专门为FLASH设计的文件系统，要考虑到FLASH的优缺点，以扬长避短。
+
+在主线内核里，为 Flash 定制的文件系统有 F2FS, JFFS2, UBIFS, LOGFS；
+YAFFS 应用广泛缺没有进入主线内核。
