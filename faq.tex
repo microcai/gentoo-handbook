@@ -9,6 +9,9 @@
 
 \section{UEFI和BIOS是什么？}
 
+IBM 制造 PC 的时候，为 PC 的 ROM 里内置了一个基本的系统，用来从磁盘加载 DOS 。 这个基本系统就是 BIOS。
+
+
 
 \section{什么是API?。}\label{FAQ:API}
 
@@ -29,8 +32,13 @@ su 还可以切换到其他用户，如“su smith - ”可以切换到smith帐�
 另外一个临时使用root权限的办法就是在执行的命令前加 sudo 。 sudo 需要用户加入wheel组并在 /etc/sudoers 加入 “\%wheel ALL=(ALL) ALL” 一行。
 sudo 通常来说只应该授权给信任的普通帐号 —— 比如管理员自己给自己设定的日常登录帐号（如果是桌面用户，自然就是自己用来登录桌面的帐号） —— 并且为普通用户设定好强壮的密码。
 
-\section{内核参数}\label{FAQ：kernelparamter}
 
+
+\section{对称多处理器}\label{FAQ:SMP}
+
+对称多处理器（Symmetric Multi-Processing） 是多 CPU 架构的一种\footnote{另一种是非对称多处理器}。 %另一种是非对称多处理器。
+
+对称多处理器里，多个 CPU 或者多个 CPU 核心，处于同等位置。他们都参与调度，执行内核代码和用户代码。操作系统对这些 CPU 同等对待。 而非对称系统下，有一个主 CPU 和多个从 CPU , 主 CPU 只是控制其他从 CPU ，不参与调度，不执行用户代码。
 
 \section{Initramfs是什么}　\label{FAQ:initramfs}
 
@@ -48,6 +56,18 @@ GRUB加载内核的时候通过initrd 命令加载一个initramfs，该initramfs
 
 initramfs是一个目录的压缩包。由dracut程序生成。initramfs用于寻找真正的根目录时的临时根目录，通常只包含一些必要的驱动和一些用于查找根分区的脚本，但有时候可以成为一个完成的系统的根目录，这样的系统可以脱离磁盘运行。比如Fedora的安装DVD,使用一个巨大initramfs作为安装环境的根目录。该initramfs包含的是一个真正的OS，带有完整的工具。
 
+\section{抢占式多任务}\label{FAQ:preemptmultitasking}
+
+一个任务在运行的时候，内核强制判断其运行时间已经够长了，应该让出CPU执行其他任务，并强制进行切换，而不管当前正运行到哪个地方。这个方式就是抢占式多任务。内核用于判断其时间长度的办法就是给每个任务分配时间片。时间片用完了就要被强制切换。
+
+但是，只有当该任务执行的是用户代码的时候，才是可以任意抢占的。如果该任务正在执行一个系统调用，导致进入内核模式，则只能在内核里预先定义的几个点上进行抢占。
+
+\section{内核参数}\label{FAQ：kernelparamter}
+
+
+\section{交换分区和交换文件}\label{FAQ:swap}
+
+在计算机发展的早期阶段，内存价格昂贵，计算机的内存总是不够运行。于是人们想出了一个叫做“交换分区”的办法。
 
 \section{汉化man手册}\label{FAQ:zhman}
 

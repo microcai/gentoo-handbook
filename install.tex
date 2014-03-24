@@ -972,11 +972,359 @@ stage3开始，已经没有硬循环依赖了。这个时候的循环依赖通�
 
 \chatu{kernelconfig}{内核配置界面} 
 
-%TODO
+在这个界面，可以使用键盘的  \textuparrow\textdownarrow 来移动选项，用 \textleftarrow\textrightarrow 来移动下方的 \verb|<Select>    < Exit >    < Help >    < Save >    < Load >| 按钮。移动到对应的选项上，使用空格键切换选项状态。Linux内核的选项，基本上分 Y M N 三种回答。在 menuconfig 配置界面，就是 [*] [M] [ ] 三种。空格键可以在这三个状态间切换。如果有子选项，按回车键进入。退出子选项，要将下面的选项移动到 <Exit> 然后按回车。
+所谓 Y 的意思，就是编译进内核 vmlinuz 文件本身。M 的意思是编译为模块，动态加载。N 就是取消对应的选项。有的选项只有 Y N 两种状态。 另外还有一种选项，是按回车后可以进入一个输入文本的界面，输入完成再按回车返回。如机器名的配置。
+光标位于一个选项上的时候，按 Shit + "/" 也就是按 "?" 键将显示对应选项的英文帮助。
 
-\subsubsection{initrd}\label{sec:initrd}
+一开始，初学者可能会对内核那么多选项摸不着头脑。内核里的选项按照子系统进行过分类。
+硬是要再分类，我认为就2类，一是功能性选项，二是驱动。
 
-%TODO
+\begin{notice}
+Linux 和 Windows 在驱动这一点上显著的不同： Linux 认为驱动是内核的一部分，而 Windows 认为驱动是硬件的一部分。因此 Linux 下驱动随内核附带。 Windows 下驱动随硬件附带。买新硬件一定要安装驱动。驱动由硬件厂家提供。
+\end{notice}
+
+自行编译内核，就需要知道自己电脑的具体硬件，以便选择驱动。如果漏选了驱动，轻则硬件功能缺失（不能上网，没有声音），重则系统无法启动。好在Linux支持按需加载驱动。就算选择了某个驱动，如果内核启动的时候没有检测到相应的硬件，对应的驱动便不会加载。
+因此，对于驱动，有一个诀窍，不知道的时候，就选 M。 但是对于功能性选项， 如果选择错误，可能导致一些系统功能不可用，轻则导致一些程序无法执行，重则无法启动系统。好在这些功能选项，内核都有默认值。第一次执行 make menuconfig 的时候，这些选项已经按照默认值设定好了，基本无需干预。
+
+下面以 X86\_64 架构为例详解内核的编译。
+
+
+第一条选项，“64bit-kernel”，允许在 64 位环境下交叉编译 32 位内核。Gentoo 要本机使用，自然这里选 Y 。
+
+下图 \ref{fig:kernelconfig1} 是 General Setup 。
+
+\chatu{kernelconfig1}{内核配置界面-General Setup} 
+
+\begin{enumerate}
+\item Cross-compiler tool prefix  交叉编译的时候，设定工具链前缀。本地编译留空，不设置。
+\item Compile aslo drivers which will not load 编译用不到的驱动。只有测试和开发人员需要。一般选 N。
+\item Local version - apend to kernel release 在内核的版本号后面添加自己的版本字符串。一般不写了吧。看个人喜好了。
+\item Kernel compress mode (XZ) 这个是内核的压缩格式。linux 内核编译完成后是一个 vmlinux 文件， ELF 格式。接着对 vmlinux 进行压缩，然后在头部添加启动和解压代码，形成 bzImage 文件。bzImage 文件通常拷贝到 /boot/ 分区，名字修改为 vmlinuz-版本号。 这里选择的就是内核的压缩格式。压缩率越高，生成的 bzImage 文件越小。载入就越快。 括号里显示的是当前选择的压缩模式。默认的压缩格式是 gzip 。 注意，系统里需要安装有相应的压缩工具。
+
+\item Default hostname 就是不使用 hostname 命令设定本机的机器名的时候，默认的名字。默认是 "(none)"。 其实开机后， init 系统会根据配置设置名字的，所以这里的设置其实无关紧要。
+\item Support for paging of anonymous memory (swap) 这个选项的意义在与支持页面文件和交换分区。内存不够用的时候就把硬盘上的一部分空间拿来当内存。哪怕内存很大，最好也选上。
+\item System V IPC UNIX 系统的 IPC 功能，禁用该选项会导致一些程序无法运行。
+\item POSIX Message Queues ~  POSIX 消息列队, 也是 UNIX 系统的功能，不建议关闭。
+\item open by fhandle syscalls ~ Linux 新增的一个系统调用。已经有一些新的软件开始采用这项功能了。
+\item Auditing support ～ systemd 需要启用 auditing 支持，并且 ``Enable system-call auditing support'' 和``Make audit loginuid immutable'' 同样需要启用。
+\item Timers subsystem ~ 定时器子系统。定时器有三种工作方式。在这里建议大家选择 Idle dynticks system (tickless idle)。 如果系统空虚下来，就会关闭时钟中断。减低系统功耗。 
+就算硬件没有高精度时钟（不太可能），也没有坏的影响。而 完全 tickless 模式，是 3.12 版本以后的内核才实现的功能，目前来说还不太稳定。慎重选择。
+注意把 High Resolution Timer Support 也启用，它可以提供比1毫秒更高的精度(因为它可以读取HPET/TSC等新型硬件时钟源),可以更好的支持音视频等对时间精度要求较高的应用，强烈建议选"Y".
+
+\item CPU/Task time and stats accounting ~~ 子选项 Cputime accounting 可以在  “Simple tick based cputime accounting”    、   (X) ”Full dynticks CPU time accounting“      、 ”Fine granularity task level IRQ time accounting “ 三个之间选择。精度依次提高，当然，对 cpu 的占用也依次提高。对进程的 cpu 时间统计有准确要求的人，可以适当的使用第二个乃至第三个选项。完全没要求的话，用第一个选项也不错。
+BSD Process Accounting 这个功能目前来说，只有 bootchart \footnote{一个用来统计开机过程中的各程序资源使用情况的软件，用于分析开机过程，进行有针对的优化。} 这个程序用到了，如果不打算使用这个程序，完全没有启用的必要。“Export task/process statistics through netlink” 同样也是用于类似目的。平时使用可以无需开启。
+
+
+\item RCU Subsystem ~~ RCU 是一个高效的读写锁，特别适用于读多写少的情况。如果不确定，这里面的选项全部都选 N。
+
+\item Kernel .config support  ~~ 这个选项启用后，允许用户通过 /proc/config.gz 访问当前运行的内核的 .config 配置文件。实际意义不大。浪费内存而已。
+
+\item Kernel log buffer size ~~  当你使用命令 dmesg 的时候，就能查看到内核启动开始到目前为止的日志输出。但是，如果你的系统运行了很长时间，内核产生了很多输出， dmesg 的输出会无限长么？ 当然是否定的。 这个就是用来设定用于存储内核日志的空间限制的。超过空间限制的日志，将会覆盖掉老日志。默认值是 17 , 也就是 128KB。
+
+\item Control Group support ~~ cgroup 是 Linux 特有的一项进程管理功能。 systemd 就采用了 cgroup 进行进管理，能正对一组进程进行资源管理配置。cgroup 启用后，还能再进入其子选项。进一步定制 cgroup 的功能。如果打算使用 systemd (并且是强烈的建议使用 systemd )作为 init 系统， cgroup 是必须启用的功能。而 cgroup 子选项的功能，当然是选的越多，功能越丰富啦。不过，一般桌面系统，其子选项可以全部不启用。无需那么强大的功能。
+
+\item Namespaces support ~~ 名字空间支持。 这个也是 systemd 要求必须启用的功能。 可能你会看到该选项变成了 -*- 
+
+\item Require conversions between uid/gids and their internal representation ~~ 不确定就选 N 。 这个是内核里更严格的检查 UID/GIDS 转换关系。
+
+\item Automatic process group scheduling ~~ 如果你使用了 systemd , 那么这个是鸡肋功能。这个是在内核里实现了 systemd 的 cgroup 分组管理。允许内核根据进程所连接的控制台自动纳入不同的 cgroup 分组。加强系统稳定性。
+
+\item Enable deprecated sysfs features to support old userspace tools ~~ 用 Gentoo 怎么还会有老旧的程序呢？ 当然选 N 节约系统资源。这个是让  /sys/class/block 的内容出现在 /sys/block 的选项。 只有当使用一些老旧的系统程序的时候才需要。 Gentoo 下无需启用该选项。一些新的程序可能会在启用该选项后无法工作。
+
+\item Kernel->user space relay support (formerly relayfs)  ~~ 选 N 。 
+
+
+\item  Initial RAM filesystem and RAM disk (initramfs/initrd) support ~~ 如果打算使用 initramfs 就启用，不打算使用 initramfs 可以不启用。有关 initramfs 请参考 \faqref{FAQ:initramfs} 启用该功能也可以不使用 initramfs , 该选项会增加内核大约15k的体积。启用该选项会有个 “Initramfs source file(s)” 选项，这个无需搭理。除非你打算把 initramfs 编译进内核文件本身，而不是使用 grub 的 initrd 命令加载。这个一般是用于引导程序不支持 initramfs 的情况下启动系统。
+
+\item Optimize for size  ～～  选 Y ， 原因参考   \secref{sec:optsize}
+
+\item Configure standard kernel features (expert users) ~~ 如选项后的 “expert users” 指示一样，除非你是专家，否则不要选 Y 。选了 Y 将展开子选项， 里面可以配置一些内核标准功能。调节后，你的内核就不标准了，不拥有一些其他系统上的标准功能，还能继续兼容市面上的程序么？
+
+\item Embedded system ~~ 选 N 。 除非你是做嵌入式开发的，对标准内核功能都要定制。
+
+\item Disable heap randomization ~~ 为了增加安全性， Linux 对堆的分配是要采取一定的随机化处理的。如果想提高内存分配的速度，可以牺牲一定的安全性，开启次选项。
+
+\item Choose SLAB allocator ~~ 使用最新的  SLUB (Unqueued Allocator)， 性能更好。
+
+\item SLUB per cpu partial cache ~~ 让 SLUB 分配出来的对象对 cpu 更本地化，以便利用 cpu 的高速缓存。缺点就是释放的时候不能立即释放。对实时系统选 N 。
+
+\item Profiling support ~~ 收集内核性能数据的系统，非内核开发者选 N 。
+
+\item Kprobes ~~ 非内核开发者选 N 。 用于追踪内核函数调用。
+
+\item Optimize very unlikely/likely branches ~~ 对几乎不可能执行的条件判定指令的一个分支进行优化，使得条件成立的时候开销更小。
+\end{enumerate}
+
+图 \ref{fig:kernelconfig2} 是 Processor type and features 。
+
+\chatu{kernelconfig2}{内核配置界面-Processor type and features} 
+
+
+“Processor type and features” 的子选项用来配置和 CPU 相关的一些特性。
+
+\begin{enumerate}
+
+\item 
+Symmetric multi-processing support ~~ 启用  SMP 支持。 关于 SMP 可以参考 \faqref{FAQ:SMP}。 对多核处理器，这个是必须开启的选项。否则 Linux 将只支持单CPU单核的硬件。一般 PC 上的多核处理器都是 SMP 结构的。因此这里需要选 Y 。
+
+\item Enable MPS table ~~ 老式 SMP 使用  MPS table ，而 PC 上使用的是 ACPI ，因此这里选 N 。 选 Y 也没关系，系统可以正常启动，只是会增加一些无用的代码，增加内存占用而已。
+
+\item Support for extended (non-PC) x86 platforms ~~ 使用 x86 处理器的并不只是 PC ， 这个选项用于支持非 PC 系统。 如果你运行 Gentoo 的是 PC , 那么就安心的取消这个选项吧，还节约资源。
+
+\item Intel Low Power Subsystem Support ~~ 在启用 Intel Low Power Subsystem 支持。好吧，你要是用的硬件是 
+Intel Lynxpoint PCH 就可以启用。
+
+\item Single-depth WCHAN output ~~ 简化 /proc/<PID>/wchan 让 CPU 使用更低。 建议使用  Y 这里。
+
+\item Linux guest support ~~ 选 N , 除非你打算在一些特定类型的虚拟机里运行 Linux。
+
+\item Memtest ~~ 选 N 。 除非你想在内核启动的时候测试内存。
+
+\item Processor family ~~ 下面的子选项有很多，建议的选项是 Generic-x86-64， 除非你很清楚的知道自己的  CPU 类型。 PS: i7-4770 可以选 Intel Core AVX2。 
+
+\item IBM Calgary IOMMU support ~~ 不清楚的就选 Y。
+
+\item Maximum number of CPUs ~~ 最大支持的 CPU 数目。 这个数字选小点，可以节约一些内存。比如在 4 核超线程的 i7 配置下， 输入 8 。
+
+\item SMT (Hyperthreading) scheduler support ~~ 让内核的调度器针对超线程优化。比如说，把 4 个线程分配到 0 2 4 6 这 4 个 CPU 上，而不是分配到 0 1 2 3 这4个 CPU上。因为 0 1 这2个 CPU 实乃一个 CPU 核心超线程虚拟出来的而已。如果你的 CPU 支持超线程技术，务必把这个选项启用。
+
+\item Multi-core scheduler support ~~ 多核 CPU 选 yes。
+
+\item Preemption Model ~~ 抢占模式。 Linux内核同所有的其他多任务操作系统一样，都使用“抢占式多任务”。有关抢占式多任务，参考 \faqref{FAQ:preemptmultitasking}。 但是，只有当该任务执行的是用户代码的时候，才是可以任意抢占的。如果该任务正在执行一个系统调用，导致进入内核模式，则只能在内核里预先定义的几个点上进行抢占。Server 模式就是在内核模式下不抢占， Desktop 模式则是在内核里预先定义的几个点上进行抢占。而 Low-Latency Desktop 模式则是只在几个 “绝对禁止抢占” 的为止禁止抢占，其他情况下可以任意抢占。
+通常选 Desktop 模式。 如果你对响应有要求，就选 Low-Latency Desktop 模式。而当你想最大化发挥系统的吞吐量的时候，就选择 Server 模式。
+
+\item Reroute for broken boot IRQs ~~ 一些主板需要启用该选项，否则内核会变得不稳定甚至无法启动。如果不确定，那就选 Y。
+
+\item Machine Check / overheating reporting  ~~ 启用该选项允许 CPU 向内核报告错误，包括数据出错和过热。应对措施可能是打印一个警告，也可能是直接停机。建议开启，并依据自己的 CPU 类型启用子选项，  Intel  的还是 AMD 的 MCE。
+
+\item Dell laptop support ~~ 是 Dell 笔记本的选 Y , 其他的 N 。
+
+\item CPU microcode loading support ~~ 微代码热更新支持。一般来说没有太大的启用必要。 如果需要这个功能，还需要安装 sys-apps/microcode-ctl 和 sys-apps/microcode-data。
+
+\item /dev/cpu/*/msr - Model-specific register support ~~ MSR 寄存器是 CPU 的特殊寄存器。启用这个选项允许 内核把寄存器透过 /dev/cpu/*/msr 文件暴露出来。允许用户空间程序设置 MSR 寄存器。 选 N。
+\item /dev/cpu/*/cpuid - CPU information support ~~ 理由同上，允许用户空间程序透过 /dev/cpu/*/cpuid 访问 CPUID 信息。选 N。
+
+\item Numa Memory Allocation and Scheduler Support ~~ 在一些多 CPU 系统里，每个 CPU 访问连接到自己节点的速度快，访问其他 CPU节点的内存速度慢。与是分配内存尽量应该分配在本地节点的内存里。 这个就是 Numa 内存分配器。PC 嘛，没有启用的意义。
+
+\item Sparse Memory virtual memmap ~~ 加速虚拟内存映射的操作，选 Y。
+
+\item Allow for memory hot-add ~~ 允许开机情况下添加内存。 这 ... 还是不要了吧，PC 在硬件上不支持啊。
+\item Enable KSM for page merging ~~ KSM 是一个将相同内容的页面进行合并的措施。这个技术在普通桌面应用上并没有实际意义。 但是对于跑了大量的虚拟机的虚拟服务器提供商来说，他能将多个虚拟机的内存进行合并从而大大减小虚拟机的内存使用。虚拟机通常都跑的相同的操作系统。他们的内存，虽然有大量的内容是重复的，但是都是独立分配的，因此传统上这些相同内容都要白白占用内存。KSM 通过定期扫描物理内存，找出内容一致的页面，并执行合并（物理页面共享）。
+
+\item Enable recovery from hardware memory errors ~~ 使用 ECC 内存就选 Y 。 ECC 内存是带数据校验的内存。多用于服务器，价格昂贵。一般个人电脑不会使用。
+
+\item Transparent Hugepage Support ~~ x86 系统使用分页技术。每个页面的大小是 4k 。 但是，4k 的页面在大地址空间下需要大量的页表。因此 CPU 提供了 大页面支持。 可以使用大于 4k 的页面。Transparent Hugepage 就是透明的合并一些连续的已分配内存的页表，改用大页面页表，以加快 CPU 的地址翻译速度同时减少页表占用的内存。
+建议启用。 “Transparent Hugepage Support sysfs defaults” 有两个选项，一个是 madvise 一个 always。 madvise 指程序需要调用 madvise 系统才对指定的内存区域使用大页面。 一个是 always 指系统无需madvise的指示就可以使用大页面。
+
+\item Cross Memory Support ~~ 这是 Linux 新增的一个功能，允许一个进程读写另一个进程的内存——只要有足够的权限。
+
+\item Enable cleancache driver to cache clean pages if tmem is present ~~ 当启用 zcache 的时候，启用这个功能非常有用，能显著的减少磁盘 IO。 当然， 你需要执行 tmem 这个程序。 没有 tmem 就选 N 。
+
+\item Enable frontswap to cache swap pages if tmem is present ~~ 同理，能显著的减少交换空间的磁盘访问。 同上，需要执行 tmem 。 没有 tmem 就选 N 。
+
+\item Contiguous Memory Allocator ~~ 允许子系统分配连续的大块物理内存。不确定就选N。
+
+\item Check for low memory corruption ~~ 一些有问题的 BIOS 会把低端内存弄坏。开启这个功能周期性的扫描低端内存以检查是不是中招。
+
+\item MTRR (Memory Type Range Register) support ~~ MTRR 寄存器用于指示 CPU 对内存的访问。为性能考虑，这个最好启用。
+
+\item EFI runtime service support ~~ 如果你使用的主板支持 UEFI 或 EFI , 那么就开启这个选项。这个允许内核从 EFI 系统上启动。如果不支持 EFI, 开启这个选项也是安全的。 有关 EFI 和 BIOS 相关的启动信息参考  \secref{sec:bootloader}
+
+\item Timer frequency ~~ Linux 内核需要周期性的时钟中断。时钟中断给了内核完成很多事情的契机。更高的时钟中断也带来更高的时钟进度。建议保留默认的 1000HZ。
+
+\item kexec system call ~~ 启用 kexec 支持。 kexec 允许用一个新内核 “替换“ 正在运行的内核。可以不\textit{重启}换内核。需要安装 sys-apps/kexec-tools。
+
+
+\item Build a relocatable kernel ~~ 如果要编译一个能被 kexec 的内核，就需要把内核加载到非默认地址。因为默认地址上已经有一个正在跑的内核了。 与是，就需要编译一个可重定位的内核。 可重定位的内核能加载到非默认地址。一些 EFI 引导器也要求内核能重定位。
+
+\item Compat VDSO support ~~ 运行 2.3.3 以前版本的 glibc 需要启用这个。否则 N 。
+
+\item Built-in kernel command line ~~ 默认的内核引导参数。关于内核引导参数，参考  \faqref{FAQ:kernelparamter}。 一些不能传递内含引导参数的情况下，将引导参数写死到内核里也是个好办法。
+
+\end{enumerate}
+
+Processor type and features 选项就解释完毕了。下面是 Power management and ACPI options。 这个选项用来配置内核的电源管理和 ACPI 功能。
+
+图 \ref{fig:kernelconfig3} 是 Power management and ACPI options 内子选项。
+
+\chatu{kernelconfig3}{内核配置界面-Power management and ACPI option} 
+
+
+\begin{enumerate}
+
+\item Suspend to RAM and standby ~~ 待机功能。选 Y 。
+\item Hibernation (aka \texttt{'} suspend to disk\texttt{'}) 休眠功能。需要注意的是，休眠功能需要使用交换分区。另外启动的时候内核要添加引导参数 resume=交换分区名。 有关交换分区，请参考 \faqref{FAQ:swap}。
+
+\item Opportunistic sleep ~~ 开启这个选项将更节能。
+\item User space wakeup sources interface ~~ 允许用户空间创建唤醒事件。不清楚就选 N。
+
+\item Run-time PM core functionality ~~ 如果不可怜你的电费单可以选N。否则就 Y 啦！
+
+\item Enable workqueue power-efficient mode by default ~~ workqueue 有性能模式和节能模式，选 Y 让 workqueue 模式使用节能模式。建议的选择是 N 。
+
+\item ACPI (Advanced Configuration and Power Interface) Support
+
+\begin{enumerate}
+\item AC Adapter ~~ 选 Y。
+
+\item Battery ~~ 有电池供电选 Y。通常笔记本选Y ， 台式机不选。
+\item Button ~~ 选 Y。 这个可以支持主机上的关机按钮，按下后桌面环境会弹出关机对话框。
+\item Fan ~~ 选 Y 可以允许程序控制风扇。选 N 则不能控制。靠主板自己调节。
+\item Dock ~~ 一些型号的笔记本，有一个可移除的底座，底座上有附加的功能。选这个选项用以支持这样型号的笔记本。
+\item Processor ~~ 选 Y。 空闲的时候可以让处理器进入低功耗模式。
+\item Processor Aggregator ~~ ACPI 4.0 里定义的新功能，让 CPU 进一步进入低功耗模式。
+\item Thermal Zone ~~ 关了你的 CPU 可能会被烤焦 。
+\item  ACPI tables override via initrd ~~ 对一些不合格的主板，有时候需要用自己产的 ACPI 表替换掉 BIOS 提供的，选上这个就可以在 initrd 里带上自己准备的版本，吼吼。 具体参考内核源码里的 Documentation/acpi/initrd\_table\_override.txt  文件。
+\item PCI slot detection driver ~~ 不确定就选 N。 这个是用于确定 PCI 设备的物理插槽位置的。
+\item Smart Battery System ~~ 智能电池系统。如果你的笔记本支持，就选 Y。
+\item Boottime Graphics Resource Table support ~~ 不确定就选N。这个允许操作系统访问冷启动画面。
+\item ACPI Platform Error Interface ~~ 允许硬件向系统报告错误。
+\end{enumerate}
+
+\item SFI (Simple Firmware Interface) Support ~~ 不确定就选 N。 运行内核在使用 SFI 固件的硬件上启动。 详情参考 \url{http://simplefirmware.org} 。
+
+\item CPU Frequency scaling ~~ 现在 CPU 越来越注重节能了，都可以在运行的时候变更自己的频率。这个选项就是让内核控制好 CPU 的频率变更功能。频率控制有五种模式： 性能、节能、用户控制、自动-按需、自动-保守。性能模式，就是一直让 CPU 工作在最高频率；节能模式就是一直工作在最低频率；用户控制，就是允许用户自己选择要运行的模式（需要安装调节频率的小程序配合）；按需模式就是让内核按照当前的工作负载自动调节；保守的自动模式，和按需差不多，但是在调节频率上比较保守，对频率的调节采取小步慢进的模式。用户可以选择几样自己用的到的模式，并设定其中一个模式为默认模式。推荐的设置是全部启用，然后设定按需为默认模式。 
+
+\item x86 CPU frequency scaling drivers ~~ 既然要调节 CPU 的频率，就需要一个驱动完成这项工作。这个选项下面列出了几个驱动。有 Intel 牌的，AMD 牌的， 和 ACPI 通用牌的。如果不清楚的话，建议全部选上，让内核自动检测硬件自动使用一个合适的。
+
+\item CPU Idle ~~ 当然是必须启用的功能。
+
+\end{enumerate}
+
+接下来是 Bus options (PCI etc.) 选项。用来设置 PCI、 PCI-E、 ISA 之类的总线支持。
+PCI 也 PCI Express 总线自然是要启用的。 留意下 PCCard (PCMCIA/CardBus) support ， 笔记本通常还保留有这个总线，用于插上网卡之类的设备。但是新出产的笔记本也取消了这个总线。毕竟上网卡之类的，都 USB 接口化了。
+ISA 总线在 PC 上已经淘汰了。二十年前的硬件上兴许还能看到。 最新的内核可能已经没有 ISA 的选项了。
+
+接下来是  Executable file formats / Emulations 选项。 这个选项用以控制内核支持的可执行文件格式。
+
+\chatu{kernelconfig4}{内核配置界面 - Executable file formats / Emulations}
+
+如图 \ref{fig:kernelconfig4} 这里只有 7 个选项。 32 位内含没有 IA32 Emulation 选项。64位内核启用 IA32 Emulation 选项可以执行 32 位的程序，目前 32 位程序并没有完全消失，所以这个选项是必须启用的。建议就是开启到如笔者这里就可以了。毕竟没人希望眼看着好好的程序执行不起来吧 ;)
+
+
+下面，进入 Internet 时代的选项 —— Networking support。
+
+\begin{enumerate}
+\item Networking options ~~ 先提个醒，这里的选项基本上都要启用，否则你的网络功能不完整，那要望洋（internet）兴叹咯。另外，一些网络功能其实是本地程序要用的，并不是说不联网就可以不启用哦～。
+
+
+\begin{enumerate}
+
+\renewcommand{\labelenumii}{\roman{enumii}.}
+
+\item Packet socket ~~ 喂喂，这个用来支持 AF\_PACKET ， 你不想一些程序跑不起来吧。 当然是选 Y。  Packet: sockets monitoring interface 顺便也得启用。
+\item Unix domain sockets ~~ 这个用来支持 AF\_LOCAL 。 别怪我没提醒你， 禁用这个基本上你的系统就废了。这个是非常非常重要的 IPC 功能。dbus , X11 都在用它。
+
+\item Transformation user configuration interface ~~ 当然启用。这个被一些网络程序用到，如 IPSec。
+
+\item Transformation sub policy support ~~ 不确定就选N。
+\item Transformation migrate database ~~ 不确定就选N。
+\item Transformation statistics ~~ 不确定就选N。
+ 
+\item  PF\_KEY sockets ~~ 除非你知道你在干嘛，否则选 Y。 这个被 IPSec 之类的工具用到。
+\item TCP/IP networking ~~ 好吧，这个是 IP/TCP 协议支持，我想没有人会拒绝选 Y 吧。 吼吼。下面那么多子选项，如果你不太清楚，就选 Y ，免得出现网络问题。
+
+\begin{enumerate}
+
+\item The IPv6 protocol ~~ 好吧， IPv6 ，目前在中国还基本上没有使用 IPv6 的，除了一些大学。如果你在一些使用校园网的学校，可以勇敢的启用哦。如果你运行 systemd , 那么 IPv6 是必须要启用的。
+可以只启用  IPv6, 下面的子选项都不需要启用，以节约宝贵的资源。
+
+\end{enumerate}
+
+\item Security Marking ~~ 如果你对 nfmark 不熟悉，那就别选 Y。
+\item Timestamping in PHY devices ~~ 为接受到的原始数据包添加时间戳。当然，前提是硬件支持。不知道的话选 N。
+
+\item Network packet filtering framework (Netfilter) ~~ Netfilter 是一个处理和过滤数据包的框架，当然要启用咯。因为防火墙就建立在这个框架之上。
+
+关于 Netfilter 可是有很长的研究的，如果只是尽快的想让内核跑起来，暂时不选也没什么，顶多就是没有防火墙功能。其子选项非常丰富，如果不确定的，可以全部选上。
+
+\item Asynchronous Transfer Mode (ATM) ~~  ATM 传输，你需要一个支持 ATM 协议的卡才需要启用这个选项。 不知道就选 N。 
+
+\item Layer Two Tunneling Protocol ~~ L2TP 是一个隧道协议，用于支持 VPN。 在一些学校和公司，需要执行一次 L2TP  拨号才能连上因特网。如果有这方面的需求，就选 Y。
+
+\item 802.1d Ethernet Bridging ~~ 不确定就选 N。 打算将 Linux 用来跑路由器上的，可以启用这个。
+
+\item 802.1Q/802.1ad VLAN Support ~~ 不确定就选 N。
+
+\item DECnet Support ~~ 有支持 DECnet 协议的网卡？ 没有吧，选 N。 现在都什么时代了，非以太网的协议早淘汰了。
+
+\item ANSI/IEEE 802.2 LLC type 2 Support ~~ 如果要支持 PF\_LLC 这里就选 Y，不知道就选 N。
+
+\item The IPX protocol ~~ 不同于 IP/TCP 协议，这个协议是为局域网开发的，从前老的能局域网对战的游戏都用这个协议 ... 如果有这方面的需求，就选 Y 吧。
+
+\item Appletalk protocol support ~~ 局域网里存在老苹果电脑的，可以用这个协议互连。
+
+\item CCITT X.25 Packet Layer ~~  X.25 协议支持。有这种网卡的就选 Y， 没有就选 N。 
+\item LAPB Data Link Driver ~~ 参考上条。
+
+\item Phonet protocols family ~~ 这个协议是 诺基亚 开发的，用来连它的猫的。不清楚就选 N。
+
+\item IEEE Std 802.15.4 Low-Rate Wireless Personal Area Networks support ~~ 好吧，这个是 LR-WPAN， 不是 WIFI。 不清楚的选 N。
+
+\item QoS and/or fair queueing ~~ QoS 是决定数据包优先级的东西。不清楚的就选 N，你将获得标准的行为。除法你打算进行定制。
+
+\item Data Center Bridging support ~~ 不确定就选 N。
+
+\item DNS Resolver support ~~ DNS 解析支持。一般选 N。 注意这个不是用户程序做的DNS解析，那个是 glibc 完成的。这里的 DNS 解析一般用在 CIFS 这类网络文件系统里，需要内核解析域名。
+
+\item BATMAN Advanced Meshing Protocol  ~~  选 N 。 
+参考  \url{http://www.open-mesh.org} 获取更多有关 BATMAN 协议的信息。
+
+\item Open vSwitch ~~ 选 N。 参考  \url{http://openvswitch.org}。
+\item Virtual Socket protocol ~~ 在虚拟机和宿主机之间传递包裹用。不确定选 N。
+
+\item NETLINK: mmaped IO ~~ 对 netlink 支持内存映射操作。不确定选 N。
+\item NETLINK: socket monitoring interface ~~ 不确定就选 N。
+
+\item MPLS: GSO support ~~ MPLS 即多协议标签交换，是一种可提供高性价比和多业务能力的交换技术。该选项让碎片化的非 MPLS GSO 变成 MPLS GSO 包。对家庭用户来说，选 N。
+\item High-availability Seamless Redundancy (HSR) ~~ 不清楚的话选 N。
+
+\item enable BPF Just In Time compiler ~~ BPF, Berkeley Packet Filter, 是一种数据包过滤技术。用来网络抓包和监控。BPF 用一种二进制代码来描述数据包的过滤过程，内核解释执行该代码完成数据过滤。开启此选项，内核能够将过滤代码编译为本机代码，这样就无需解释执行了。加快了过滤速度。建议选 Y。
+
+\end{enumerate}
+
+\item Amateur Radio support ~~ 用来支持业余无线电。相关问题咨询 \url{http://www.tldp.org/docs.html} 
+\item CAN bus subsystem support ~~ CAN bus 是一个低速串行通信协议。广泛用在汽车和一些医疗产品中。如果要使用这个协议， 选 Y 并在子选项中启用需要的驱动。
+
+\item IrDA (infrared) subsystem support ~~ 红外通信协议支持。旧式手机和笔记本通常都有红外通信接口，可以传文件神码的。现在被蓝牙取代了，吼吼。如果你还有，就选 Y。 并参阅 Documentation/networking/irda.txt 文件。
+
+\item Bluetooth subsystem support ~~ 蓝牙支持。有蓝牙设备的话，就选 Y 吧。 KDE 和 GNOME 都集成了蓝牙支持，无需额外安装蓝牙套件。可以直接在桌面环境管理你的蓝牙设备。记得从 Bluetooth device drivers 子选项里启用需要的驱动。通常 USB 接口的蓝牙接收器选 HCI USB driver 即可。
+
+\item RxRPC session sockets ~~ 选 N 。目前并不完善。
+
+\item Wireless ~~ 无线网络。 当然是 WiFi 支持啦！笔记本都需要。一些使用了 PCI 无线网卡的台式机也需要。
+
+\begin{enumerate}
+
+\item cfg80211 - wireless configuration API ~~  必须启用啊，否则你无法配置无线网卡。
+
+\item Generic IEEE 802.11 Networking Stack (mac80211) ~~ 选 Y。
+
+\end{enumerate}
+
+\item WiMAX Wireless Broadband support ~~ 4G 无线宽带。和 LTE 一样属于 4G 上网。不确定就选 N 。
+
+\item RF switch subsystem support ~~ 笔记本通常提供软开关，用来关闭无线网卡。启用这个选项以支持这项功能。
+
+\item Plan 9 Resource Sharing Support (9P2000) ~~ 不确定就选 N。
+
+\item CAIF support ~~ 选 N。
+
+\item Ceph core library~~ 选 N。
+\item NFC subsystem support ~~ 近场通讯。 手机上用到的，把两个手机相互靠近就能通信的一个东西。如果不是在造手机，还是选 N 吧。 
+
+\end{enumerate}
+
+接下来就是硬件驱动和文件系统驱动了。硬件驱动，简单的原则是，有这个硬件就选 Y 没有就选 N。不清楚有没有就选 M。
+
+文件系统则是，用到就选 Y 没用到就不选。不常用到，想节约内存，就选 M。
+
+唯一要注意的是，一定要选上 AHCI 。 Serial ATA and Parallel ATA drivers 下面的，  AHCI SATA support。
+如果你的电脑比较老旧，不支持 AHCI 或者还是 IDE 硬盘，那一定要将对应硬件选 Y 而不是 M。否则开机过程中会出现先有鸡还是先有鸡蛋的问题。没有磁盘驱动就无法访问模块文件，无法访问模块文件就无法载入磁盘驱动。
+
+还有， SCSI 支持一定要选上。“SCSI device support” 和 “SCSI disk support” 是必选的。因为虽然没有 SCSI 设备，但是内核是将 SATA 硬盘模拟成 SCSI 硬盘的。
+
+设备驱动的选择是编译内核最大的难题。需要非常熟悉自己的硬件。很难一次配置成功。所以建议新手使用 genkernel。
 
 \subsubsection{新手使用 genkernel}
 
@@ -990,10 +1338,53 @@ Gentoo开发者似乎注意到了不会自行编译内核的しんまい%ざこ%
 
 这里就教大家用genkernel获得一个能启动的内核的.config配置文件好了。
 
+\subsubsection{initrd}\label{sec:initrd}
+
+Linux启动过程中内核主动做的最后一件事情就是执行/sbin/init，那么倒数第二件事情必然是挂载根目录。
+挂载根目录有2个前提条件：找到根分区和支持根分区所使用的文件系统。
+找到根分区，第一点，需要其所在设备的驱动。第二点就是内核需要知道哪个是根分区。这个可以通过内核参数 root= 设定。
+
+Linux下驱动可以编译进内核，也可以编译为模块动态加载。如果恰巧磁盘设备的驱动被编译成了模块，就出现“鸡生蛋和蛋生鸡”的问题了：不访问磁盘就无法加载模块，而不加载模块有没有磁盘的驱动。这对于自己编译内核的童鞋不成问题。只要知道自己的SATA/IDE控制器的型号，将对应的驱动编译进内核就解决了。但是如果是打算制作“通用内核”的发行版呢？
+
+文件系统也是同样的问题，没有文件系统驱动就无法挂载分区访问上面的文件，无法访问文件就无法加载模块。这对于自己编译内核的童鞋不成问题。只要将自己根分区所使用的文件系统编译进内核就解决了。但是如果是打算制作“通用内核”的发行版呢？将所有的文件系统都编译进内核么？
+
+initramfs就是为解决这个“鸡生蛋和蛋生鸡”的问题诞生的。
+
+GRUB加载内核的时候通过initrd 命令加载一个initramfs，该initramfs就会成为内核的根分区\footnote{事实上是Linux内核拥有一个不挂载就存在的rootfs文件系统，Linux启动过程中将initramfs的内容解压到rootfs中。作为理解，可以认为initramfs挂载成Linux的临时根目录。}。内核初始化完毕后直接执行initramfs中的/sbin/init而不理会root=命令行参数。由initramfs中的/sbin/init程序负责加载磁盘驱动，查找根分区，挂载根分区到 /sysroot 并调用pivot\_root()\footnote{使用命令　man 2 pivot\_root查看介绍。}将找到的根目录替换为真正的根目录。然后执行真正的/sbin/init程序。
+
+initramfs是一个目录的压缩包。由dracut程序生成。initramfs用于寻找真正的根目录时的临时根目录，通常只包含一些必要的驱动和一些用于查找根分区的脚本，但有时候可以成为一个完成的系统的根目录，这样的系统可以脱离磁盘运行。比如Fedora的安装DVD,使用一个巨大initramfs作为安装环境的根目录。该initramfs包含的是一个真正的OS，带有完整的工具。
+
+
+通常 Gentoo 用户不使用 initrd ，但是遇到下列情况，你需要 initrd：
+
+\begin{enumerate}
+\item 使用 genkernel 编译内核。
+\item root 文件系统放在 LVM/RAID 上。或者其他无法由内核直接挂载的地方，如一些网络文件系统。
+\item root 文件系统使用的驱动没有编译进内核。
+\item / 和 /usr  不在一个分区。
+\end{enumerate}
+
+genkernel 会自动生成 initrd ,但是如果你不依靠 genkernel , 可以通过 dracut 这个实用工具生成。
+
+\begin{code}
+\# emerge dracut
+
+\# dracut -H
+\end{code}
+
+使用 -H 参数，表示生成的是本机使用的 initrd 如果没有 -H ，dracut 默认会尝试生成一个通用的initrd , 通常用于制作发行版的 LiveCD。
+
+dracut 默认会生成 initramfs-<kernel version>.img 并存放到 /boot 目录下。通过在命令行上直接给出文件名，可以覆盖默认的文件名。
+如：
+
+\begin{code}
+\# dracut -H   initrd.img
+\end{code}
+
+有关 dracut 的进一步的信息，参考 man dracut。
 
 \subsection{系统初步配置—重启前配置}
 在chroot环境中我们需要做的就是进行必备系统的安装，配置好基本系统然后重启进入Gentoo环境中进行后续的安装。所以这里基础系统的配置非常关键，他关系到你第一次能否成功地进入Gentoo系统。
-
 
 \subsubsection{nano 编辑器快速入门}\label{sec:nano}
 现在才讲nano我都觉得有点罪过。由于Gentoo的stage3里并没有包含vim，所以一开始必须使用nano进行系统配置，直到portage配置好后emerge了vim才能使用vim。
@@ -1235,7 +1626,7 @@ grub-efi 在 gentoo-zh overlay里。介绍和使用overlay请参考 \secref{sec:
 
 这样就可以了。重启后系统会自动运行 grub.efi　进入grub模式，grub就可以将内核加载了。
 
-\subsection{配置引导程序}
+\subsection{配置引导程序}\label{sec:bootloader}
 
 grub 的配置文件就是 grub.conf。 UEFI 模式下，是和 grub.efi 在同一个目录下。 BIOS模式下，是在 /boot/grub/grub.conf。（果把grub安装到boot分区的话）
 
