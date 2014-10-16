@@ -1,0 +1,218 @@
+
+如果 Linus 有什么让他出名的话，那就是他写了 Linux。 如果 有什么让 Lennart 出名的话，大概就是因为他编写了两个被广泛使用却又备受争议的软件： PulseAudio 和 systemd。
+
+systemd 是带着一些人的怨恨出身的。
+
+不管喜欢还是不喜欢，systemd 就这样出身了，并且蓬勃发展了。回过头来，如今反对 systemd 的人，大概以后会用“我当年太年轻了” 这么一句轻描淡写的搪塞过去吧\footnote{也许她他们傲娇了？}？
+
+\section{PID1 做什么}
+
+systemd 被人诟病的一个地方就是， systemd 干的实在太多啦！\footnote{其实 systemd 发行超过了 80 个可执行文件，systemd 的许多功能都是在这些独立运行的可执行文件里完成的，而并不是由 pid 1 执行的。} 作为 PID 1 到底应该干什么？ 或者说，到底什么是必须由 PID 1 执行的？
+
+在　systemd 作者　Lennart 的博客上，他详细的记录了他对PID 1的思考。
+
+\begin{insertnote}
+
+\subsection*{重新思考PID 1}
+
+If you are well connected or good at reading between the lines you might already
+know what this blog post is about. 
+你可能已经知道这篇博客要讲的是什么了，但是如果这篇故事让你提起了阅读的兴趣，赶紧冲杯咖啡坐下来吧。
+
+本故事很长，尽管我希望读者能耐心读完，但是呢，一句话概括一下还是必要的：我们在重新发明一个 有趣的 init 系统。
+
+This blog story is long, so even though I can only recommend reading the long story,
+here's the one sentence summary: we are experimenting with a new init system and it is fun.
+
+好了，代码在这里\footnote{\url{http://cgit.freedesktop.org/Software/systemd}} ，下面故事开始咯。
+
+
+\subsubsection*{Process Identifier 1}
+
+每一个UNIX系统，都有一个进程ID等于1的特殊进程。这个特殊进程是系统启动过程中第一个运行的进程（内核初始化完成后启动 /sbin/init），并是所有其他进程的祖宗。正因为其特殊性，许多事情只有它才能办的到。所谓权力越大，责任也越大。被给予了巨大的权力的同时，它也承担着巨大的责任——启动并维持用户空间\footnote{内核里的代码跑在内核空间，用户空间是相对的，指没有跑在内核空间的代码。维持用户空间的意思，就是维持整个系统除了内核以外的其他部分的运转。}。
+
+从前Linux上担任 PID 1 大任的软件呢，就是 sysvinit。 sysvinit 的历史比 Linux 还要长， 古老的代码越发暴露出它的局限性。于是一系列旨在替代 sysvinit 的软件被开发出来，其中走的最远的，就数 Upstart 啦，扎根到了 Ubuntu 和其他几个重要发行版之中。
+
+上文提到，init 的中心职责就是启动用户空间。一个好的 init 当然干活要利索，迅速的干完。
+不幸的是，sysvinit 就像一个步履蹒跚的老头，快不起来。
+
+要又快又好的启动系统，关键是要做好如下两点：
+
+\begin{enumerate}
+\item[\textbullet] 启动的少点
+\item[\textbullet] 尽可能的同时启动
+\end{enumerate}
+
+这是啥意思呢？ 更少的启动，意味着启动尽可能少的服务或者将服务的启动推迟到第一次真正用到的时候再启动。
+只有很少的服务是迟早都要用到的，必须被启动，很多服务甚至可能一直到关机都不曾被用到。比如说，蓝牙服务 —— 除非你插入了蓝牙适配器或者启动了一个蓝牙通信，否则蓝牙服务并没有启动的必要。打印服务也是如此 —— 除非你接上了打印机，或者按下了应用程序里的打印按钮，否则打印服务没有一直运行的必要。甚至是 SSH —— 如果没有用户要远程登录，连运行他的必要的没有; 只有有一个用户要连接过来的时候再开启 sshd 也不迟。（ 老实说，很多系统开一个 sshd 在那里就为了将来几个月后的某一天管理员会登录上来。）
+
+尽可能的同时启动，意味着如果必须启动一个服务，那就别（像 sysvinit 所做的那样）一个一个启动，而是并行化启动，把 CPU 和磁盘IO都跑满，最大化的利用上系统的能力，把系统启动时间降到最低。
+
+
+\subsubsection*{动态增删软硬件}
+
+现代的OS特别是通用操作系统都是动态可配置的，系统并不是安装完成后就一陈不变了。
+程序开起来又退出，各种热插拔设备插上又拔掉。
+作为一个 init ，它需要响应这些变化。通过开启或关闭一些服务来响应这些硬件变化。
+
+当前，很多系统都试图通过并行化来加速启动，但是相互有依赖关系的服务之间仍然无法并行启动。比如说 Avahi 需要 dbus , 所以 dbus 得先启动，而且是告诉 init 它启动完毕了才能启动 Avahi。
+再说一个：libvirtd 和 X11 都需要 HAL （好吧，我在讨论 Fedora 13 上的情况，无视一下现在HAL已经不再使用的现状先），于是HAL需要先被启动。
+因为 libvirtd 同时也需要avahi，所以它也得等 avahi 启动了先。
+然后所有上面提到的服务统统依赖 syslog , 所以他们都得等 syslog 先完成启动才能开起来。
+
+\subsubsection*{并行启动 Socket 服务\footnotemark}
+
+\footnotetext{Socket服务指通过Socket这种IPC机制对外提供服务的服务程序。比如 syslog。}
+
+通过“它依赖它所以它先启动它后启动” 这种落后的同步措施导致系统启动过程中的那么多方服务只有极少一部分才能真的被并行化。大多数时候系统都处于序列化的启动中：一次启动一个服务。
+难道就不能丢弃这套同步措施么？
+
+那啥，能是能。我们首先来看一看，到底为啥一个服务必须要在另一个服务启动后才能启动，到底它依赖了它什么。
+对于传统的UNIX服务来说，答案就只有一个：他们要等依赖的服务创建好需要的 UNIX socket\footnote{UNIX socket 是UNIX提供的一种socket，用于本机上的多个进程间的通信。不同于 inet socket 是用于 internet 上的不同主机的进程之间的通信。} 并等待连接。当然 inet socket 也是可以的。
+比如说，dbus 服务会创建 \texttt{/var/run/dbus/system\_bus\_socket} 这个 UNIX socket 等待客户端连接； syslog 会创建\texttt{/dev/log} 这个 socket； CUPS 则是创建  \texttt{/var/run/cups/cups.sock }；  挂载NFS 要等 \texttt{/var/run/rpcbind.sock} 准备就绪，并且 portamapper 也监听在对应的 端口上（这货是 AF\_INET 的）； 等等。
+仔细想想就会发现，其实这些依赖的服务也就只是需要等这些 socket 而已!
+
+他们只是等个 socket 的话，我们可以提前创建这些 socket， 只要些 socket 都创建完了，这些服务就可以一口气启动了，也不用管谁要等谁先启动了。
+\textbf{可以么？} 当然可以！而且在 UNIX 类系统里，这样做其实很简单：先创建 socket ，然后再启动对应服务，把预先创建的 socket 传给被启动的服务（简单的让 socket 跨 exec() 这个系统调用继承过去即可），而不是让服务自己去创建socket。
+这样，我们就可以一次性创建好所有的 socket， 然后一次性把所有的服务都启动了。如果一个服务依赖一个尚未完成启动的服务，也没有任何问题——它的请求会被内核缓存起来。就算他因为要等待回复导致被阻塞，也只有这一个服务的这一个请求被阻塞了。等被依赖的服务器处理了请求，这个服务也就继续运行了。
+\textbf{并且}， 我们再也不需要为服务配置依赖关系才能正确的同步它们了。
+就算所有的服务被一次性启动，而被依赖的服务还没运行到，连接到它提供的 socket 也总是成功的——因为这些 socket 早创建好了。
+
+这里讲到的一些概念是下面要讲的基础，还得换个遣词造句的方式再说一遍\footnote{因为很重要，所以说两遍。}：如果你把 syslog 和依赖它的服务一起启动，那么接下来发生的事情就是，那些要发送给 syslog 的消息会被内核缓冲进 /dev/log 这个 socket 的缓冲区。只要这个缓冲区没满（在syslog启动完成并开始从socket读取走消息前系统里没那么多消息产生）就不会阻塞要向syslog写入消息的程序，它们可以立即处理其他的事情。一旦 syslog 自己完成好启动，所有被内核缓冲的消息都会被取走并处理掉。
+再来一个例子：我们把 dbus 和依赖 dbus 的其他服务同时启动, 如果一个服务执行了一个 dbus 请求并等待回复，那么这个服务就会被阻塞，但是也只有这一个会被阻塞。而且一旦 dbus 追上来并处理掉了这个请求，它也可以继续启动了。
+
+也就是说，我们依靠内核提供的 socket 缓冲帮获得我们最大限度的并行。所有的次序问题同步问题统统让内核代劳了，我们不用写一行代码来干这些事情！如果所有的 socket 都已经预先存在了，那么依赖关系的管理也就变得多余了（至少不那么重要了）: 如果一个服务依赖另一个服务，它直接连接到相应的socket就可以了。
+如果被依赖的服务已经启动了，这个连接会立即成功；而如果被依赖的服务还没运行到就绪状态，那它也不一定就要阻塞在 \texttt{connect()} 调用上，除非它发起了一个需要对方应答的请求；
+就算被依赖的服务还没启动都没关系，被依赖的服务器可以以此为契机被自动激活。
+对于第一个连接上去的程序来说，这根本没有任何区别！所以说依赖管理已经无关紧要了。我们还获得了最大限度的并行能力，以及，让一个服务按需启动。
+还有呢！ 这个模式还让系统更加健壮了！因为需要的 socket 不论提供它的服务有没有在运行都一直存在并可用。可能提供服务的程序暂时崩溃了\footnote{事实上你可以写一个daemon，故意处理完一个 client 后就 exit 直接退出，systemd 会立即重启该 daemon 并且外界对此重启一无所知，而且重启过程中一个请求都不会丢弃。}，对这个 socket 的客户来说，甚至无需知晓。
+
+好了，说的够多了，该暂停一下了，起来走两圈，给咖啡杯重新灌点开水。
+接下来更长呢！
+
+且慢，我们把思绪再清理一下：这样的逻辑好牛逼，是你刚想出来的？ 非也。眼下就有一个早已这么干——苹果公司的 Mac OS X 系统使用的 launchd。 在 OSX 系统上， 所有的 daemon 使用的 socket 统一由 launchd 创建，这些服务被一次性启动而无需处理依赖关系也无需对启动过程执行同步操作。这真的是一个天才般的设计！强烈的建议大家看看 launchd 那群人做的一个关于launchd的视频。 可惜了，这个天才设计从来没有走出苹果公司。
+
+其实 launchd 也不是第一个吃螃蟹的。在 launchd 之前就有一个被广泛使用的程序 inetd 干的就差不多。
+socket 是在一个 daemon 里创建，然后通过 exec 传递给另一个 真正干活的daemon 。 然后， inetd  关注于非本地服务，而是用于那些提供给 internet 访问的服务\footnote{尽管后来一些实现支持了 UNIX socket。}。
+因此它并不是一个用来加速启动的东西。
+
+对于 TCP 协议的服务来说， inetd 的传统做法就是每接收一个连接开启一个进程。这对一些追求高性能的服务来说就不大可能接受了。当然， inetd 也支持只对第一个连接开启一个进程，后续的连接就由同一个进程处理\footnote{这也是 inet.conf 配置文件里 wait/nowait 选项的作用。就是文档上没怎么说明。} inetd 一开始为人所知的就是它 一个连接一个进程的做法，导致被人诟病性能问题。其实好不公平的说。
+
+\subsubsection*{并行启动Bus服务\footnotemark}
+
+\footnotetext{Bus 服务指通过 D-Bus 接口对外提供服务的，比如 NetworkManager。}
+
+Linux 上越来越多的 daemon 转向使用 D-Bpwdus\footnote{有关 D-Bus 参考 \faqref{FAQ:dbus} }　而不是原始的UNIX socket 提供服务。
+对于这些服务还能使用同样的逻辑进行并行化吗？
+能。而且 D-Bus 已经提供了相应的机制了: 使用 bus activation 可以让一个D-Bus 服务只有第一次被用到的时候才开起来。
+Bus activation 也拥有同 Socket activation 一样的免依赖免同步配置：如果我们希望 Avahi 和 CUPS 同时启动\sidenote{CUPS通过 Avahi 查找局域网里的共享打印机。当然，通过D-Bus 接口访问。}, 我们就真的能将他们同时启动。如果 CUPS 比 Avahi 启动的快点，D-Bus 也可以缓存CUPS的请求直到Avahi完成启动。
+
+于是结合起来： socket activation 和 bus activatin 联合起来让我们得以将所有的服务同时启动而不考虑相互依赖关系，不需要特别的同步措施来关照它们。
+同时我们也能延迟启动服务，将服务推迟到真正被需要的时候才启动。
+
+如果这不够棒，我真不知道还有什么可以算棒了。
+
+\end{insertnote}
+
+重新思考 PID 1 的结果，就是 systemd 了。 systemd 的核心思想就是无需依赖，无需同步。
+但并不意味着, systemd 对服务之间的依赖追踪能力就很差了。恰恰相反， systemd 具有非常强大的依赖追踪能力。
+systemd 的依赖追踪相当可靠，并不会出现 sysv 下已经启动的服务丢失的情况。
+
+不管怎样， systemd 的出现都让一些管理人员的原有知识和水平受到了严峻的挑战。在 sysv 时代锻炼多年的经验技术一夜之间报废，多少会使人怨恨吧。
+
+\section{系统状态检验}
+在 sysv 时代，系统启动过程中会刷屏显示启动过程。但是启动速度如果比较快就来不及看了。而且如果使用了启动动画，那就啥也没得看了。
+系统启动后，要查看系统状态嘛，就只有 telint 一条命令能告诉你当前运行在哪个运行级上。别的啥也不知道了，想知道各个服务是否有正确启动，还是拿出 ps 看看进程列表吧。
+
+systemd 在启动过程中，也会显示各个服务的启动状态 ——  用绿色的 {\color{green} [OK]}或红色的 {\color{red}[FAILED]}指示。
+
+在系统运行阶段，　systemd 依然保留了服务的状态信息。只要简单的输入　systemctl 命令就可以列出\textbf{所有}服务的状态，不管是已启动的，还是启动失败了，还是运行中崩溃了。
+为了不占用过多篇幅，这里略去了大部分服务的状态。
+
+\begin{tiny}
+
+\begin{longtable}[h]{>\tiny l >\tiny l >\tiny l>\tiny l>\tiny l}
+\multicolumn{5}{>\tiny l}{  [root@lambda] \textasciitilde\# systemctl } \\
+UNIT  &                     LOAD &  ACTIVE &      SUB   ~~   JOB          &   DESCRIPTION \\
+dev-hugepages.automount             &          loaded & active  &     running     &                 Huge Pages File System Automount Point   \\
+boot.mount       &          loaded & active     &   mounted        &      /boot \\
+-.mount            &        loaded & active    &   mounted  &               / \\
+dev-hugepages.mount       &     loaded  & active  &     mounted  &                    Huge Pages File System \\
+
+\multicolumn{5}{>\tiny l}{ [...]} \\
+
+accounts-daemon.service             &          loaded & active &       running           &           Accounts Service  \\
+acpid.service       &                          loaded & active  &     running        &              ACPI Event Daemon \\
+
+\multicolumn{5}{>\tiny l}{ [...]} \\
+modem-manager.service       &                  loaded & active     &  running          &            Modem Manager\\
+netfs.service             &                    loaded & active    &   exited         &              LSB: Mount and unmount network filesystems.\\
+NetworkManager.service &                       loaded & active    &   running                 &     Network Manager \\
+
+
+ntpd.service   &        loaded &  {\color{red}maintenance}  & {\color{red}maintenance}      &     Network Time Service \\
+
+\multicolumn{5}{>\tiny l}{ [...]} \\
+
+
+\multicolumn{5}{>\tiny l}{ LOAD   = Reflects whether the unit definition was properly loaded. } \\
+\multicolumn{5}{>\tiny l}{ ACTIVE = The high-level unit activation state, i.e. generalization of SUB. } \\\\
+\multicolumn{5}{>\tiny l}{ SUB    = The low-level unit activation state, values depend on unit type. } \\
+\multicolumn{5}{>\tiny l}{ JOB    = Pending job for the unit. } \\
+
+
+\multicolumn{5}{>\tiny l}{ 221 units listed. Pass --all to see inactive units, too. } \\
+\multicolumn{5}{>\tiny l}{ [root@lambda] \textasciitilde\# } \\
+\end{longtable}
+\end{tiny}
+
+各个服务\footnote{不是服务，其实所有的systemd unit 的状态都可以看到。}的状态 —— 运行中(active)、 没运行(inactive)或者其他的状态 —— 在 ACTIVE 列里被一目了然的标记出来。
+如果你仔细看，还会看到 maintenance 这样的状态，而且以红色醒目的标记出来。在这个例子里是 NTP 这个服务挂了。然后可以用 systemctl status 命令列出当个服务的状态以获得更详尽的原因。
+
+\begin{code}
+[root@lambda] \textasciitilde\# systemctl status ntpd.service\\
+ntpd.service - Network Time Service \\
+\vskip -6ex ~  \\
+\begin{tabbing}
+\hspace*{8em}\=active \hspace*{0.3em}\=sub\kill
+\>Loaded: \> loaded (/etc/systemd/system/ntpd.service) \\
+\>Active: \> {\color{red}maintenance } \\ 
+\>~~Main: \>  953 (code=exited, status=255) \\
+\>CGroup: \> name=systemd:/systemd-1/ntpd.service 
+\end{tabbing}
+\vskip -3ex
+[root@lambda] \textasciitilde\#
+\end{code}
+
+这条命令的输出告诉我们， ntp 曾经启动过，PID 是  953， 但是非正常退出了。
+退出代码 255。
+
+\textbf{总结：}　使用　 systemctl 和　systemctl status 这种现代工具替代古老的 SysV 启动时的刷屏输出。
+systemctl status 不仅仅能提供更多的错误状态，还能提供更多的运行期信息。
+
+\section{寻找服务所属进程}
+
+Linux支持在一台计算机上运行成千上万的进程。想知道一个进程是干什么的，属于哪个服务，变得十分的棘手。
+一些守护进程还开启很多“帮手”进程，扰乱了ps的输出导致常常难以识别。像 Apache 还会执行第三方程序作为CGI调用，让进程列表变得更凌乱以致难以确定进程具体所属。
+通过 "ps xaf" 输出的进程树结构可以缓解问题，但是进程树又不靠谱。因为子进程常会被重新指派到 PID 1 的名下\footnote{一个进程终止了，它的子进程都会被过继给 pid 1。}，这样进程的父子关系就破坏了。
+这个特点也被拿来挣脱父进程的控制，就像传统的daemon。
+另外，一个进程在 ps 里显示的名字也是可以更改的，也可籍此捉弄管理员。
+
+systemd 使用了 Linux 独有的强大进程控制技术 —— cgroups。 通过将进程塞入以服务的名字明明的 cgroups 里，
+systemd 解决了服务的子进程可能脱离控制的问题。进程一旦被放入名为 cgroups 的牢笼，包括其子进程在内的所有派生进程都无法逃离。这样 cgroups 就变成了一个很可靠的将一组进程标记为从属某个服务的工具。不管他动用了多少次 双fork 技术，修改自己的名字多少次，都不能挣脱控制。 cgroups 可以轻松的将一个服务启动的所有进程都杀的一干二静，不留任何活口。
+
+systemd 给了管理员2条强大的命令用于探寻进程信息，一个是使用更新过的 ps 命令就可以列出进程所属 cgroups 名字和其他一些信息。另一个命令则是 systemd-cgls。
+限于篇幅这里就不给出执行结果了。
+
+如果你仔细观察 systemd-cgls 的输出，会发现有个叫 /user.slice 的 cgroup， 再仔细观察会这个 cgroups 里包含的进程似乎就是属于用户的。 systemd  不仅仅将启动的服务要被放入 cgroups , 属于登录用户运行的进程也被放入了了 cgroups。 所以用户注销的话，其进程也可以很干净的被清理。
+
+\section{将 SysV 脚本转换为 systemd service 单元}
+
+本来吧，Linux （当然也包括 UNIX） 的服务进程都是 SysV 脚本启动的。
+这些bash脚本都躺在 /etc/rc.d/init.d 目录里，都以按照给定的start、stop或者restart参数调用以启动、停止或者重启对应的服务进程。
+
+For starts this usually involves invoking the daemon binary, which then forks a background process (more precisely daemonizes). Shell scripts tend to be slow, needlessly hard to read, very verbose and fragile. Although they are immensly flexible (after all, they are just code) some things are very hard to do properly with shell scripts, such as ordering parallized execution, correctly supervising processes or just configuring execution contexts in all detail. systemd provides compatibility with these shell scripts, but due to the shortcomings pointed out it is recommended to install native systemd service files for all daemons installed. Also, in contrast to SysV init scripts which have to be adjusted to the distribution systemd service files are compatible with any kind of distribution running systemd (which become more and more these days...). What follows is a terse guide how to take a SysV init script and translate it into a native systemd service file. Ideally, upstream projects should ship and install systemd service files in their tarballs. If you have successfully converted a SysV script according to the guidelines it might hence be a good idea to submit the file as patch to upstream. How to prepare a patch like that will be discussed in a later installment, suffice to say at this point that the daemon(7) manual page shipping with systemd contains a lot of useful information regarding this.
+
+So, let's jump right in. As an example we'll convert the init script of the ABRT daemon into a systemd service file. ABRT is a standard component of every Fedora install, and is an acronym for Automatic Bug Reporting Tool, which pretty much describes what it does, i.e. it is a service for collecting crash dumps. Its SysV script I have uploaded here.
+
+The first step when converting such a script is to read it (surprise surprise!) and distill the useful information from the usually pretty long script. In almost all cases the script consists of mostly boilerplate code that is identical or at least very similar in all init scripts, and usually copied and pasted from one to the other. So, let's extract the interesting information from the script linked above:

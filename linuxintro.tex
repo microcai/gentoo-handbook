@@ -98,9 +98,6 @@ Gentoo的ebuild严格来说并不是软件包格式。rpm deb之类的，可以�
 
 Gentoo的ebuild却并不是这样的。ebuild大致是一个BASH脚本（不能直接执行，只能由包管理器调用）。Gentoo的包管理器通过执行ebuild完成“自动下载源码，解压，编译，安装”这样的操作。
 
-ebuild 向 PMS\footnote{PMS - Package Management System， 软件管理系统。Gentoo 默认的 PMS 就是 portage。 使用 emerge 命令来访问它的功能。} 提供了如何下载编译安装一个软件的指引。 为了能清晰的告诉 PMS 一个软件具体的安装步骤，ebuild 文件要遵循一定的规则。这个规则目前已经更新到了第六个版，ebuild 在文件的头部使用 \texttt{EAPI="5"} 表明自己使用的是第 6 个版本\footnote{第一版规则是 0 ，可以不用写出。}的规则。 除了文件的内容要符合规范，ebuild 文件就连文件名和目录形式都是有严格要求。 同其他将软件包的名字和版本编码到包内部的描述不同，ebuild 依靠ebuild文件名本身来只是软件包的名字和版本。如果上一个版本和下一个版本的安装步骤没有发生任何变化，简单的重命名一下 ebuild 即可安装软件的新版本。
-
-
 %TODO
 \todo{更多ebuild介绍}
 
@@ -124,8 +121,7 @@ RPM系的发行版，使用yum\footnote{不要和rpm混淆哦！一个是安装�
 \#yum search handwrite
 \end{code}
 
-在结果页面，有个叫　ibus-handwrite的软件。
-ibus是一个输入法框架，而 ibus-handwrite 就是手写输入法了。
+在结果页面，有个叫　ibus-handwrite的软件。ibus是一个输入法框架，自然ibus-handwrite就是手写输入法了。
 开始安装（注意需要使用root帐号运行，参考\faqref{FAQ:su}）
 \begin{code}
 \#yum install ibus-handwrite

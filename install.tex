@@ -479,12 +479,15 @@ S表示　Kill，?? 是一个两位数的数字，代表停止的次序（停止
 我表示我已经被Fedora这种模式弄晕了，Gentoo的openrc好歹是设置依赖关系自动决定启动次序的。这也是Fedora后来果断废除sysvinit的原因吧。}Fedora的 /etc/init.d/下是实实在在的shell脚本。没有依赖关系。引入Gentoo的openrc不如彻底革新到自动确定依靠关系或者是根本不需要依赖关系的新服务管理系统。
 
 \subsubsection{systemd}
+\sidenote{有关 systemd 的内容, 将在 \protect\chapref{chap:systemd} 详细讲解. }
 sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本的一大特点就是慢。
 另一个诟病的地方就是服务之间的关系复杂，很难搞懂。而且各个发行版并没有统一这些脚本。有的发行版为脚本加入了依赖关系，有的要依靠手工设置（是发行版打包的时候确定的）启动次序。管理上非常复杂。
 
 那么，针对sysvinit的问题：慢、管理复杂，Redhat的一个牛人开发了systemd做为PID 1以克服sysvinit的缺陷。
 
 那么systemd到底有哪些好处呢？
+
+
 
 \begin{itemize}
 \item 极度并行化启动。
@@ -497,6 +500,8 @@ sysvinit大量依靠脚本（/etc/init.d/* ）实现系统启动过程。脚本�
 \item	无需配置依赖性。
 		按需启动还使得服务之间的依赖关系成了过去式。你不需要直接指定服务之间的依赖关系——只要一个服务用到了另一个服务，另一个服务会被按需启动，\em 就好像它本来就已经被启动了一样。
 
+\item	支持未经修改在容器内启动。
+		有关 systemd 容器的内容, 将在 \protect\chapref{chap:systemd} 详细讲解. 
 \end{itemize}
 
 systemd能实现按需启动和避开依赖性配置，原因就是实现了socket activation。

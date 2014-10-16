@@ -63,6 +63,16 @@ TODO:#1}
 
 \definecolor{gray}{cmyk}{0,0,0,0.2}
 
+\newcommand*{\sidenote}[1]{\marginnote[%
+\color{gray}\footnotesize%
+NOTE:#1%
+]{%
+\color{gray}\footnotesize%
+NOTE:#1}
+}
+
+
+
 %=====================================================================================
 % define new command and environment 
 %=====================================================================================
@@ -243,7 +253,7 @@ Now may you code in the power of the Source; may the Kernel, the Libraries and t
 \ifdefined\compileall
 \input{linuxintro}\fi
 
-\chapter{安装 Linux}
+\chapter{安装 Linux}\label{chap:install}
 
 \begin{quotes}[0.5]{insomnia}
 It only takes three commands to install Gentoo!
@@ -266,7 +276,7 @@ A computer shall not waste your time or require you to do more work than is stri
 \ifdefined\compileall
 \input{dialy}\fi
 
-\chapter{软件管理}\label{软件管理}
+\chapter{软件管理}\label{chap:软件管理}
 
 \begin{quotes}{Ian Murdock}
 Package Management is the single biggest advancement Linux has brought to the industry
@@ -276,6 +286,12 @@ Package Management is the single biggest advancement Linux has brought to the in
 \ifdefined\compileall
 \input{pkgmgr}
 \fi
+
+\chapter{systemd 风暴}\label{chap:systemd}
+
+\footnotetext[0]{按照本书原来的策划, 其实本来不会增加这一章节. 但是本书的完成迟迟落后于进度, 一直到 Debian 的技术委员会宣布 systemd 将成为 Debian 的默认 init, 一直到 Ubuntu 也紧随 Debian 的决定, 一直到 systemd 占领了市场. 这个时候, 市场涵待一个能全面介绍 systemd 的书籍. systemd 虽然在 \chapref{chap:install} 稍微介绍, 但最终太过简陋, 本书作者终于决定另劈一章讲解.}
+
+\input{systemd}
 
 \chapter{图形界面}
 

@@ -177,3 +177,10 @@ key1=value1
 key2=value2
 \end{verbatim}
 
+
+\section{D-Bus}\label{FAQ:dbus}
+
+UNIX 系统提供了一些 IPC 的基础机制，如消息列队，共享内存，和 socket。 可以在这些原始的东西上构建一套高级点的 IPC 功能，如RPC接口。
+
+很多 D-Bus 时代以前的程序，都各自发明轮子，各自有一套利用底层系统提供的 IPC 机制构建的 RPC 接口。 但是呢，计算机世界里所谓轮子是越多越麻烦。 于是一套通用的 D-Bus 规范就出来了。 D-Bus 在 UNIX Socket 基础上提供比较高阶的操作。
+
